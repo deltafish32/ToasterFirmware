@@ -21,7 +21,7 @@ Open source Protogen Firmware. ^w^
 
 
 
-# [Installation guide](docs/install_en_us.md)
+# [Installation guide](docs/install_en_US.md)
 
 
 
