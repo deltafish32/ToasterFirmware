@@ -1,0 +1,15 @@
+version: 1
+images:
+  - /png/eyes/eye_badass_0.png
+  - /png/eyes/eye_badass_1.png
+  - /png/eyes/eye_badass_2.png
+  - /png/eyes/eye_badass_3.png
+sequences:
+  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
+  - draw, 0, eyes, mirror, 0, 0, 3.0
+  - draw, 1, eyes, mirror, 0, 0, 0.05
+  - draw, 2, eyes, mirror, 0, 0, 0.05
+  - draw, 3, eyes, mirror, 0, 0, 0.05
+  - draw, 2, eyes, mirror, 0, 0, 0.05
+  - draw, 1, eyes, mirror, 0, 0, 0.05
+  

@@ -1,0 +1,216 @@
+version: 1
+
+# 나만의 프로토젠을 만들어보세요.
+# Create your own Protogen.
+my_protogen:
+  # 눈, 코, 입, 사이드 패널 색상
+  # Color of eyes, nose, mouth, side panel.
+  color_eyes: '#00ff00'
+  color_nose: color_eyes
+  color_mouth: color_eyes
+  color_side: color_eyes
+  
+  # 기본 표정
+  # Default emotion
+  eyes_default: eyes_normal
+  nose_default: nose_default
+  mouth_default: mouth_default
+  side_default: side_default
+  
+  # 색상 모드
+  #   original: 이미지의 원래 색상
+  #   personal: 나만의 색상
+  #   rainbow_single: 무지개 단색
+  #   rainbow: 무지개
+  #   gradation: 그라데이션
+  # Color modes
+  #   original: the original color of the image
+  #   personal: your own color
+  #   rainbow_single: rainbow single
+  #   rainbow: rainbow
+  #   gradation: gradation
+  color_mode: personal
+  
+  # 무지개(단색) 전환 속도 (ms)
+  # Transition speed of Rainbow Single (ms)
+  rainbow_single_speed: 20ms
+  
+  # 무지개 전환 속도 (ms)
+  # Transition speed of Rainbow (ms)
+  rainbow_speed: 10ms
+  
+  # 무지개 전환 픽셀 (숫자를 낮추면 좌우 고르게, 높이면 좌우 급격하게 변화합니다)
+  # Transition pixels of Rainbow (if you lower the number, it will change evenly, if you increase it, it will change drastically)
+  rainbow_transition_pixels: 4
+
+  # 그라데이션 색상
+  # Gradient color
+  # gradation_points:
+  #   - 0.0 -> '#0000ff'
+  #   - 0.4 -> '#00ff00'
+  #   - 0.5 -> '#00ff00'
+  #   - 0.8 -> '#00ff00'
+  #   - 1.0 -> '#ffff00'
+
+
+emotions:
+  - name: default
+    eyes: eyes_normal
+    nose: nose_default
+    mouth: mouth_default
+    side: side_default
+  - name: normal
+    eyes: eyes_normal
+  - name: badass
+    eyes: eyes_badass
+  - name: grin
+    eyes: eyes_grin
+  - name: worry
+    eyes: eyes_worry
+  - name: love
+    eyes: eyes_love
+  - name: confusion
+    eyes: eyes_confusion
+  - name: qmark
+    eyes: eyes_qmark
+  - name: unyuu
+    eyes: eyes_unyuu
+  - name: bean
+    eyes: eyes_bean
+  - name: bsod
+    eyes: bsod
+    nose: ''
+    mouth: ''
+  - name: loading
+    eyes: loading
+    nose: ''
+    mouth: ''
+
+
+hardware:
+  # 메인 디스플레이 (HUB75)
+  # Main display (HUB75)
+  hub75:
+    # 초당 프레임 개수 (1 ~ 60, 기본값: 60)
+    # Target frames per second (1 to 60, default: 60)
+    fps: 60
+
+    # 기본 밝기 (조도 센서가 없을 때, 0.0 ~ 1.0)
+    # Default brightness (when there is no photoresistor, 0.0 to 1.0)
+    default_brightness: 1.0
+
+    # 핀맵
+    # Pinout
+    # r1_pin: 25
+    # g1_pin: 26
+    # b1_pin: 27
+    # r2_pin: 14
+    # g2_pin: 12
+    # b2_pin: 13
+    # a_pin: 23
+    # b_pin: 19
+    # c_pin: 5
+    # d_pin: 33
+    # e_pin: 32
+    # lat_pin: 4
+    # oe_pin: 15
+    # clk_pin: 18
+
+  # 사이드 패널 (NeoPixel)
+  # Side panel (NeoPixel)
+  side_panel:
+    num_leds: 30
+    pin: 17
+    # NeoPixelBus 종류 변경은 컴파일이 필요합니다.
+    # Changing NeoPixelBus type requires compilation.
+
+  # HUD (SSD1306 128x64)
+  hud:
+    fps: 30
+    # i2c: 0x3C
+
+  # ESP-Now
+  i2c_esp_now:
+    i2c: 0x15
+
+  # IR 리모컨
+  # IR remote
+  ir_remote:
+    pin: 35
+    # 디버그 모드 활성화 시, 리모컨의 코드를 모니터링 할 수 있습니다.
+    # 현재는 NEC 타입만 지원합니다.
+    # When debug mode is activated, you can monitor the remote control's code.
+    # Currently only NEC type is supported.
+    debug: true
+
+    nec:
+      # 예제
+      # 
+      # 1. 해당 코드의 리모컨 신호를 받으면 표정 변화
+      # - code: 0xba45ff00 # 리모컨의 1번 버튼을 누르면
+      #   emotion: normal  # 일반 표정으로 변경
+      # 
+      # 2. 해당 코드의 리모컨 신호를 받으면 특수 동작 (이 부분은 변경될 수 있음)
+      # - code: 0xe31cff00 # 리모컨의 ok 버튼을 누르면
+      #   keypress: s      # 사진모드 토글
+      # 
+      - code: 0xba45ff00 # 1
+        emotion: normal
+      - code: 0xb946ff00 # 2
+        emotion: badass
+      - code: 0xb847ff00 # 3
+        emotion: grin
+      - code: 0xbb44ff00 # 4
+        emotion: worry
+      - code: 0xbf40ff00 # 5
+        emotion: love
+      - code: 0xbc43ff00 # 6
+        emotion: confusion
+      - code: 0xf807ff00 # 7
+        emotion: qmark
+      - code: 0xea15ff00 # 8
+        emotion: unyuu
+      - code: 0xf609ff00 # 9
+        emotion: bean
+      - code: 0xe619ff00 # 0
+        emotion: blank
+      - code: 0xe916ff00 # *
+        emotion: festive
+      - code: 0xf20dff00 # #
+        emotion: bsod
+      - code: 0xf708ff00 # left
+        keypress: H
+      - code: 0xad52ff00 # down
+        keypress: J
+      - code: 0xe718ff00 # up
+        keypress: K
+      - code: 0xa55aff00 # right
+        keypress: L
+      - code: 0xe31cff00 # ok
+        keypress: S
+
+  # 조도센서
+  # Photoresistor
+  photoresistor:
+    pin: 34
+    calibration:
+      # 이동평균 알파값
+      # 0에 가까울수록 빠르게 변화하지만 노이즈 많음
+      # 1에 가까울수록 천천히 변화하지만 노이즈 적음
+      # SMA alpha value
+      # The closer it is to 0, the faster it changes, but more noisy.
+      # The closer it is to 1, the slowler it changes, but less noisy.
+      alpha: 0.98
+      alpha_init: 0.9
+      
+      # 자동 밝기 구간 (센서 -> 밝기)
+      # 최소 2개는 존재해야 하며, 사용하지 않는 구간은 비활성화 가능
+      # Auto brightness (Sensor -> Brightness)
+      # Must be at least two, and unused sections can be deactivated.
+      points:
+        - 0.25 -> 0.25
+        - 0.75 -> 1.0
+        
+    # 히스테리시스 (밝기를 변경할 최소 센서 변화량 비율 (0.0 ~ 1.0))
+    # Hysteresis (minimum sensor change rate to change brightness (0.0 to 1.0))
+    hysteresis: 0.05
