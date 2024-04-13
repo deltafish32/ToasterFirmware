@@ -1191,7 +1191,7 @@ upng_t* upng_new_from_file(const char *filename)
 	}
 
 	//file = fopen(filename, "rb");
-	file = SPIFFS.open(filename, "r");
+	file = FFat.open(filename, "r");
 	if (file == false) {
 		SET_ERROR(upng, UPNG_ENOTFOUND);
 		return upng;

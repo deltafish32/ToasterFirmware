@@ -31,13 +31,11 @@ bool I2CESPNowRemote::begin(uint8_t addr) {
 
   _i2c_addr = addr;
 
-	Wire.begin();
-
   // delay(2000);
   // for (int i = 0; i < 127; i++) {
   //   Wire.beginTransmission(i);
   //   if (Wire.endTransmission() == 0) {
-  //     TF_LOG(TAG, "Found: 0x%02x\n", i);
+  //     TF_LOGD(TAG, "Found: 0x%02x", i);
   //   }
   // }
 
@@ -47,16 +45,7 @@ bool I2CESPNowRemote::begin(uint8_t addr) {
     _i2c_found = true;
   }
 
-  if (_i2c_found) {
-    TF_LOG(TAG, "ESP-Now I2C 0x%02x connected\n", _i2c_addr);
-  }
-  else {
-    TF_LOG(TAG, "ESP-Now I2C 0x%02x not connected (%d)\n", _i2c_addr, result);
-  }
-
-  if (!Worker::begin(60)) {
-    return false;
-  }
+  Worker::begin(60);
 
   _init = true;
 
@@ -64,8 +53,10 @@ bool I2CESPNowRemote::begin(uint8_t addr) {
 }
 
 
-void I2CESPNowRemote::work() {
-  if (_i2c_found == false) return;
+bool I2CESPNowRemote::work() {
+  if (_init == false || _i2c_found == false) {
+    return false;
+  }
 
 	_i2c_buffer.clear();
   
@@ -106,6 +97,8 @@ void I2CESPNowRemote::work() {
       _i2c_buffer.erase(_i2c_buffer.begin());
     }
 	}
+
+  return true;
 }
 
 

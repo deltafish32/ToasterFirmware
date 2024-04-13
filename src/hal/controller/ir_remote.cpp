@@ -33,7 +33,21 @@ bool IRRemote::begin(uint16_t pin, bool debug) {
     return false;
   }
 
-  _irrecv->enableIRIn();
+  _irrecv->enableIRIn(true);
+
+  int high_count = 0;
+  for (int i = 0; i < 10; i++) {
+    if (digitalRead(pin) == HIGH) {
+      ++high_count;
+    }
+    delay(1);
+  }
+
+  // TF_LOGD(TAG, "%d", high_count);
+
+  if (high_count < 9) {
+    return false;
+  }
 
   _init = true;
 
@@ -52,6 +66,10 @@ static uint32_t bit_reverse(uint32_t x) {
 
 
 void IRRemote::loop() {
+  if (!_init) {
+    return;
+  }
+
   decode_results results;
   
   if (_irrecv->decode(&results)) {
@@ -79,7 +97,7 @@ void IRRemote::loop() {
         uint16_t nec_address = nec_code & 0xffff;
         uint16_t nec_command = (nec_code >> 16) & 0xffff;
 
-        TF_LOG(TAG, "on_nec: address: 0x%04x, command: 0x%04x (full: 0x%08x)", nec_address, nec_command, nec_code);
+        TF_LOGI(TAG, "on_nec: address: 0x%04x, command: 0x%04x (full: 0x%08x)", nec_address, nec_command, nec_code);
 
         if (!processNEC_Emotion(nec_code)) {
           if (!processNEC_Keypress(nec_code)) {

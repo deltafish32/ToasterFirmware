@@ -88,8 +88,8 @@ public:
   // }
 
 public:
-  upng_t* load_png(const char* name);
-  void unload_png(upng_t* upng);
+  static upng_t* load_png(const char* name);
+  static void unload_png(upng_t* upng);
 
   virtual bool draw_png(upng_t* upng, DRAW_MODE draw_mode = DRAW_DEFAULT, int offset_x = 0, int offset_y = 0, int rotate_cw = 0, uint8_t param = 0) {
     return draw_png_newcolor(upng, [](int, int, uint8_t&, uint8_t&, uint8_t&, uint8_t, uint8_t) {}, param, draw_mode, offset_x, offset_y, rotate_cw);

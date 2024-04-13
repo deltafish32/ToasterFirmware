@@ -20,11 +20,12 @@ bool HeadUpDisplay::begin(uint8_t i2c_addr, uint32_t target_fps) {
     return false;
   }
 
+  _oled.clearDisplay();
+  _oled.display();
+
   setHUD(&hud_splash);
 
-  if (!Worker::begin(target_fps)) {
-    return false;
-  }
+  Worker::begin(target_fps);
 
   _init = true;
 
@@ -47,9 +48,9 @@ void HeadUpDisplay::pressKey(uint16_t key) {
 }
 
 
-void HeadUpDisplay::work() {
+bool HeadUpDisplay::work() {
   if (_init == false || _hud == nullptr) {
-    return;
+    return false;
   }
 
   _hud->process(_oled);
@@ -71,6 +72,8 @@ void HeadUpDisplay::work() {
       setHUD(next);
     }
   }
+
+  return true;
 }
 
 

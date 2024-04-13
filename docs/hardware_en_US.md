@@ -74,13 +74,27 @@ Pin maps except for I2C can be changed. Please see [here](https://randomnerdtuto
 # Side panel
 Any type that uses NeoPixel, such as WS2812B, is available. There is no perfect way to this part, so please just use it as a reference.
 
-I made this using WS2812B LED strips, with 60 LEDs per meter.
+I made this using WS2812B LED strips, with 144 LEDs per meter.
 
 ![side_panel_en_US.png](side_panel_en_US.png)
 
 It was made using multi-color 3D printing. Please refer to the link below for the drawing.
 
-(to be uploaded)
+<https://www.printables.com/model/803669-side-panel-for-cm1-protogen>
+
+
+
+# I2C
+We used a lot of pins to drive HUB75, so we don't have enough GPIO. Therefore, most expansions use the I2C bus.
+
+You can set the speed of the I2C bus. The unit is Hz and can be set from 1 to 1,000,000 (1MHz). The default is 100000 (100kHz).
+
+```
+  i2c:
+    frequency: 100000
+```
+
+If you increase the speed, communication may fail due to noise. Noise can be reduced by shortening the length of the cables, air gap, or twisting and shielding the cables. Please see [here](https://docs.slimevr.dev/diy/tracker-schematics.html#cable-layout-recommendation-for-auxiliary-tracker) for more informations.
 
 
 
@@ -114,3 +128,31 @@ Since I'm currently using an ESP32 as my motherboard, it would have been nice to
   - No commercialized remote control
   - Relatively high power compared to IR
   - Relatively expensive price
+
+It is connected via I2C, just connect SCL and SDA.
+
+
+
+# Boop sensor
+This is a sensor for detecting boop. When an object, such as your own or someone else's hand, is detected in front of nose (visor), it is possible to change emotion.
+
+I tested the VL53L0X sensor, but it had issues with not penetrating through PETG visors and was unusable. On the other hand, the `VL53L1X` sensor has a slight problem, but it was possible to use it.
+
+
+## VL53L1X
+This is a laser ToF sensor that can measure up to 4m distance and up to 50Hz cycle. It is the only sensor currently supported by ToasterFirmware, and due to other I2C device processing, it can measure up to a 30Hz cycle.
+
+
+
+# Light sensor
+**Decreasing the brightness may cause flickering, so it is recommended to set the brightness to maximum.**
+
+This is a sensor for automatic brightness adjustment. Currently only 2 types are supported.
+
+
+## BH1750
+This is a digital light sensor that supports light intensity measurement in LUX units. It is connected via I2C, just connect SCL and SDA.
+
+
+## CDS
+You can use a module type such as `KY-018` (not tested), or the circuit is simple, you can make it yourself using CDS and a 1k resistor.

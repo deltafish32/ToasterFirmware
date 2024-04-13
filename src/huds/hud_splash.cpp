@@ -12,7 +12,7 @@ HUDSplash hud_splash;
 #define LOGO_WIDTH    128
 #define LOGO_HEIGHT   64
 
-static const unsigned char PROGMEM default_logo_bmp[] = {
+static const uint8_t PROGMEM DEFAULT_LOGO_BMP[] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -98,7 +98,7 @@ void HUDSplash::process(Adafruit_SSD1306& oled) {
         oled.drawBitmap(
           (oled.width()  - LOGO_WIDTH ) / 2,
           (oled.height() - LOGO_HEIGHT) / 2,
-          default_logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+          DEFAULT_LOGO_BMP, LOGO_WIDTH, LOGO_HEIGHT, 1);
       }
       oled.display();
     }
@@ -121,14 +121,14 @@ void HUDSplash::pressKey(uint16_t key) {
 
 bool HUDSplash::draw_oled_png(Adafruit_SSD1306& oled, upng_t* upng, int offset_x, int offset_y, uint8_t th) {
   if (upng == nullptr) {
-    TF_LOG(TAG, "upng draw failed (nullptr).\n");
+    TF_LOGE(TAG, "upng draw failed (nullptr).");
     return false;
   }
 
   auto format = upng_get_format(upng);
 
   if (format != UPNG_RGB8 && format != UPNG_RGBA8) {
-    TF_LOG(TAG, "upng unsupported format (%d).\n", format);
+    TF_LOGE(TAG, "upng unsupported format (%d).", format);
     return false;
   }
 
@@ -139,7 +139,7 @@ bool HUDSplash::draw_oled_png(Adafruit_SSD1306& oled, upng_t* upng, int offset_x
   auto components = upng_get_components(upng);
   auto buffer = upng_get_buffer(upng);
   
-  //TF_LOG(TAG, "%d x %d, size: %d, bitdepth: %d, components: %d\n", width, height, size, bitdepth, components);
+  //TF_LOGD(TAG, "%d x %d, size: %d, bitdepth: %d, components: %d", width, height, size, bitdepth, components);
 
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {

@@ -51,90 +51,99 @@ void SerialDebug::loop() {
         break;
 
       case '0':
-        TF_LOG(TAG, "Set Shutdown");
+        TF_LOGI(TAG, "Set Shutdown");
         Protogen.setEmotion("blank");
         break;
       case '1':
-        TF_LOG(TAG, "Set Normal");
+        TF_LOGI(TAG, "Set Normal");
         Protogen.setEmotion("normal");
         break;
       case '2':
-        TF_LOG(TAG, "Set Badass");
+        TF_LOGI(TAG, "Set Badass");
         Protogen.setEmotion("badass");
         break;
       case '3':
-        TF_LOG(TAG, "Set Grin");
+        TF_LOGI(TAG, "Set Grin");
         Protogen.setEmotion("grin");
         break;
       case '4':
-        TF_LOG(TAG, "Set Worry");
+        TF_LOGI(TAG, "Set Worry");
         Protogen.setEmotion("worry");
         break;
       case '5':
-        TF_LOG(TAG, "Set Love");
+        TF_LOGI(TAG, "Set Love");
         Protogen.setEmotion("love");
         break;
       case '6':
-        TF_LOG(TAG, "Set Confusion");
+        TF_LOGI(TAG, "Set Confusion");
         Protogen.setEmotion("confusion");
         break;
       case '7':
-        TF_LOG(TAG, "Set Question");
+        TF_LOGI(TAG, "Set Question");
         Protogen.setEmotion("qmark");
         break;
       case '8':
-        TF_LOG(TAG, "Set Unyuu");
+        TF_LOGI(TAG, "Set Unyuu");
         Protogen.setEmotion("unyuu");
         break;
       case '9':
-        TF_LOG(TAG, "Set Bean");
+        TF_LOGI(TAG, "Set Bean");
         Protogen.setEmotion("bean");
         break;
       case 'P': case 'p':
-        TF_LOG(TAG, "Set BSOD");
+        TF_LOGI(TAG, "Set BSOD");
         Protogen.setEmotion("bsod");
         break;
-      case '-':
-        TF_LOG(TAG, "Set Align");
-        Protogen.setEmotion("align");
-        break;
       case 'W': case 'w':
-        TF_LOG(TAG, "Set White");
+        TF_LOGI(TAG, "Set White");
         Protogen.setEmotion("white");
         break;
       case ';':
-        TF_LOG(TAG, "Set Festive");
+        TF_LOGI(TAG, "Set Festive");
         Protogen.setEmotion("festive");
         break;
       case '\'':
-        TF_LOG(TAG, "Set Loading");
+        TF_LOGI(TAG, "Set Loading");
         Protogen.setEmotion("loading");
+        break;
+      case 'Q': case 'q':
+        Protogen._boopsensor.setEmulation(!Protogen._boopsensor.getEmulation());
+        TF_LOGI(TAG, "Boop emulation: %s", Protogen._boopsensor.getEmulation() ? "on" : "off");
         break;
 
       case 'Z': case 'z':
-        TF_LOG(TAG, "Set Color Original");
+        TF_LOGI(TAG, "Set Color Original");
         Protogen.setColorMode(PCM_ORIGINAL);
         break;
       case 'X': case 'x':
-        TF_LOG(TAG, "Set Color Personal");
+        TF_LOGI(TAG, "Set Color Personal");
         Protogen.setColorMode(PCM_PERSONAL);
         break;
       case 'C': case 'c':
-        TF_LOG(TAG, "Set Color Rainbow single");
+        TF_LOGI(TAG, "Set Color Rainbow single");
         Protogen.setColorMode(PCM_RAINBOW_SINGLE);
         break;
       case 'V': case 'v':
-        TF_LOG(TAG, "Set Color Rainbow");
+        TF_LOGI(TAG, "Set Color Rainbow");
         Protogen.setColorMode(PCM_RAINBOW);
         break;
       case 'B': case 'b':
-        TF_LOG(TAG, "Set Color Gradation");
+        TF_LOGI(TAG, "Set Color Gradation");
         Protogen.setColorMode(PCM_GRADATION);
+        break;
+
+      case 'M': case 'm':
+        if (Protogen._boopsensor.isError()) {
+          TF_LOGW(TAG, "Cannot start debug mode because Boop sensor is disabled.");
+        }
+        else {
+          Protogen._boopsensor.setDebug(!Protogen._boopsensor.getDebug());
+        }
         break;
       
       case 'A': case 'a':
         Protogen.setStaticMode(!Protogen.getStaticMode());
-        TF_LOG(TAG, "Static mode: %s\n", Protogen.getStaticMode() ? "on" : "off");
+        TF_LOGI(TAG, "Static mode: %s", Protogen.getStaticMode() ? "on" : "off");
         break;
       case '!':
         serial_text_mode = true;
@@ -145,11 +154,31 @@ void SerialDebug::loop() {
       if (ch == '\r' || ch == '\n') {
         const char* read = serial_buffer_read();
 
-        if (read[0] == 'b') {
-          uint8_t value = (uint8_t)(atoi(read + 1) / 100.0f * 255);
-          Protogen._display.setBrightness(value);
-          Protogen._side_display.setBrightness(value);
-          TF_LOG(TAG, "Set brightness: %.3f\n", Protogen._display.getBrightness() / 255.0f);
+        if (strncasecmp(read, "b ", 2) == 0) {
+          float brightness = atoi(read + 1) / 100.0f;
+          Protogen.refreshAutoBrightness(brightness);
+          TF_LOGI(TAG, "Set brightness: %.3f", brightness);
+        }
+        else if (strcasecmp(read, "reset") == 0 || strcasecmp(read, "restart") == 0 || strcasecmp(read, "reboot") == 0) {
+          TF_LOGI(TAG, "soft reset");
+          ESP.restart();
+        }
+        else if (strcasecmp(read, "mac") == 0) {
+          uint8_t mac[6];
+          esp_read_mac(mac, ESP_MAC_WIFI_STA);
+          TF_LOGI(TAG, "MAC: %02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        }
+        else if (strcasecmp(read, "boop") == 0) {
+          Protogen._boopsensor.setEnabled(true);
+          TF_LOGI(TAG, "Boop sensor enabled");
+        }
+        else if (strcasecmp(read, "noboop") == 0) {
+          Protogen._boopsensor.setEnabled(false);
+          TF_LOGI(TAG, "Boop sensor disabled");
+        }
+        else if (strncasecmp(read, "set ", 4) == 0) {
+          TF_LOGI(TAG, "Set %s", read + 4);
+          Protogen.setEmotion(read + 4);
         }
 
         _serial_buffer.clear();

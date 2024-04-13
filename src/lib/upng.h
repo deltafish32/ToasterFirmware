@@ -29,7 +29,7 @@ freely, subject to the following restrictions:
 	#define UPNG_H
 	#include <Arduino.h>
 	#include <FS.h>
-	#include "SPIFFS.h"
+	#include <FFat.h>
 
 		struct upng_s_rgb16b{
 			int r:5;

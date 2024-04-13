@@ -33,7 +33,7 @@ Q: 상업적으로 사용해도 되나요?<br>
 A: 아니오. (단호)
 
 Q: 구입 할 수 있는 보드가 있나요?<br>
-A: 아직 없습니다. ESP32-Trinity가 유사하지만 핀맵 문제나 장착 위치 문제로 사용하기 어려울 것으로 보입니다. 저는 ESP32 개발 보드에 케이블을 일일이 납땜해서 제작했습니다. 언젠가는 PCB로 만들지도 모릅니다.
+A: 아직은 없지만, 현재 프로토타입을 제작하여 테스트 중입니다!
 
 Q: ESP32 대신 다른 보드를 사용해도 되나요?<br>
 A: ESP32로만 테스트되었으며, ESP32-C3, ESP32-S2, ESP32-S3 등 보드에서는 테스트되지 않았습니다. 코어 개수, RAM 용량에서 차이가 있으므로 최소한 소스를 수정해야 구동 가능하며, 수정하더라도 원활한 사용이 어려울 수 있습니다.
@@ -44,8 +44,14 @@ A: ESP32로만 테스트되었으며, ESP32-C3, ESP32-S2, ESP32-S3 등 보드에
 
 
 
+# 기여하신 분
+- 사토루 [X(Twitter)](https://x.com/leopard_sato_)
+- 양말 / SheepPony [X(Twitter)](https://x.com/sheeppony)
+
+
+
 # 프로젝트 관리자
-디테일 / DETAIL [X(Twitter)](https://x.com/deltafish32)
+- 디테일 / DETAIL [X(Twitter)](https://x.com/deltafish32)
 
 
 

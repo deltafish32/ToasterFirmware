@@ -17,14 +17,14 @@ class HeadUpDisplay : public Worker {
 public:
   HeadUpDisplay();
 
-  bool begin(uint8_t i2c_addr, uint32_t target_fps);
-  void pressKey(uint16_t key);
+  virtual bool begin(uint8_t i2c_addr, uint32_t target_fps);
+  virtual void pressKey(uint16_t key);
 
 public:
   Adafruit_SSD1306 _oled;
 
 protected:
-  void work();
+  virtual bool work();
 
 protected:
   bool _init{false};

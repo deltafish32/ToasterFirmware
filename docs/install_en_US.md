@@ -2,7 +2,8 @@
 [English](install_en_US.md)
 
 # Installation
-1. Install Visual Studio Code and PlatformIO.
+1. Install [Visual Studio Code](https://code.visualstudio.com/Download) and [PlatformIO](https://platformio.org/install/ide?install=vscode).
+1. Install [Git](https://git-scm.com/downloads).
 1. Connect the ESP32 board and first do `Upload Filesystem Image` in PlatformIO on the left. If you are in `Monitoring` status, please exit.
 1. Click the `Upload` button at the bottom to install the firmware.
 
@@ -11,8 +12,8 @@ If the development board uses a USB chipset such as CH340 or CH9102, you must in
 
 
 # Configuration
-ToasterFirmware uses SPIFFS, a lightweight file system, to store data files in Flash.
-When doing `Upload Filesystem Image`, all files in the `/data` folder will be uploaded, and the full path name can be up to 32 characters long, so please be careful.
+ToasterFirmware uses FFAT, a lightweight file system, to store data files in Flash.
+When doing `Upload Filesystem Image`, all files in the `/data` folder will be uploaded, and the full path name can be up to 31 characters long(up to /123456789012345678901234567890), so please be careful.
 
 Among them, most settings are managed in the `config.yaml` file. Basically, it follows the syntax of yaml, but it does not include all functions, so please format it as best as possible.
 
@@ -64,7 +65,7 @@ If you create multiple frames in full screen, it may not be displayed due to mem
 ## Preparing assets
 Please prepare a images. Just save in 8-bit RGBA PNG format, up to 64x32 pixels.
 
-You can put the prepared image in the `png` folder, and due to SPIFFS restrictions, the entire file path must be within a maximum of 32 characters.
+You can put the prepared image in the `png` folder.
 
 
 ## Script
@@ -159,7 +160,7 @@ You can register all `eyes`, `nose`, `mouth`, and `side`. You can register only 
 
 
 # Upload
-Changing any settings does not take effect immediately; you must upload a file to SPIFFS for it to take effect.
+Changing any settings does not take effect immediately; you must upload a file to Filesystem for it to take effect.
 
 Connect the ESP32 board and do `Upload Filesystem Image` first in PlatformIO on the left. If you are in `Monitoring` status, please exit.
 
@@ -205,3 +206,14 @@ Click the `Platformio: Serial Monitor` button at the bottom of the Visual Studio
 | J | Down | Use in menu |
 | K | Up | Use in menu |
 | L | Right | Use in menu (select) |
+| M | Boop sensor debug | Toggle Boop sensor value(mm) through serial |
+
+
+## Commands
+| Command | Function | Note |
+| - | - | - |
+| `!reset` | Soft Reset | |
+| `!b [number 0 ~ 100]` | Set the brightness to that value. | ex: `!b 100` |
+| `!set [emotion]` | Change to the entered emotion. | ex: `!set normal` |
+| `!noboop` | Disable Boop sensor. | |
+| `!boop` | Enable Boop sensor. | |

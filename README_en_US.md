@@ -33,7 +33,7 @@ Q: Can I use it commercially?<br>
 A: No.
 
 Q: Is there a board I can purchase?<br>
-A: Not yet. International shipping may not be possible. ESP32-Trinity is similar, but appears to be difficult to use due to pin map issues and mounting location issues. I made it soldering cables to the ESP32 development board. I might make it into a PCB someday.
+A: Not yet, but we are currently testing a prototype!
 
 Q: Can I use another board instead of ESP32?<br>
 A: Tested only on ESP32, not on ESP32-C3, ESP32-S2, ESP32-S3, etc. boards. Since there are differences in the number of cores and RAM capacity, you must at least modify the source to run it, and even if you modify it, smooth use may be difficult.
@@ -44,8 +44,14 @@ A: Tested only on ESP32, not on ESP32-C3, ESP32-S2, ESP32-S3, etc. boards. Since
 
 
 
+# Special Thanks
+- 사토루 [X(Twitter)](https://x.com/leopard_sato_)
+- 양말 / SheepPony [X(Twitter)](https://x.com/sheeppony)
+
+
+
 # Administrator
-디테일 / DETAIL [X(Twitter)](https://x.com/deltafish32)
+- 디테일 / DETAIL [X(Twitter)](https://x.com/deltafish32)
 
 
 

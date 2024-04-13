@@ -1,4 +1,4 @@
-version: 1
+version: 2
 
 # 나만의 프로토젠을 만들어보세요.
 # Create your own Protogen.
@@ -12,10 +12,7 @@ my_protogen:
   
   # 기본 표정
   # Default emotion
-  eyes_default: eyes_normal
-  nose_default: nose_default
-  mouth_default: mouth_default
-  side_default: side_default
+  default_emotion: normal
   
   # 색상 모드
   #   original: 이미지의 원래 색상
@@ -52,6 +49,10 @@ my_protogen:
   #   - 0.8 -> '#00ff00'
   #   - 1.0 -> '#ffff00'
 
+  # festive에 얼굴 표시 여부
+  # face Visibility in festive
+  festive_face: true
+
 
 emotions:
   - name: default
@@ -60,7 +61,13 @@ emotions:
     mouth: mouth_default
     side: side_default
   - name: normal
-    eyes: eyes_normal
+    eyes: eyes_normal_boop
+    nose: nose_default_boop
+    mouth: mouth_normal_boop
+  # - name: normal
+  #   eyes: eyes_normal_boop2
+  #   nose: nose_hide
+  #   mouth: mouth_hide
   - name: badass
     eyes: eyes_badass
   - name: grin
@@ -83,6 +90,10 @@ emotions:
     mouth: ''
   - name: loading
     eyes: loading
+    nose: ''
+    mouth: ''
+  - name: video
+    eyes: video
     nose: ''
     mouth: ''
 
@@ -119,10 +130,22 @@ hardware:
   # 사이드 패널 (NeoPixel)
   # Side panel (NeoPixel)
   side_panel:
-    num_leds: 30
+    num_leds: 72
     pin: 17
     # NeoPixelBus 종류 변경은 컴파일이 필요합니다.
     # Changing NeoPixelBus type requires compilation.
+
+    # 사이드 패널 밝기 비율
+    # 1.0보다 작으면 사이드가 어두워지고, 크면 사이드가 밝아짐
+    # Side panel brightness rate
+    # less than 1.0, the side becomes darker, and larger than 1.0, the side becomes brighter.
+    brightness_rate: 0.05
+
+  # I2C Bus
+  i2c:
+    # 속도 (1 ~ 1000000, 기본값: 100000)
+    # Speed (1 to 1000000, default: 100000)
+    frequency: 100000
 
   # HUD (SSD1306 128x64)
   hud:
@@ -187,30 +210,96 @@ hardware:
       - code: 0xa55aff00 # right
         keypress: L
       - code: 0xe31cff00 # ok
-        keypress: S
+        keypress: A
 
-  # 조도센서
-  # Photoresistor
-  photoresistor:
-    pin: 34
-    calibration:
-      # 이동평균 알파값
-      # 0에 가까울수록 빠르게 변화하지만 노이즈 많음
-      # 1에 가까울수록 천천히 변화하지만 노이즈 적음
-      # SMA alpha value
-      # The closer it is to 0, the faster it changes, but more noisy.
-      # The closer it is to 1, the slowler it changes, but less noisy.
-      alpha: 0.98
-      alpha_init: 0.9
+  # 조도 센서
+  # Light Sensor
+  lightsensor:
+    # 현재 2가지 종류를 지원하지만 사용하지 않는 것을 권장드립니다.
+    # (HUB75 특성상 밝기 조정시 플리커링이 발생하여, 사진 촬영시 표정 깨짐 발생)
+
+    # ----------------
+    # 미 사용
+    # Unused
+    type: none
+
+    # ----------------
+    # CDS (LDR)
+    # type: ldr
+    # pin: 34
+
+    # # 히스테리시스 (밝기를 변경할 최소 센서 변화량 비율 (0.0 ~ 1.0))
+    # # Hysteresis (minimum sensor change rate to change brightness (0.0 to 1.0))
+    # hysteresis: 0.05
+
+    # calibration:
+    #   # 이동평균 알파값
+    #   # 0에 가까울수록 빠르게 변화하지만 노이즈 많음
+    #   # 1에 가까울수록 천천히 변화하지만 노이즈 적음
+    #   # SMA alpha value
+    #   # The closer it is to 0, the faster it changes, but more noisy.
+    #   # The closer it is to 1, the slowler it changes, but less noisy.
+    #   alpha: 0.98
+    #   alpha_init: 0.9
       
-      # 자동 밝기 구간 (센서 -> 밝기)
-      # 최소 2개는 존재해야 하며, 사용하지 않는 구간은 비활성화 가능
-      # Auto brightness (Sensor -> Brightness)
-      # Must be at least two, and unused sections can be deactivated.
-      points:
-        - 0.25 -> 0.25
-        - 0.75 -> 1.0
-        
-    # 히스테리시스 (밝기를 변경할 최소 센서 변화량 비율 (0.0 ~ 1.0))
-    # Hysteresis (minimum sensor change rate to change brightness (0.0 to 1.0))
-    hysteresis: 0.05
+    #   # 자동 밝기 구간 (센서 -> 밝기)
+    #   # 최소 2개는 존재해야 하며, 사용하지 않는 구간은 비활성화 가능
+    #   # Auto brightness (Sensor -> Brightness)
+    #   # Must be at least two, and unused sections can be deactivated.
+    #   points:
+    #     - 0.25 -> 0.25
+    #     - 0.75 -> 1.0
+
+    # ----------------
+    # # BH1750
+    # type: bh1750
+    # # i2c: 0x23
+    
+    # # 히스테리시스 (밝기를 변경할 최소 센서 변화량 (0 ~ ?))
+    # # Hysteresis (minimum sensor change value to change brightness (0.0 to ?))
+    # hysteresis: 50
+
+    # calibration:
+    #   # 이동평균 알파값
+    #   # 0에 가까울수록 빠르게 변화하지만 노이즈 많음
+    #   # 1에 가까울수록 천천히 변화하지만 노이즈 적음
+    #   # SMA alpha value
+    #   # The closer it is to 0, the faster it changes, but more noisy.
+    #   # The closer it is to 1, the slowler it changes, but less noisy.
+    #   alpha: 0.98
+    #   alpha_init: 0.9
+      
+    #   # 자동 밝기 구간 (센서 -> 밝기)
+    #   # 최소 2개는 존재해야 하며, 사용하지 않는 구간은 비활성화 가능
+    #   # Auto brightness (Sensor -> Brightness)
+    #   # Must be at least two, and unused sections can be deactivated.
+    #   points:
+    #     - 5 -> 0.25
+    #     - 40 -> 1.0
+
+  # Boop 센서
+  # Boop sensor
+  boopsensor:
+    # 종류: VL53L1X (현재는 이것만 지원)
+    # type: VL53L1X (currently only support this)
+    type: vl53l1x
+    # i2c: 0x29
+
+    # Boop으로 인식할 거리 (mm)
+    # Distance to be Boop (mm)
+    threshold: 20
+
+    # 노이즈 제거를 위한 샘플링 횟수 (현재 30Hz)
+    # Smooth out measurements from this number of readings (currently 30Hz)
+    sampling: 6
+
+  # 온도 센서
+  # Thermometer
+  thermometer:
+    # 종류: SHT31 (현재는 이것만 지원)
+    # type: SHT31 (currently only support this)
+    type: sht31
+
+    # 측정 주기
+    # period
+    period: 15s

@@ -14,7 +14,7 @@ public:
 protected:
   uint16_t _unlock_key{0};
   uint8_t _unlock_count{0};
-  uint32_t _unlock_tick{0};
+  timer_ms_t _unlock_tick_ms{0};
 
 protected:
   static void mirror(Adafruit_SSD1306& oled, int offset_x, int offset_y);

@@ -13,7 +13,7 @@ public:
   virtual bool begin(uint8_t addr);
 
 protected:
-  virtual void work();
+  virtual bool work();
 
 protected:
   bool _init{false};

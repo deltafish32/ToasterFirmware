@@ -37,6 +37,8 @@ public:
     return findKeys(keys) != nullptr;
   }
   std::string getString(const char* keys, const char* def_str = "") const;
+  int getInt(const char* keys, int def_value = 0) const;
+  float getFloat(const char* keys, float def_value = 0.0f) const;
 
 public:
   void trace() {

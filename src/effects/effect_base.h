@@ -2,6 +2,7 @@
 #include "config/configure.h"
 
 #include "hal/display/display.h"
+#include "lib/timer.h"
 #include "lib/random.h"
 #include "lib/linear_calibrate.h"
 
@@ -38,7 +39,7 @@ public:
   virtual void release(Display& display) {
   }
   
-  const char* getName() const {
+  virtual const char* getName() const {
     return _name;
   }
 
@@ -48,6 +49,17 @@ public:
 
   virtual bool isScript() const {
     return false;
+  }
+
+  virtual bool isVideoMode() const {
+    return false;
+  }
+
+  virtual uint32_t getVideoFPS() const {
+    return 0;
+  }
+
+  virtual void restart() {
   }
 
   virtual bool loadScript(const char* name) {
@@ -64,16 +76,18 @@ public:
     if (_staticMode != mode) {
       _staticMode = mode;
 
+      timer_us_t tick_us = Timer::get_micros();
+      
       if (_staticMode) {
-        _staticModeTick = millis();
+        _static_mode_tick_us = tick_us;
       }
       else {
-        uint32_t tickPaused = millis() - _staticModeTick;
+        timer_us_t tick_paused_us = tick_us - _static_mode_tick_us;
         for (auto& it : _effects) {
-          it->_tick += tickPaused;
+          it->_tick_us += tick_paused_us;
         }
         
-        _colorTick += millis() - _staticModeTick;
+        _color_tick_us += tick_us - _static_mode_tick_us;
       }
     }
   }
@@ -175,23 +189,23 @@ protected:
 protected:
   const char* _name{0,};
   int _step{0};
-  uint32_t _tick{0};
+  timer_us_t _tick_us{0};
 
   void setStep(int step) {
     _step = step;
-    _tick = millis();
+    _tick_us = Timer::get_micros();
 
     if (_staticMode) {
-      _staticModeTick = _tick;
+      _static_mode_tick_us = _tick_us;
     }
   }
 
-  bool timeout(uint32_t t) {
+  bool timeout(uint32_t time_ms) {
     if (_staticMode) {
       return false;
     }
 
-    return ((millis() - _tick) >= t);
+    return ((Timer::get_micros() - _tick_us) >= (time_ms * 1000));
   }
 
 
@@ -222,8 +236,8 @@ public:
 
 protected:
   static bool _staticMode;
-  static uint32_t _staticModeTick;
-  static uint32_t _colorTick;
+  static timer_us_t _static_mode_tick_us;
+  static timer_us_t _color_tick_us;
   static PROTOGEN_COLOR_MODE _colorMode;
   static COLOR_FUNC _colorFunc;
   static uint8_t _personalColor[4][3];
@@ -253,7 +267,7 @@ public:
 
 
 protected:
-  static uint32_t color_millis();
+  static timer_ms_t color_millis();
 
 
 public:

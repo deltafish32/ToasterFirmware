@@ -14,10 +14,9 @@ public:
   }
 
   virtual void process(Display& display) {
-    const int GROUP = 3;
-    const int RAINBOW_SPEED = 1;
-    const int RAINBOW_TRANSITION = 64;
-    const int OFF_SPEED = 40;
+    const int GROUP = 4;
+    const int RAINBOW_TRANSITION = 32;
+    const int OFF_SPEED = 20;
 
     size_t width = display.getWidth();
     size_t numleds = width / 2;
@@ -35,7 +34,7 @@ public:
 
         for (int k = 0; k < GROUP; k++) {
           int index = (j * GROUP) + k;
-          if (index == off_index) {
+          if ((index - off_index + numleds) % numleds < GROUP) {
             continue;
           }
 

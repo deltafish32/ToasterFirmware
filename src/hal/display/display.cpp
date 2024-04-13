@@ -60,22 +60,26 @@ void Display::fillWhite() {
 
 
 upng_t* Display::load_png(const char* name) {
+  timer_us_t tick = Timer::get_micros();
   upng_t* upng = upng_new_from_file(name);
 
   if (upng == nullptr) {
-    TF_LOG(TAG, "upng load failed (%s).\n", name);
+    TF_LOGE(TAG, "upng load failed (%s).", name);
     return nullptr;
   }
+  
+  timer_us_t tick2 = Timer::get_micros();
 
   upng_decode(upng);
 
   auto error = upng_get_error(upng);
   if (error != UPNG_EOK) {
-    TF_LOG(TAG, "upng decode failed (%s) (%d).\n", name, error);
+    TF_LOGE(TAG, "upng decode failed (%s) (%d).", name, error);
     return nullptr;
   }
 
-  // TF_LOG(TAG, "upng load (%s)\n", name);
+  timer_us_t tick3 = Timer::get_micros();
+  //TF_LOGD(TAG, "upng load (%s, %lld us, %lld us)", name, tick2 - tick, tick3 - tick2);
 
   return upng;
 }
@@ -83,11 +87,11 @@ upng_t* Display::load_png(const char* name) {
 
 void Display::unload_png(upng_t* upng) {
   if (upng == nullptr) {
-    //TF_LOG(TAG, "upng unload failed.\n");
+    //TF_LOGE(TAG, "upng unload failed.");
     return;
   }
 
-  // TF_LOG(TAG, "upng unload\n");
+  // TF_LOGD(TAG, "upng unload");
 
   upng_free(upng);
 }
@@ -95,14 +99,14 @@ void Display::unload_png(upng_t* upng) {
 
 bool Display::draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_t param, DRAW_MODE draw_mode, int offset_x, int offset_y, int rotate_cw) {
   if (upng == nullptr) {
-    TF_LOG(TAG, "upng draw failed (nullptr).\n");
+    TF_LOGE(TAG, "upng draw failed (nullptr).");
     return false;
   }
 
   auto format = upng_get_format(upng);
 
   if (format != UPNG_RGB8 && format != UPNG_RGBA8) {
-    TF_LOG(TAG, "upng unsupported format (%d).\n", format);
+    TF_LOGE(TAG, "upng unsupported format (%d).", format);
     return false;
   }
 
@@ -113,7 +117,7 @@ bool Display::draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_t par
   auto components = upng_get_components(upng);
   auto buffer = upng_get_buffer(upng);
   
-  //TF_LOG(TAG, "%d x %d, size: %d, bitdepth: %d, components: %d\n", width, height, size, bitdepth, components);
+  //TF_LOGD(TAG, "%d x %d, size: %d, bitdepth: %d, components: %d\n", width, height, size, bitdepth, components);
 
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
@@ -151,14 +155,14 @@ bool Display::draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_t par
 
 // bool Display::undraw_png(upng_t* upng, DRAW_MODE draw_mode, int offset_x, int offset_y, int rotate_cw) {
 //   if (upng == nullptr) {
-//     TF_LOG(TAG, "upng draw failed (nullptr).\n");
+//     TF_LOGE(TAG, "upng draw failed (nullptr).");
 //     return false;
 //   }
 
 //   auto format = upng_get_format(upng);
 
 //   if (format != UPNG_RGB8 && format != UPNG_RGBA8) {
-//     TF_LOG(TAG, "upng unsupported format (%d).\n", format);
+//     TF_LOGE(TAG, "upng unsupported format (%d).", format);
 //     return false;
 //   }
 
@@ -169,7 +173,7 @@ bool Display::draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_t par
 //   auto components = upng_get_components(upng);
 //   auto buffer = upng_get_buffer(upng);
   
-//   //TF_LOG(TAG, "%d x %d, size: %d, bitdepth: %d, components: %d\n", width, height, size, bitdepth, components);
+//   //TF_LOGD(TAG, "%d x %d, size: %d, bitdepth: %d, components: %d", width, height, size, bitdepth, components);
 
 //   for (int y = 0; y < height; y++) {
 //     for (int x = 0; x < width; x++) {

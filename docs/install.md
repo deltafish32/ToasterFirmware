@@ -2,7 +2,8 @@
 [English](install_en_US.md)
 
 # 설치
-1. Visual Studio Code 설치 후 PlatformIO를 설치합니다.
+1. [Visual Studio Code](https://code.visualstudio.com/Download) 설치 후 [PlatformIO](https://platformio.org/install/ide?install=vscode)를 설치합니다.
+1. [Git](https://git-scm.com/downloads)을 설치합니다.
 1. ESP32 보드를 연결하고, 좌측의 PlatformIO에서 `Upload Filesystem Image`를 먼저 해줍니다. 혹시나 `Monitoring` 상태라면 종료해주세요.
 1. 하단의 `Upload` 버튼을 눌러 펌웨어를 설치합니다.
 
@@ -11,8 +12,8 @@
 
 
 # 설정
-ToasterFirmware는 경량 파일 시스템인 SPIFFS를 통해 데이터 파일을 Flash에 저장하여 사용합니다.
-`Upload Filesystem Image`를 할 때 `/data` 폴더의 모든 파일이 업로드되며, 파일 이름은 폴더를 포함해 최대 32글자이므로 주의해주세요.
+ToasterFirmware는 파일 시스템인 FFAT를 통해 데이터 파일을 Flash에 저장하여 사용합니다.
+`Upload Filesystem Image`를 할 때 `/data` 폴더의 모든 파일이 업로드 됩니다.
 
 그 중 `config.yaml` 파일에서 대부분의 설정이 관리됩니다. 기본적으로 yaml의 문법을 따르나, 모든 기능이 포함되어 있지 않으므로 최대한 형식을 맞춰주세요.
 
@@ -64,7 +65,7 @@ my_protogen:
 ## 그림 준비
 그림을 준비해주세요. 최대 64x32 픽셀, 8비트 RGBA PNG 형식으로 저장하면 됩니다.
 
-준비된 그림을 `png` 폴더에 넣어주시면 되며, SPIFFS 특성상 파일 이름은 폴더를 포함해 최대 32글자 이내로 만들어주셔야 합니다.
+준비된 그림을 `png` 폴더에 넣어주시면 됩니다.
 
 
 ## 스크립트
@@ -159,7 +160,7 @@ emotions:
 
 
 # 업로드
-어떤 설정이든 변경하면 즉시 적용되지 않고, 파일을 SPIFFS에 업로드해야 적용됩니다.
+어떤 설정이든 변경하면 즉시 적용되지 않고, 파일을 파일시스템에 업로드해야 적용됩니다.
 
 ESP32 보드를 연결하고, 좌측의 PlatformIO에서 `Upload Filesystem Image`를 먼저 해줍니다. 혹시나 `Monitoring` 상태라면 종료해주세요.
 
@@ -205,3 +206,14 @@ Visual Studio Code 화면 하단의 `Platformio: Serial Monitor` 버튼을 누�
 | J | 아래쪽 | 메뉴에서 사용 |
 | K | 위쪽 | 메뉴에서 사용 |
 | L | 오른쪽 | 메뉴에서 사용 (선택) |
+| M | Boop 센서 디버깅 | 시리얼 통신으로 Boop 센서 측정 값(mm) 표시 기능 토글 |
+
+
+## 명령어
+| 입력 | 기능 | 비고 |
+| - | - | - |
+| `!reset` | Soft Reset | |
+| `!b [숫자 0 ~ 100]` | 밝기를 해당 값으로 설정합니다. | 예제: `!b 100` |
+| `!set [표정]` | 해당 표정으로 변경합니다. | 예제: `!set normal` |
+| `!noboop` | Boop 센서를 비활성화합니다. | |
+| `!boop` | Boop 센서를 활성화합니다. | |

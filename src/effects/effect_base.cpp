@@ -9,8 +9,8 @@ namespace toaster {
 std::vector<Effect*> Effect::_effects;
 
 bool Effect::_staticMode = false;
-uint32_t Effect::_staticModeTick = 0;
-uint32_t Effect::_colorTick = 0;
+timer_us_t Effect::_static_mode_tick_us = 0;
+timer_us_t Effect::_color_tick_us = 0;
 PROTOGEN_COLOR_MODE Effect::_colorMode = PCM_DEFAULT;
 COLOR_FUNC Effect::_colorFunc = color_func_personal;
 uint8_t Effect::_personalColor[4][3] = {
@@ -45,11 +45,9 @@ EffectBlank flex_blank("blank");
 EffectWhite flex_white("white");
 EffectRainbow flex_rainbow("rainbow");
 EffectFestive effect_festive("festive");
-EffectFestiveFace effect_festive_face("festive_face");
 EffectFestiveSidePanel side_festive("side_festive");
 
 EffectSidePanel side_default("side_default");
-EffectSideAlign side_align("side_align");
 EffectSideRainbow side_rainbow("side_rainbow");
 
 
@@ -96,12 +94,12 @@ void Effect::h2rgb(uint16_t h, uint8_t& out_r, uint8_t& out_g, uint8_t& out_b) {
 }
 
 
-uint32_t Effect::color_millis() {
+timer_ms_t Effect::color_millis() {
   if (_staticMode) {
-    return _staticModeTick - _colorTick;
+    return (_static_mode_tick_us - _color_tick_us) / 1000;
   }
 
-  return millis() - _colorTick;
+  return (Timer::get_micros() - _color_tick_us) / 1000;
 }
 
 

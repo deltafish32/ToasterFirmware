@@ -261,6 +261,18 @@ std::string YamlNodeArray::getString(const char* keys, const char* def_str) cons
 }
 
 
+int YamlNodeArray::getInt(const char* keys, int def_value) const {
+  std::string str = getString(keys, "");
+  return (str.empty()) ? def_value : atoi(str.c_str());
+}
+
+
+float YamlNodeArray::getFloat(const char* keys, float def_value) const {
+  std::string str = getString(keys, "");
+  return (str.empty()) ? def_value : atoff(str.c_str());
+}
+
+
 std::string YamlNodeArray::toString(const char* newline, const char* indent) const {
   std::string str;
   _toString(*this, str, 0, newline, indent);

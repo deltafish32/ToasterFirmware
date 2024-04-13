@@ -1,6 +1,6 @@
 #pragma once
 #include "config/configure.h"
-
+#include "lib/timer.h"
 #include <Adafruit_SSD1306.h>
 
 
@@ -39,7 +39,7 @@ public:
 
 protected:
   int _step{0};
-  uint32_t _tick{0};
+  timer_ms_t _tick_ms{0};
   bool _dirty{false};
   HUDBase *_next{nullptr};
   bool _clearStack{false};
@@ -52,12 +52,12 @@ protected:
     restartTimer();
   }
 
-  bool timeout(uint32_t t) {
-    return ((millis() - _tick) >= t);
+  bool timeout(timer_ms_t time_ms) {
+    return ((Timer::get_millis() - _tick_ms) >= time_ms);
   }
 
   void restartTimer() {
-    _tick = millis();
+    _tick_ms = Timer::get_millis();
   }
 
 public:

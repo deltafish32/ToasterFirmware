@@ -37,6 +37,10 @@ public:
     sortDataPoints();
   }
 
+  const std::vector<DATA_POINT>& getDataPoints() const {
+    return _data_points;
+  }
+
   bool getValue(T_FROM data_from, T_TO& data_to, bool nofail = false) const {
     if (_data_points.size() < 2) {
       return false;
