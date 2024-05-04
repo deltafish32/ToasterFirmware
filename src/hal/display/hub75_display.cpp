@@ -17,10 +17,10 @@ Hub75Display::Hub75Display() {
 bool Hub75Display::begin(int width, int height, int chain) {
   return begin(width, height, chain, {R1_PIN_DEFAULT, G1_PIN_DEFAULT, B1_PIN_DEFAULT, R2_PIN_DEFAULT, G2_PIN_DEFAULT, B2_PIN_DEFAULT,
     A_PIN_DEFAULT, B_PIN_DEFAULT, C_PIN_DEFAULT, D_PIN_DEFAULT, E_PIN_DEFAULT,
-    LAT_PIN_DEFAULT, OE_PIN_DEFAULT, CLK_PIN_DEFAULT});
+    LAT_PIN_DEFAULT, OE_PIN_DEFAULT, CLK_PIN_DEFAULT}, 240);
 }
 
-bool Hub75Display::begin(int width, int height, int chain, HUB75_I2S_CFG::i2s_pins pins) {
+bool Hub75Display::begin(int width, int height, int chain, HUB75_I2S_CFG::i2s_pins pins, uint8_t min_refresh_rate) {
   if (!Display::begin(width * chain, height)) {
     return false;
   }
@@ -35,6 +35,7 @@ bool Hub75Display::begin(int width, int height, int chain, HUB75_I2S_CFG::i2s_pi
   mxconfig.clkphase = false;
   mxconfig.latch_blanking = 4;
   mxconfig.i2sspeed = HUB75_I2S_CFG::HZ_10M;
+  mxconfig.min_refresh_rate = min_refresh_rate;
 
   _dma_display = new MatrixPanel_I2S_DMA(mxconfig);
   if (!_dma_display->begin()) {

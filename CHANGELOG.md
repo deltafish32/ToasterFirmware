@@ -1,6 +1,14 @@
 # Changelog
 
 
+## 2024.5.1
+### 기능
+- 사진 촬영시 플리커링 감소를 위해, HUB75 패널 min_refresh_rate 변경 (60 -> 240)
+
+### Feature
+- To reduce flickering when taking photos, HUB75 panel min_refresh_rate changed (60 to 240)
+
+
 ## 2024.4.1
 ### 주의 사항
 SPIFFS에서 FFAT으로 저장소 형식이 변경되었습니다. 프로그램 뿐만 아니라 파일 시스템도 다시 업로드해야 정상 사용 가능합니다.

@@ -14,7 +14,7 @@ static const char* TAG = "Protogen";
 
 
 Toaster Protogen;
-const char* Toaster::_tf_version = "2024.4.1";
+const char* Toaster::_tf_version = "2024.5.1";
 
 
 static const int ADC_MAX = 4095;
@@ -370,7 +370,9 @@ bool Toaster::loadHub75(const YamlNodeArray& yaml) {
   hub75_pins.oe = yaml.getInt("hardware:hub75:oe_pin", 15);
   hub75_pins.clk = yaml.getInt("hardware:hub75:clk_pin", 18);
 
-  if (!_display.begin(HUB75_PANEL_RES_X, HUB75_PANEL_RES_Y, HUB75_PANEL_CHAIN, hub75_pins)) {
+  uint8_t min_refresh_rate = yaml.getInt("hardware:hub75:min_refresh_rate", 240);
+
+  if (!_display.begin(HUB75_PANEL_RES_X, HUB75_PANEL_RES_Y, HUB75_PANEL_CHAIN, hub75_pins, min_refresh_rate)) {
     return false;
   }
 

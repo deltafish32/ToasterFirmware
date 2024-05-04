@@ -17,7 +17,7 @@ public:
 
 public:
   virtual bool begin(int width, int height, int chain);
-  virtual bool begin(int width, int height, int chain, HUB75_I2S_CFG::i2s_pins pins);
+  virtual bool begin(int width, int height, int chain, HUB75_I2S_CFG::i2s_pins pins, uint8_t min_refresh_rate);
 
 
 public:
