@@ -20,6 +20,8 @@ static const std::map<std::string, uint8_t> methods = {
   {"draw_90", Effect::SM_DRAW_90},
   {"draw_180", Effect::SM_DRAW_180},
   {"draw_270", Effect::SM_DRAW_270},
+  {"video", Effect::SM_VIDEO},
+  {"video_loop", Effect::SM_VIDEO_LOOP},
 };
 
 static const std::map<std::string, uint8_t> colors = {
@@ -154,7 +156,7 @@ uint8_t EffectParser::parseDrawSequence(const std::string& str, DRAW_SEQUENCE& d
   case Effect::SM_DRAW:
   case Effect::SM_DRAW_90:
   case Effect::SM_DRAW_180:
-  case Effect::SM_DRAW_270:
+  case Effect::SM_DRAW_270: {
     if (split_result.size() < 7) {
       error = "not enough arguments in [sequences]";
       return PD_FAIL;
@@ -180,6 +182,29 @@ uint8_t EffectParser::parseDrawSequence(const std::string& str, DRAW_SEQUENCE& d
     ds.offset_y = atoi(split_result[5].c_str());
     ds.display_time = (uint32_t)(atof(split_result[6].c_str()) * 1000);
     return PD_SUCCESS;
+  }
+    break;
+  case Effect::SM_VIDEO:
+  case Effect::SM_VIDEO_LOOP: {
+    if (split_result.size() < 5) {
+      error = "not enough arguments in [sequences]";
+      return PD_FAIL;
+    }
+
+    ds.image = atoi(split_result[1].c_str());
+
+    auto mode = modes.find(split_result[2].c_str());
+    if (mode == modes.end()) {
+      error = "failed to parse [mode] in [sequences]";
+      return PD_FAIL;
+    }
+    ds.mode = mode->second;
+
+    ds.offset_x = atoi(split_result[3].c_str());
+    ds.offset_y = atoi(split_result[4].c_str());
+    return PD_SUCCESS;
+  }
+    break;
   }
 
   return PD_SKIP;

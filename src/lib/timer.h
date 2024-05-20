@@ -8,6 +8,23 @@ typedef int64_t timer_us_t;
 typedef int64_t timer_ms_t;
 
 
+enum {
+  PF_NONE = 0,
+  PF_FREQUENCY,
+  PF_PERIOD,
+};
+
+
+typedef struct _timer_pf_t {
+  uint8_t type;
+
+  union {
+    uint32_t frequency;
+    uint32_t period_ms;
+  };
+} timer_pf_t;
+
+
 class Timer {
 private:
   Timer() {}

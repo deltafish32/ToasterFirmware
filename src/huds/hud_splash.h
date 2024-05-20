@@ -10,13 +10,13 @@ public:
   virtual void init();
   virtual void process(Adafruit_SSD1306& oled);
   virtual void release();
-  virtual void pressKey(uint16_t key);
+  virtual void pressKey(uint16_t key, uint8_t mode);
 
 protected:
-  static bool draw_oled_png(Adafruit_SSD1306& oled, upng_t* upng, int offset_x, int offset_y, uint8_t th = 128);
+  static bool draw_oled_png(Adafruit_SSD1306& oled, const Image* image, int offset_x, int offset_y, uint8_t th = 128);
 
 protected:
-  upng_t* _splash{nullptr};
+  Image* _splash{nullptr};
 };
 
 extern HUDSplash hud_splash;

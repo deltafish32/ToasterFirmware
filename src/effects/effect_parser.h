@@ -47,10 +47,6 @@ public:
     _boop_sequences.clear();
   }
 
-  void releaseImages() {
-    _images.clear();
-  }
-
   uint32_t getVersion() const {
     return _version;
   }

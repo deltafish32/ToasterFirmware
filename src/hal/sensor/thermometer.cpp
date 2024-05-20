@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "thermometer.h"
 #include "lib/logger.h"
+#include "protogen.h"
 
 
 namespace toaster {
@@ -58,7 +59,9 @@ bool Thermometer::work() {
 
     _read_tick_ms = Timer::get_millis();
 
-    TF_LOGD("Thermometer", "Temperature: %.2f\"C, Humidity: %.2f%%", _temperature, _humidity);
+    if (!Protogen._serialdebug.isTextMode()) {
+      TF_LOGD("Thermometer", "Temperature: %.2f\"C, Humidity: %.2f%%", _temperature, _humidity);
+    }
 
     return true;
   }

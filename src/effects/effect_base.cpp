@@ -39,7 +39,7 @@ uint8_t Effect::_gradation_greens[HUB75_PANEL_RES_X] = {0, };
 uint8_t Effect::_gradation_blues[HUB75_PANEL_RES_X] = {0, };
 
 
-EffectScript effect_script[4]{"script0", "script1", "script2", "script3"};
+EffectScript effect_script[6]{"script0", "script1", "script2", "script3", "script4", "script5"};
 
 EffectBlank flex_blank("blank");
 EffectWhite flex_white("white");
@@ -53,10 +53,53 @@ EffectSideRainbow side_rainbow("side_rainbow");
 
 
 
-Effect* Effect::findFromScript(const char* name, uint8_t script_index) {
+Effect::Effect(const char* name) {
+  _name = name;
+  _effects.push_back(this);
+}
+
+
+Effect::~Effect() {
+  for (auto it = _effects.begin(); it != _effects.end(); ) {
+    if ((*it) == this) {
+      it = _effects.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+}
+
+
+Effect* Effect::find(const char* name, uint8_t script_index, const char* base_path) {
+  if (*name == 0) {
+    return nullptr;
+  } 
+  
+  auto result = findFromHardcoded(name);
+  if (result != nullptr) {
+    return result;
+  }
+
+  return findFromScript(name, script_index, base_path);
+}
+
+
+Effect* Effect::findFromHardcoded(const char* name) {
+  for (auto it = _effects.begin(); it != _effects.end(); ++it) {
+    if (strcasecmp((*it)->_name, name) == 0) {
+      return *it;
+    }
+  }
+
+  return nullptr;
+}
+
+
+Effect* Effect::findFromScript(const char* name, uint8_t script_index, const char* base_path) {
   auto& script = effect_script[script_index];
 
-  if (script.loadScript(name)) {
+  if (script.loadScript(name, base_path)) {
     return &script;
   }
 

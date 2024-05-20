@@ -25,7 +25,8 @@ bool HeadUpDisplay::begin(uint8_t i2c_addr, uint32_t target_fps) {
 
   setHUD(&hud_splash);
 
-  Worker::begin(target_fps);
+  _target_fps = target_fps;
+  Worker::begin(_target_fps);
 
   _init = true;
 
@@ -33,7 +34,7 @@ bool HeadUpDisplay::begin(uint8_t i2c_addr, uint32_t target_fps) {
 }
 
 
-void HeadUpDisplay::pressKey(uint16_t key) {
+void HeadUpDisplay::pressKey(uint16_t key, uint8_t mode) {
   if (_init == false) {
     return;
   }
@@ -41,9 +42,27 @@ void HeadUpDisplay::pressKey(uint16_t key) {
   if (_hud != nullptr) {
     Protogen.syncLock();
 
-    _hud->pressKey(key);
+    _hud->pressKey(key, mode);
     
     Protogen.syncUnlock();
+  }
+}
+
+
+void HeadUpDisplay::setPF(timer_pf_t pf) {
+  if (pf.type == PF_FREQUENCY) {
+    uint32_t hud_freq = pf.frequency;
+    while (hud_freq > _target_fps) {
+      hud_freq /= 2;
+    }
+    setFPS(hud_freq);
+  }
+  else if (pf.type == PF_PERIOD) {
+    uint32_t hud_period_ms = pf.period_ms;
+    while (hud_period_ms < (1000 / _target_fps)) {
+      hud_period_ms *= 2;
+    }
+    setPeriod(hud_period_ms);
   }
 }
 

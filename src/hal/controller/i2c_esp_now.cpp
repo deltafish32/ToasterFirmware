@@ -16,6 +16,8 @@ static const size_t I2C_BUFFER_MAX = 16;
 typedef struct _ESP_NOW_DATA {
 	uint8_t mac[6]{0,};
 	uint8_t data{0};
+  uint8_t spare{0};
+  uint16_t battery{0};
 } ESP_NOW_DATA;
 
 
@@ -60,7 +62,7 @@ bool I2CESPNowRemote::work() {
 
 	_i2c_buffer.clear();
   
-	Wire.requestFrom(_i2c_addr, (uint8_t)8);
+	Wire.requestFrom(_i2c_addr, (uint8_t)11);
 	
 	while (Wire.available()) {
 		while (_i2c_buffer.size() >= I2C_BUFFER_MAX) {
@@ -70,30 +72,24 @@ bool I2CESPNowRemote::work() {
 		_i2c_buffer.push_back(Wire.read());
 	}
 	
-	while (_i2c_buffer.size() >= 8) {
-		uint8_t checksum = calcChecksum(&_i2c_buffer[0], 7);
-		if (checksum == _i2c_buffer[7]) {
+	while (_i2c_buffer.size() >= 11) {
+		uint8_t checksum = calcChecksum(&_i2c_buffer[0], 10);
+		if (checksum == _i2c_buffer[10]) {
 			ESP_NOW_DATA data;
 			
 			for (int i = 0; i < 6; i++) {
 				data.mac[i] = _i2c_buffer[i];
 			}
 			data.data = _i2c_buffer[6];
+      data.spare = _i2c_buffer[7];
+      data.battery = (_i2c_buffer[8] | (_i2c_buffer[9] << 8));
 			
-      switch (data.data) {
-      case 'S': case 's':
-        Protogen._hud.pressKey('S');
-        break;
-      case 'D': case 'd':
-        Protogen._hud.pressKey('D');
-        break;
-      case 'F': case 'f':
-        Protogen._hud.pressKey('F');
-        break;
+      if (data.mac[0] != 0 && data.mac[1] != 0 && data.mac[2] != 0 && data.mac[3] != 0 && data.mac[4] != 0 && data.mac[5] != 0 && data.data != 0) {
+        Protogen._hud.pressKey(data.data);
       }
 		}
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 11; i++) {
       _i2c_buffer.erase(_i2c_buffer.begin());
     }
 	}

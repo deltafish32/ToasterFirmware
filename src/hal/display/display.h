@@ -1,7 +1,9 @@
 #pragma once
 
 #include <vector>
-#include "lib/upng.h"
+#include <FFat.h>
+#include "lib/timer.h"
+#include "lib/asset.h"
 
 
 namespace toaster {
@@ -19,7 +21,6 @@ typedef enum _DRAW_MODE {
 
 
 typedef std::function<void(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param)> COLOR_FUNC;
-
 
 
 class Display {
@@ -74,6 +75,21 @@ public:
     int index = (y * _width + x) * 3;
     return (_buffer[index + 0] >= 128) || (_buffer[index + 1] >= 128) || (_buffer[index + 2] >= 128);
   }
+  
+  inline uint8_t getPixelGray(int x, int y) const {
+    int index = (y * _width + x) * 3;
+
+    // Rec. 601
+    return (uint8_t)(((2990 * ((uint32_t)_buffer[index + 0])) + 
+                      (5870 * ((uint32_t)_buffer[index + 1])) + 
+                      (1140 * ((uint32_t)_buffer[index + 2]))) / 10000);
+    
+    // Rec. 709
+    // return (uint8_t)(((2126 * ((uint32_t)_buffer[index + 0])) + 
+    //                   (7152 * ((uint32_t)_buffer[index + 1])) + 
+    //                   ( 722 * ((uint32_t)_buffer[index + 2]))) / 10000);
+  }
+
 
   // uint32_t getTotalR() const {
   //   return _total_r;
@@ -88,15 +104,10 @@ public:
   // }
 
 public:
-  static upng_t* load_png(const char* name);
-  static void unload_png(upng_t* upng);
-
-  virtual bool draw_png(upng_t* upng, DRAW_MODE draw_mode = DRAW_DEFAULT, int offset_x = 0, int offset_y = 0, int rotate_cw = 0, uint8_t param = 0) {
-    return draw_png_newcolor(upng, [](int, int, uint8_t&, uint8_t&, uint8_t&, uint8_t, uint8_t) {}, param, draw_mode, offset_x, offset_y, rotate_cw);
+  virtual bool draw_image(const Image* image, DRAW_MODE draw_mode = DRAW_DEFAULT, int offset_x = 0, int offset_y = 0, int rotate_cw = 0, uint8_t param = 0) {
+    return draw_image_newcolor(image, [](int, int, uint8_t&, uint8_t&, uint8_t&, uint8_t, uint8_t) {}, param, draw_mode, offset_x, offset_y, rotate_cw);
   }
-  virtual bool draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_t param = 0, DRAW_MODE draw_mode = DRAW_DEFAULT, int offset_x = 0, int offset_y = 0, int rotate_cw = 0);
-
-  // virtual bool undraw_png(upng_t* upng, DRAW_MODE draw_mode = DRAW_DEFAULT, int offset_x = 0, int offset_y = 0, int rotate_cw = 0);
+  virtual bool draw_image_newcolor(const Image* image, COLOR_FUNC color_func, uint8_t param = 0, DRAW_MODE draw_mode = DRAW_DEFAULT, int offset_x = 0, int offset_y = 0, int rotate_cw = 0);
 
 protected:
   uint8_t* _buffer{nullptr};
@@ -129,11 +140,7 @@ public:
 
 protected:
   static inline void xy_rotate(int& out_x, int& out_y, int x, int y, int w, int h, int rotate_cw) {
-    if (rotate_cw == 0) { // 0
-      out_x = x;
-      out_y = y;
-    }
-    else if (rotate_cw == 1) { // cw 90
+    if (rotate_cw == 1) { // cw 90
       out_x = h - y - 1;
       out_y = x;
     }
@@ -145,8 +152,12 @@ protected:
       out_x = y;
       out_y = w - x - 1;
     }
+    else { // if (rotate_cw == 0) { // 0
+      out_x = x;
+      out_y = y;
+    }
   }
-
+  
 };
 
 };

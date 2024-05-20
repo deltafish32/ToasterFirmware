@@ -6,19 +6,27 @@ namespace toaster {
 
 class HUDEmotions : public HUDMenu {
 public:
-  HUDEmotions() {
-    _pthis = this;
+  HUDEmotions() {}
+  HUDEmotions(const char* group) : _group(group) {
   }
+
   virtual void init();
 
-public:
-  static HUDEmotions* _pthis;
-  static void addEmotion(const char* name, const char* emotion) {
-    _pthis->_menuData.push_back({1, name, nullptr, emotion});
+  const char* getGroupName() const {
+    return _group.c_str();
   }
+
+protected:
+  std::string _group;
+};
+
+class HUDEmotionDir : public HUDMenu {
+public:
+  virtual void init();
 
 };
 
-extern HUDEmotions hud_emotions;
-
+extern std::vector<HUDEmotions> hud_emotions;
+extern HUDEmotionDir hud_emotiondir;
+ 
 };

@@ -22,36 +22,54 @@ public:
   }
 
   virtual bool isVideoMode() const {
-    return (_parser.getType() == ST_VIDEO);
+    return (_parser.getType() == ST_VIDEO) || _video_flag;
   }
 
-  virtual uint32_t getVideoFPS() const {
-    return _parser.getVideoInfo().fps;
+  virtual timer_pf_t getVideoPF() const {
+    if (_video_index >= _assets.size() || _assets[_video_index] == nullptr) {
+      return {PF_NONE, };
+    }
+
+    return _assets[_video_index]->getVideo()->getPF();
   }
 
   virtual void restart() {
-    if (_parser.getType() == ST_VIDEO) {
+    switch (_parser.getType()) {
+    case ST_SEQUENCE:
+      restartTimer();
+      break;
+    case ST_VIDEO:
       setStep(_parser.getVideoInfo().start);
+      break;
     }
   }
 
-  virtual bool loadScript(const char* name);
+  virtual bool loadScript(const char* name, const char* base_path);
 
 protected:
   bool _error{false};
-  std::vector<upng_t*> _images;
+  std::vector<Asset *> _assets;
   EffectParser _parser;
   std::string _script_name;
+  std::string _base_path;
   bool _boop{false};
 
 protected:
-  upng_t* _recent_frame{nullptr};
+  Asset* _video_legacy_frame{nullptr};
+  bool _video_legacy{false};
   int _video_offset_x{0};
   int _video_offset_y{0};
+  bool _video_flag{false};
+  size_t _video_index{0};
 
 protected:
-  size_t releaseSomeImages(Display& display, int current_image, const std::vector<DRAW_SEQUENCE>& sequence, size_t to_release = 1);
-  size_t loadNextImages(Display& display, int current_image, const std::vector<DRAW_SEQUENCE>& sequence, size_t to_load = 1);
+  std::string makeFileName(const char* filename);
+  bool initSequence(Display& display);
+  bool initVideo(Display& display);
+  void processSequence(Display& display, const std::vector<DRAW_SEQUENCE>& sequence, const std::vector<DRAW_SEQUENCE>& other_sequence);
+  void processVideo(Display& display);
+  size_t releaseSomeImages(Display& display, int current_sequence, const std::vector<DRAW_SEQUENCE>& sequence, const std::vector<DRAW_SEQUENCE>& other_sequence, size_t to_release = 1);
+  size_t loadNextImages(Display& display, int current_sequence, const std::vector<DRAW_SEQUENCE>& sequence, const std::vector<DRAW_SEQUENCE>& other_sequence, size_t to_load = 1);
 
 };
 

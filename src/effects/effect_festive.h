@@ -1,6 +1,7 @@
 #pragma once
 #include "effect_base.h"
 #include "protogen.h"
+#include "lib/logger.h"
 
 
 namespace toaster {
@@ -14,21 +15,33 @@ public:
     Effect::init(display);
 
     _vdatas = new VDATA[display.getWidth() / HUB75_PANEL_CHAIN];
+    if (_vdatas == nullptr) {
+      TF_LOGE("EffectFestive", "memory allocation failed.");
+      return;
+    }
     memset(_vdatas, 0, sizeof(_vdatas));
     
     if (Protogen.isFestiveFace()) {
-      _eyes[0] = display.load_png("/png/eyes/eye_default_0.png");
-      _eyes[1] = display.load_png("/png/eyes/eye_default_1.png");
-      _eyes[2] = display.load_png("/png/eyes/eye_default_2.png");
-      _eyes[3] = display.load_png("/png/eyes/eye_default_3.png");
-      _nose = display.load_png("/png/nose/nose_default.png");
-      _mouth = display.load_png("/png/mouth/mouth_default.png");
+      bool use_rgb565 = Protogen.isRGB565();
+      std::string base_path = Toaster::DEFAULT_BASE_PATH;
+      _eyes[0] = new Image((base_path + "/png/eyes/eye_default_0.png").c_str(), use_rgb565);
+      _eyes[1] = new Image((base_path + "/png/eyes/eye_default_1.png").c_str(), use_rgb565);
+      _eyes[2] = new Image((base_path + "/png/eyes/eye_default_2.png").c_str(), use_rgb565);
+      _eyes[3] = new Image((base_path + "/png/eyes/eye_default_3.png").c_str(), use_rgb565);
+      _eyes[4] = new Image((base_path + "/png/eyes/eye_default_4.png").c_str(), use_rgb565);
+      _eyes[5] = new Image((base_path + "/png/eyes/eye_default_5.png").c_str(), use_rgb565);
+      _nose = new Image((base_path + "/png/nose/nose_default.png").c_str(), use_rgb565);
+      _mouth = new Image((base_path + "/png/mouth/mouth_default.png").c_str(), use_rgb565);
     }
 
     _eye_frame = 0;
   }
 
   virtual void process(Display& display) {
+    if (_vdatas == nullptr) {
+      return;
+    }
+    
     const int EASE_MAX = 6;
 
     if (_staticMode == false) {
@@ -82,35 +95,63 @@ public:
       break;
     case 100:
       _eye_frame = 1;
-      if (timeout(50)) {
+      if (timeout(16)) {
         setStep(200);
         break;
       }
       break;
     case 200:
       _eye_frame = 2;
-      if (timeout(50)) {
+      if (timeout(16)) {
         setStep(300);
         break;
       }
       break;
     case 300:
       _eye_frame = 3;
-      if (timeout(50)) {
+      if (timeout(16)) {
         setStep(400);
         break;
       }
       break;
     case 400:
-      _eye_frame = 2;
-      if (timeout(50)) {
+      _eye_frame = 4;
+      if (timeout(16)) {
         setStep(500);
         break;
       }
       break;
     case 500:
+      _eye_frame = 5;
+      if (timeout(100)) {
+        setStep(600);
+        break;
+      }
+      break;
+    case 600:
+      _eye_frame = 4;
+      if (timeout(16)) {
+        setStep(700);
+        break;
+      }
+      break;
+    case 700:
+      _eye_frame = 3;
+      if (timeout(16)) {
+        setStep(800);
+        break;
+      }
+      break;
+    case 800:
+      _eye_frame = 2;
+      if (timeout(16)) {
+        setStep(900);
+        break;
+      }
+      break;
+    case 900:
       _eye_frame = 1;
-      if (timeout(50)) {
+      if (timeout(16)) {
         setStep(0);
         break;
       }
@@ -118,30 +159,32 @@ public:
     }
 
     if (Protogen.isFestiveFace()) {
-      display.draw_png_newcolor(_eyes[_eye_frame], color_func_rainbow_single, 0, DRAW_MIRROR, 0, 0);
-      display.draw_png_newcolor(_nose, color_func_rainbow_single, 1, DRAW_MIRROR, 48, 0);
-      display.draw_png_newcolor(_mouth, color_func_rainbow_single, 2, DRAW_MIRROR, 0, 16);
+      display.draw_image_newcolor(_eyes[_eye_frame], color_func_rainbow_single, 0, DRAW_MIRROR, 0, 0);
+      display.draw_image_newcolor(_nose, color_func_rainbow_single, 1, DRAW_MIRROR, 48, 0);
+      display.draw_image_newcolor(_mouth, color_func_rainbow_single, 2, DRAW_MIRROR, 0, 16);
     }
   }
 
   virtual void release(Display& display) {
-    delete[] _vdatas;
-    _vdatas = nullptr;
+    if (_vdatas != nullptr) {
+      delete[] _vdatas;
+      _vdatas = nullptr;
+    }
     
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 6; i++) {
       if (_eyes[i] != nullptr) {
-        display.unload_png(_eyes[i]);
+        delete _eyes[i];
         _eyes[i] = nullptr;
       }
     }
     
     if (_nose != nullptr) {
-      display.unload_png(_nose);
+      delete _nose;
       _nose = nullptr;
     }
 
     if (_mouth != nullptr) {
-      display.unload_png(_mouth);
+      delete _mouth;
       _mouth = nullptr;
     }
 
@@ -160,9 +203,9 @@ protected:
   VDATA* _vdatas{nullptr};
 
 protected:
-  upng_t* _eyes[4]{nullptr,};
-  upng_t* _nose{nullptr};
-  upng_t* _mouth{nullptr};
+  Image* _eyes[6]{nullptr,};
+  Image* _nose{nullptr};
+  Image* _mouth{nullptr};
   uint8_t _eye_frame{0};
 
 };

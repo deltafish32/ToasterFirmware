@@ -189,8 +189,25 @@ Click the `Platformio: Serial Monitor` button at the bottom of the Visual Studio
 | 9 | Bean (bean) | |
 | P | BSOD (bsod) | |
 | W | White screen (white) | When used at maximum brightness, the display may not be displayed properly due to power issues. |
-| ; | Music visualizer emulation (Party mode) (festive) | |
+| O | Music visualizer emulation (Party mode) (festive) | |
 | ' | Loading (loading) | |
+
+
+## Glove Controller Emulation
+Actions are case-sensitive.
+- Lower case: short click
+- Upper case: long click
+
+| Key | Function | Note |
+| - | - | - |
+| F    | Left index finger |  |
+| D    | Left middle finger |  |
+| S    | Left ring finger |  |
+| A    | Left littler finger | Unused, reserved |
+| J    | Right index finger |  |
+| K    | Right middle finger |  |
+| L    | Right ring finger |  |
+| ;(:) | Right little finger | Unused, reserved |
 
 
 ## Specials
@@ -202,18 +219,27 @@ Click the `Platformio: Serial Monitor` button at the bottom of the Visual Studio
 | V | Color mode - Rainbow (rainbow) | |
 | B | Color mode - Gradation (gradation) | |
 | A | Toggle Photo mode | Mode to stop screen changes |
-| H | Left | Use in menu (back) |
-| J | Down | Use in menu |
-| K | Up | Use in menu |
-| L | Right | Use in menu (select) |
+| LEFT | Left | Use in menu (back) |
+| DOWN | Down | Use in menu |
+| UP | Up | Use in menu |
+| RIGHT | Right | Use in menu (select) |
 | M | Boop sensor debug | Toggle Boop sensor value(mm) through serial |
+| \ | Toggle HUD dithering | |
+| TAB | Change to next emotion | Quickly change to the next emotion within the registered |
 
 
 ## Commands
+Press the `Enter` key or `!` key and enter the command.
+
 | Command | Function | Note |
 | - | - | - |
-| `!reset` | Soft Reset | |
-| `!b [number 0 ~ 100]` | Set the brightness to that value. | ex: `!b 100` |
-| `!set [emotion]` | Change to the entered emotion. | ex: `!set normal` |
-| `!noboop` | Disable Boop sensor. | |
-| `!boop` | Enable Boop sensor. | |
+| `help`                 | Display information about builtin commands. | |
+| `reset`, `restart` or `reboot` | Soft reset | |
+| `b`                    | Set the brightness to that value. | ex: `b 100` |
+| `ls` or `emotions`     | Show list of loaded emotions | |
+| `set`                  | Change to the entered emotion. | ex: `set normal` |
+| `mac`                  | Display mac address. | |
+| `boop`                 | Enable boop sensor. | |
+| `noboop`               | Disable boop sensor. | |
+| `dithering`            | Enable HUD dithering. | |
+| `nodithering`          | Disable HUD dithering. | |

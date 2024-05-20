@@ -1,6 +1,58 @@
 # Changelog
 
 
+## 2024.5.2
+### 주의 사항
+- 표정을 저장하는 폴더 구조가 변경되었습니다. 이제 다른 사람에게 공유받은 표정을 더 편리하게 추가하세요! (`/emotions`)
+
+### CAUTION
+- The folder structure for storing emotion has changed. Now you can more conveniently add emotions shared by others! (`/emotions`)
+
+### 기능
+- GIF, MJPEG 지원
+- 표정에 동영상을 추가 할 수 있도록 명령어 추가 (`video`, `video_loop`)
+- HUD 대시보드 디자인 변경 (영문자 대신 직관적인 아이콘으로 변경)
+- HUD 디더링 지원 추가 (`hardware:hud:dithering`)
+- 기본 표정의 눈 크기 조정, 프레임 향상
+- 속눈썹이 존재하는 표정 추가 (`eyelash`)
+- 표정에 특수 효과 지원을 위한 레이어 2개 추가 (`special`, `special2`)
+- ESP-Now 장갑 컨트롤러 지원 (베타)
+- 빠른 표정 변경 모드 추가 (`/emotions/shortcut.yaml`)
+
+### 버그 수정
+- 동적 이미지 로딩 기능이 제대로 동작하지 않는 문제 수정
+- 표정 이름이 긴 경우 메뉴에 제대로 표시되지 않는 문제 수정
+- 특정 조건에서 Core 1 Task 시작에 실패하는 문제 수정
+
+### 기타
+- Splash 화면 skip 가능하도록 변경
+- 시리얼 모니터에 명령어 입력시 피드백 추가
+- 내부 이미지 버퍼 RGB888 대신 RGB565로 사용하도록 변경 (`hardware:hub75:use_rgb565`)
+- 화면 주사율 변경시 HUD도 변경되도록 수정
+
+### Feature
+- Add support for GIF, MJPEG
+- Add support for command in emotion (`video`, `video_loop`)
+- HUD dashboard design change (change to icons instead of character)
+- Add support dithering for HUD (`hardware:hud:dithering`)
+- Adjusted eye size and improved framing for basic emotions
+- Add emotions with eyelashes (`eyelash`)
+- Add 2 layers for special effect (`special`, `special2`)
+- Add support for ESP-Now glove controller (Beta)
+- Add emotion shortcut
+
+### Bugfix
+- Fix dynamic image loading do not work as intended
+- Fix long emotion names were not displayed properly in the menu
+- Fix Core 1 Task fails to start under certain conditions
+
+### Misc.
+- Changed Splash screen to be skippable
+- Added feedback when entering commands in the serial monitor
+- Changed internal image buffer to use RGB565 instead of RGB888. (`hardware:hub75:use_rgb565`)
+- HUD refresh rate also changes when the screen refresh rate changes.
+
+
 ## 2024.5.1
 ### 기능
 - 사진 촬영시 플리커링 감소를 위해, HUB75 패널 min_refresh_rate 변경 (60 -> 240)

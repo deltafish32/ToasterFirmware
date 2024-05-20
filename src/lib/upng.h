@@ -96,11 +96,11 @@ freely, subject to the following restrictions:
 		typedef struct upng_t upng_t;
 
 		upng_t*		upng_new_from_bytes	(const unsigned char* buffer, unsigned long size);
-		upng_t*		upng_new_from_file	(const char* path);
+		upng_t*		upng_new_from_file	(const char* path, fs::FS& filesystem);
 		void		upng_free			(upng_t* upng);
 
 		upng_error	upng_header			(upng_t* upng);
-		upng_error	upng_decode			(upng_t* upng);
+		upng_error	upng_decode			(upng_t* upng, unsigned char* external_buffer = nullptr);
 
 		upng_error	upng_get_error		(const upng_t* upng);
 		unsigned	upng_get_error_line	(const upng_t* upng);

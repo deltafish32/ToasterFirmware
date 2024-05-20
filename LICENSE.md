@@ -1,6 +1,7 @@
 
 # Open-source license
 소스가 삽입된 오픈소스 목록입니다. 그 외 사용된 라이브러리는 `platformio.ini` 파일을 참고해주세요.
+This is a list of open sources with embedded sources. Please refer to the `platformio.ini` file for other libraries used.
 
 
 ## ESP32-upng

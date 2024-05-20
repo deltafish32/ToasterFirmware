@@ -9,7 +9,7 @@ public:
   virtual void init();
   virtual void process(Adafruit_SSD1306& oled);
   virtual void release();
-  virtual void pressKey(uint16_t key);
+  virtual void pressKey(uint16_t key, uint8_t mode);
 
 protected:
   uint16_t _unlock_key{0};
@@ -17,7 +17,7 @@ protected:
   timer_ms_t _unlock_tick_ms{0};
 
 protected:
-  static void mirror(Adafruit_SSD1306& oled, int offset_x, int offset_y);
+  void mirror(Adafruit_SSD1306& oled, int offset_x, int offset_y, bool dither);
 };
 
 extern HUDDashboard hud_dashboard;

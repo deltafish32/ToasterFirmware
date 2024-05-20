@@ -16,9 +16,9 @@ public:
     setFPS(target_frequency);
   }
 
-  virtual void beginPeriod(uint32_t target_period) {
+  virtual void beginPeriod(uint32_t target_period_ms) {
     _worker_tick_us = _fps_tick_us = Timer::get_micros();
-    setPeriod(target_period);
+    setPeriod(target_period_ms);
   }
 
   virtual void setFPS(uint32_t target_frequency) {
@@ -26,9 +26,18 @@ public:
     _worker_uspf_error = 1000000 % target_frequency;
   }
 
-  virtual void setPeriod(uint32_t target_period) {
-    _worker_uspf = (timer_us_t)target_period * 1000;
+  virtual void setPeriod(uint32_t target_period_ms) {
+    _worker_uspf = (timer_us_t)target_period_ms * 1000;
     _worker_uspf_error = 0;
+  }
+
+  virtual void setPF(timer_pf_t pf) {
+    if (pf.type == PF_FREQUENCY) {
+      setFPS(pf.frequency);
+    }
+    else if (pf.type == PF_PERIOD) {
+      setPeriod(pf.period_ms);
+    }
   }
 
   virtual void loop() {

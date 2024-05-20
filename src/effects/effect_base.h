@@ -13,21 +13,8 @@ namespace toaster {
 
 class Effect : protected Random {
 public:
-  Effect(const char* name) {
-    _name = name;
-    _effects.push_back(this);
-  }
-
-  virtual ~Effect() {
-    for (auto it = _effects.begin(); it != _effects.end(); ) {
-      if ((*it) == this) {
-        it = _effects.erase(it);
-      }
-      else {
-        ++it;
-      }
-    }
-  }
+  Effect(const char* name);
+  virtual ~Effect();
 
 
 public:
@@ -55,8 +42,8 @@ public:
     return false;
   }
 
-  virtual uint32_t getVideoFPS() const {
-    return 0;
+  virtual timer_pf_t getVideoPF() const {
+    return {PF_NONE, };
   }
 
   virtual void restart() {
@@ -156,30 +143,9 @@ public:
     _gradation_dirty = true;
   }
 
-  static Effect* find(const char* name, uint8_t script_index = 0) {
-    if (*name == 0) {
-      return nullptr;
-    } 
-    
-    auto result = findFromHardcoded(name);
-    if (result != nullptr) {
-      return result;
-    }
-
-    return findFromScript(name, script_index);
-  }
-
-  static Effect* findFromHardcoded(const char* name) {
-    for (auto it = _effects.begin(); it != _effects.end(); ++it) {
-      if (strcasecmp((*it)->_name, name) == 0) {
-        return *it;
-      }
-    }
-
-    return nullptr;
-  }
-
-  static Effect* findFromScript(const char* name, uint8_t script_index);
+  static Effect* find(const char* name, uint8_t script_index, const char* base_path);
+  static Effect* findFromHardcoded(const char* name);
+  static Effect* findFromScript(const char* name, uint8_t script_index, const char* base_path);
 
 
 protected:
@@ -191,13 +157,18 @@ protected:
   int _step{0};
   timer_us_t _tick_us{0};
 
-  void setStep(int step) {
-    _step = step;
+  void restartTimer() {
     _tick_us = Timer::get_micros();
 
     if (_staticMode) {
       _static_mode_tick_us = _tick_us;
     }
+  }
+
+  void setStep(int step) {
+    _step = step;
+
+    restartTimer();
   }
 
   bool timeout(uint32_t time_ms) {
@@ -216,6 +187,14 @@ public:
     SM_DRAW_90,
     SM_DRAW_180,
     SM_DRAW_270,
+    SM_VIDEO,
+    SM_VIDEO_RESERVED_1,
+    SM_VIDEO_RESERVED_2,
+    SM_VIDEO_RESERVED_3,
+    SM_VIDEO_LOOP,
+    SM_VIDEO_LOOP_RESERVED_1,
+    SM_VIDEO_LOOP_RESERVED_2,
+    SM_VIDEO_LOOP_RESERVED_3,
   };
 
   enum {

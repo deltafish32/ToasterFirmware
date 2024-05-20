@@ -125,7 +125,7 @@ bool IRRemote::processNEC_Emotion(uint32_t nec_code) {
 bool IRRemote::processNEC_Keypress(uint32_t nec_code) {
   for (const auto& it : _event_keypresses) {
     if (it.nec_code == nec_code) {
-      Protogen._hud.pressKey(it.key);
+      Protogen._hud.pressKey(it.key, it.mode);
       return true;
     }
   }

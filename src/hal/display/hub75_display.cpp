@@ -73,38 +73,37 @@ void Hub75Display::endDraw() {
 }
 
 
-bool Hub75Display::draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_t param, DRAW_MODE draw_mode, int offset_x, int offset_y, int rotate_cw) {
-  if (upng == nullptr) {
-    TF_LOGE(TAG, "upng draw failed (nullptr).");
+bool Hub75Display::draw_image_newcolor(const Image* image, COLOR_FUNC color_func, uint8_t param, DRAW_MODE draw_mode, int offset_x, int offset_y, int rotate_cw) {
+  if (image == nullptr) {
+    TF_LOGE(TAG, "image draw failed (nullptr).");
     return false;
   }
 
-  auto format = upng_get_format(upng);
-
-  if (format != UPNG_RGB8 && format != UPNG_RGBA8) {
-    TF_LOGE(TAG, "upng unsupported format (%d).", format);
-    return false;
-  }
-
-  auto width = upng_get_width(upng);
-  auto height = upng_get_height(upng);
-  // auto size = upng_get_size(upng);
-  // auto bitdepth = upng_get_bitdepth(upng);
-  auto components = upng_get_components(upng);
-  auto buffer = upng_get_buffer(upng);
-  
-  //TF_LOGD(TAG, "%d x %d, size: %d, bitdepth: %d, components: %d", width, height, size, bitdepth, components);
+  auto width = image->getWidth();
+  auto height = image->getHeight();
+  auto bpp = image->getBpp();
+  auto has_alpha = image->getHasAlpha();
+  auto buffer = image->getBuffer();
 
   if (draw_mode == DRAW_SINGLE) {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        int index = (y * width + x) * components;
-        uint8_t a = (components >= 4) ? buffer[index + 3] : 255;
+        int index = (y * width + x) * (bpp + has_alpha);
+        uint8_t a = has_alpha ? buffer[index + bpp] : 255;
         if (a == 0) continue;
         
-        uint8_t r1 = buffer[index + 0];
-        uint8_t g1 = buffer[index + 1];
-        uint8_t b1 = buffer[index + 2];
+        uint8_t r1;
+        uint8_t g1;
+        uint8_t b1;
+
+        if (bpp == 3) {
+          r1 = buffer[index + 0];
+          g1 = buffer[index + 1];
+          b1 = buffer[index + 2];
+        }
+        else {
+          Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
+        }
         
         int xr, yr;
         xy_rotate(xr, yr, x, y, width, height, rotate_cw);
@@ -129,13 +128,22 @@ bool Hub75Display::draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_
   else if (draw_mode == DRAW_COPY) {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        int index = (y * width + x) * components;
-        uint8_t a = (components >= 4) ? buffer[index + 3] : 255;
+        int index = (y * width + x) * (bpp + has_alpha);
+        uint8_t a = has_alpha ? buffer[index + bpp] : 255;
         if (a == 0) continue;
         
-        uint8_t r1 = buffer[index + 0];
-        uint8_t g1 = buffer[index + 1];
-        uint8_t b1 = buffer[index + 2];
+        uint8_t r1;
+        uint8_t g1;
+        uint8_t b1;
+
+        if (bpp == 3) {
+          r1 = buffer[index + 0];
+          g1 = buffer[index + 1];
+          b1 = buffer[index + 2];
+        }
+        else {
+          Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
+        }
         
         int xr, yr;
         xy_rotate(xr, yr, x, y, width, height, rotate_cw);
@@ -164,14 +172,23 @@ bool Hub75Display::draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_
   else if (draw_mode == DRAW_MIRROR) {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        int index = (y * width + x) * components;
-        uint8_t a = (components >= 4) ? buffer[index + 3] : 255;
+        int index = (y * width + x) * (bpp + has_alpha);
+        uint8_t a = has_alpha ? buffer[index + bpp] : 255;
         if (a == 0) continue;
         
-        uint8_t r1 = buffer[index + 0];
-        uint8_t g1 = buffer[index + 1];
-        uint8_t b1 = buffer[index + 2];
+        uint8_t r1;
+        uint8_t g1;
+        uint8_t b1;
 
+        if (bpp == 3) {
+          r1 = buffer[index + 0];
+          g1 = buffer[index + 1];
+          b1 = buffer[index + 2];
+        }
+        else {
+          Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
+        }
+        
         int xr, yr;
         xy_rotate(xr, yr, x, y, width, height, rotate_cw);
         
@@ -199,13 +216,22 @@ bool Hub75Display::draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_
   else if (draw_mode == DRAW_MIRROR_ONLY_OFFSET) {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        int index = (y * width + x) * components;
-        uint8_t a = (components >= 4) ? buffer[index + 3] : 255;
+        int index = (y * width + x) * (bpp + has_alpha);
+        uint8_t a = has_alpha ? buffer[index + bpp] : 255;
         if (a == 0) continue;
         
-        uint8_t r1 = buffer[index + 0];
-        uint8_t g1 = buffer[index + 1];
-        uint8_t b1 = buffer[index + 2];
+        uint8_t r1;
+        uint8_t g1;
+        uint8_t b1;
+
+        if (bpp == 3) {
+          r1 = buffer[index + 0];
+          g1 = buffer[index + 1];
+          b1 = buffer[index + 2];
+        }
+        else {
+          Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
+        }
         
         int xr, yr;
         xy_rotate(xr, yr, x, y, width, height, rotate_cw);
@@ -235,131 +261,5 @@ bool Hub75Display::draw_png_newcolor(upng_t* upng, COLOR_FUNC color_func, uint8_
   return true;
 }
 
-
-// bool Hub75Display::undraw_png(upng_t* upng, DRAW_MODE draw_mode, int offset_x, int offset_y, int rotate_cw) {
-//   if (upng == nullptr) {
-//     TF_LOGE(TAG, "upng draw failed (nullptr).");
-//     return false;
-//   }
-
-//   auto format = upng_get_format(upng);
-
-//   if (format != UPNG_RGB8 && format != UPNG_RGBA8) {
-//     TF_LOGE(TAG, "upng unsupported format (%d).", format);
-//     return false;
-//   }
-
-//   auto width = upng_get_width(upng);
-//   auto height = upng_get_height(upng);
-//   // auto size = upng_get_size(upng);
-//   // auto bitdepth = upng_get_bitdepth(upng);
-//   auto components = upng_get_components(upng);
-//   auto buffer = upng_get_buffer(upng);
-  
-//   //TF_LOGD(TAG, "%d x %d, size: %d, bitdepth: %d, components: %d", width, height, size, bitdepth, components);
-
-//   if (draw_mode == DRAW_SINGLE) {
-//     for (int y = 0; y < height; y++) {
-//       for (int x = 0; x < width; x++) {
-//         int index = (y * width + x) * components;
-
-//         uint8_t a = (components >= 4) ? buffer[index + 3] : 255;
-
-//         if (a == 0) continue;
-        
-//         int xr, yr;
-//         xy_rotate(xr, yr, x, y, width, height, rotate_cw);
-        
-//         int x1 = xr + offset_x;
-//         int y1 = yr + offset_y;
-
-//         uint8_t r2 = (uint8_t)((uint16_t)getPixelR(x1, y1) * (255 - a) / 255);
-//         uint8_t g2 = (uint8_t)((uint16_t)getPixelG(x1, y1) * (255 - a) / 255);
-//         uint8_t b2 = (uint8_t)((uint16_t)getPixelB(x1, y1) * (255 - a) / 255);
-//         setPixel(x1, y1, r2, g2, b2);
-//       }
-//     }
-//   }
-//   else if (draw_mode == DRAW_COPY) {
-//     for (int y = 0; y < height; y++) {
-//       for (int x = 0; x < width; x++) {
-//         int index = (y * width + x) * components;
-
-//         uint8_t a = (components >= 4) ? buffer[index + 3] : 255;
-
-//         if (a == 0) continue;
-        
-//         int xr, yr;
-//         xy_rotate(xr, yr, x, y, width, height, rotate_cw);
-        
-//         int x1 = xr + offset_x;
-//         int y1 = yr + offset_y;
-
-//         uint8_t r2 = (uint8_t)((uint16_t)getPixelR(x1, y1) * (255 - a) / 255);
-//         uint8_t g2 = (uint8_t)((uint16_t)getPixelG(x1, y1) * (255 - a) / 255);
-//         uint8_t b2 = (uint8_t)((uint16_t)getPixelB(x1, y1) * (255 - a) / 255);
-//         setPixel(x1, y1, r2, g2, b2);
-
-//         int x2 = x1 + _panel_width;
-//         int y2 = y1;
-//         setPixel(x2, y2, r2, g2, b2);
-//       }
-//     }
-//   }
-//   else if (draw_mode == DRAW_MIRROR) {
-//     for (int y = 0; y < height; y++) {
-//       for (int x = 0; x < width; x++) {
-//         int index = (y * width + x) * components;
-
-//         uint8_t a = (components >= 4) ? buffer[index + 3] : 255;
-        
-//         if (a == 0) continue;
-        
-//         int xr, yr;
-//         xy_rotate(xr, yr, x, y, width, height, rotate_cw);
-        
-//         int x1 = xr + offset_x;
-//         int y1 = yr + offset_y;
-
-//         uint8_t r2 = (uint8_t)((uint16_t)getPixelR(x1, y1) * (255 - a) / 255);
-//         uint8_t g2 = (uint8_t)((uint16_t)getPixelG(x1, y1) * (255 - a) / 255);
-//         uint8_t b2 = (uint8_t)((uint16_t)getPixelB(x1, y1) * (255 - a) / 255);
-//         setPixel(x1, y1, r2, g2, b2);
-
-//         int x2 = _width - (xr + offset_x) - 1;
-//         int y2 = (yr + offset_y);
-//         setPixel(x2, y2, r2, g2, b2);
-//       }
-//     }
-//   }
-//   else if (draw_mode == DRAW_MIRROR_ONLY_OFFSET) {
-//     for (int y = 0; y < height; y++) {
-//       for (int x = 0; x < width; x++) {
-//         int index = (y * width + x) * components;
-
-//         uint8_t a = (components >= 4) ? buffer[index + 3] : 255;
-        
-//         if (a == 0) continue;
-        
-//         int xr, yr;
-//         xy_rotate(xr, yr, x, y, width, height, rotate_cw);
-        
-//         int x1 = xr + offset_x;
-//         int y1 = yr + offset_y;
-
-//         uint8_t r2 = (uint8_t)((uint16_t)getPixelR(x1, y1) * (255 - a) / 255);
-//         uint8_t g2 = (uint8_t)((uint16_t)getPixelG(x1, y1) * (255 - a) / 255);
-//         uint8_t b2 = (uint8_t)((uint16_t)getPixelB(x1, y1) * (255 - a) / 255);
-//         setPixel(x1, y1, r2, g2, b2);
-
-//         int x2 = xr + _width - offset_x - width;
-//         int y2 = (yr + offset_y);
-//         setPixel(x2, y2, r2, g2, b2);
-//       }
-//     }
-//   }
-
-//   return true;
-// }
 
 };

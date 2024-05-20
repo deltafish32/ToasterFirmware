@@ -51,7 +51,8 @@
         "regex": "cpp",
         "set": "cpp",
         "iostream": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "list": "cpp"
     },
     "cmake.configureOnOpen": true
 }

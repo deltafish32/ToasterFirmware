@@ -28,8 +28,8 @@ public:
     _event_emotions.push_back({nec_code, emotion});
   }
 
-  void addNEC_Keypress(uint32_t nec_code, char key) {
-    _event_keypresses.push_back({nec_code, key});
+  void addNEC_Keypress(uint32_t nec_code, char key, uint8_t mode) {
+    _event_keypresses.push_back({nec_code, key, mode});
   }
 
 protected:
@@ -52,6 +52,7 @@ protected:
   typedef struct _IR_EVENT_KEYPRESS {
     uint32_t nec_code;
     char key;
+    uint8_t mode;
   } IR_EVENT_KEYPRESS;
   std::vector<IR_EVENT_KEYPRESS> _event_keypresses;
 

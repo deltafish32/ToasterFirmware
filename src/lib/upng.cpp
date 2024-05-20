@@ -981,7 +981,7 @@ upng_error upng_header(upng_t* upng)
 }
 
 /*read a PNG, the result will be in the same color type as the PNG (hence "generic")*/
-upng_error upng_decode(upng_t* upng)
+upng_error upng_decode(upng_t* upng, unsigned char* external_buffer)
 {
 	const unsigned char *chunk;
 	unsigned char* compressed;
@@ -1108,21 +1108,25 @@ upng_error upng_decode(upng_t* upng)
 
 	/* allocate final image buffer */
 	upng->size = (upng->height * upng->width * upng_get_bpp(upng) + 7) / 8;
-	upng->buffer = (unsigned char*)malloc(upng->size);
-	if (upng->buffer == NULL) {
-		free(inflated);
-		upng->size = 0;
-		SET_ERROR(upng, UPNG_ENOMEM);
-		return upng->error;
+	if (external_buffer == nullptr) {
+		upng->buffer = (unsigned char*)malloc(upng->size);
+		if (upng->buffer == NULL) {
+			free(inflated);
+			upng->size = 0;
+			SET_ERROR(upng, UPNG_ENOMEM);
+			return upng->error;
+		}
 	}
 
 	/* unfilter scanlines */
-	post_process_scanlines(upng, upng->buffer, inflated, upng);
+	post_process_scanlines(upng, (external_buffer != nullptr) ? external_buffer : upng->buffer, inflated, upng);
 	free(inflated);
 
 	if (upng->error != UPNG_EOK) {
-		free(upng->buffer);
-		upng->buffer = NULL;
+		if (external_buffer == nullptr) {
+			free(upng->buffer);
+			upng->buffer = NULL;
+		}
 		upng->size = 0;
 	} else {
 		upng->state = UPNG_DECODED;
@@ -1178,7 +1182,7 @@ upng_t* upng_new_from_bytes(const unsigned char* buffer, unsigned long size)
 	return upng;
 }
 
-upng_t* upng_new_from_file(const char *filename)
+upng_t* upng_new_from_file(const char *filename, fs::FS& filesystem)
 {
 	upng_t* upng;
 	char *buffer;
@@ -1191,7 +1195,7 @@ upng_t* upng_new_from_file(const char *filename)
 	}
 
 	//file = fopen(filename, "rb");
-	file = FFat.open(filename, "r");
+	file = filesystem.open(filename, "r");
 	if (file == false) {
 		SET_ERROR(upng, UPNG_ENOTFOUND);
 		return upng;

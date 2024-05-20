@@ -83,7 +83,7 @@ static const uint8_t PROGMEM DEFAULT_LOGO_BMP[] = {
 void HUDSplash::init() {
   HUDBase::init();
 
-  _splash = load_png("/png/full/splash.png");
+  _splash = new Image("/splash.png", true);
 }
 
 
@@ -98,7 +98,7 @@ void HUDSplash::process(Adafruit_SSD1306& oled) {
         oled.drawBitmap(
           (oled.width()  - LOGO_WIDTH ) / 2,
           (oled.height() - LOGO_HEIGHT) / 2,
-          DEFAULT_LOGO_BMP, LOGO_WIDTH, LOGO_HEIGHT, 1);
+          DEFAULT_LOGO_BMP, LOGO_WIDTH, LOGO_HEIGHT, SSD1306_WHITE);
       }
       oled.display();
     }
@@ -111,49 +111,52 @@ void HUDSplash::process(Adafruit_SSD1306& oled) {
 
 
 void HUDSplash::release() {
-  unload_png(_splash);
+  if (_splash != nullptr) {
+    delete _splash;
+    _splash = nullptr;
+  }
 }
 
 
-void HUDSplash::pressKey(uint16_t key) {
+void HUDSplash::pressKey(uint16_t key, uint8_t mode) {
+  nextHUD(&hud_dashboard, true);
 }
 
 
-bool HUDSplash::draw_oled_png(Adafruit_SSD1306& oled, upng_t* upng, int offset_x, int offset_y, uint8_t th) {
-  if (upng == nullptr) {
-    TF_LOGE(TAG, "upng draw failed (nullptr).");
+bool HUDSplash::draw_oled_png(Adafruit_SSD1306& oled, const Image* image, int offset_x, int offset_y, uint8_t th) {
+  if (image == nullptr) {
+    TF_LOGE(TAG, "image draw failed (nullptr).");
     return false;
   }
 
-  auto format = upng_get_format(upng);
-
-  if (format != UPNG_RGB8 && format != UPNG_RGBA8) {
-    TF_LOGE(TAG, "upng unsupported format (%d).", format);
-    return false;
-  }
-
-  auto width = upng_get_width(upng);
-  auto height = upng_get_height(upng);
-  // auto size = upng_get_size(upng);
-  // auto bitdepth = upng_get_bitdepth(upng);
-  auto components = upng_get_components(upng);
-  auto buffer = upng_get_buffer(upng);
+  auto width = image->getWidth();
+  auto height = image->getHeight();
+  auto bpp = image->getBpp();
+  auto has_alpha = image->getHasAlpha();
+  auto buffer = image->getBuffer();
   
-  //TF_LOGD(TAG, "%d x %d, size: %d, bitdepth: %d, components: %d", width, height, size, bitdepth, components);
-
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      int index = (y * width + x) * components;
+      int index = (y * width + x) * (bpp + has_alpha);
 
-      uint8_t r1 = buffer[index + 0];
-      uint8_t g1 = buffer[index + 1];
-      uint8_t b1 = buffer[index + 2];
-      uint8_t a = (components >= 4) ? buffer[index + 3] : 255;
-
+      uint8_t a = has_alpha ? buffer[index + bpp] : 255;
       if (a == 0) continue;
       
+      uint8_t r1;
+      uint8_t g1;
+      uint8_t b1;
+
+      // if (bpp == 3) {
+      //   r1 = buffer[index + 0];
+      //   g1 = buffer[index + 1];
+      //   b1 = buffer[index + 2];
+      // }
+      // else {
+        Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
+      // }
+      
       if (r1 >= th || g1 >= th || b1 >= th) {
-        oled.drawPixel(x + offset_x, y + offset_y, WHITE);
+        oled.drawPixel(x + offset_x, y + offset_y, SSD1306_WHITE);
       }
     }
   }
