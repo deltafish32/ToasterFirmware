@@ -1,0 +1,15 @@
+version: 1
+video:
+  # ffmpeg -i test.mp4 -r 30 -s 44:27 -f image2 %d.png
+  path: png/video/%d.png
+  start: 1
+  end: 210
+  fps: 30
+  mode: mirror_only_offset
+  loop: true
+
+  offset: auto
+
+  # offset: manual
+  # offset_x: 20
+  # offset_y: 2

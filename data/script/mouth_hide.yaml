@@ -1,8 +1,0 @@
-version: 1
-images:
-  - /png/mouth/mouth_default.png
-sequences:
-  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
-  - draw, 0, mouth, mirror, 0, 16, 0
-boop_sequences:
-  - none, 0

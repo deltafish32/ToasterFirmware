@@ -53,51 +53,6 @@ my_protogen:
   # face Visibility in festive
   festive_face: true
 
-
-emotions:
-  - name: default
-    eyes: eyes_normal
-    nose: nose_default
-    mouth: mouth_default
-    side: side_default
-  - name: normal
-    eyes: eyes_normal_boop
-    nose: nose_default_boop
-    mouth: mouth_normal_boop
-  # - name: normal
-  #   eyes: eyes_normal_boop2
-  #   nose: nose_hide
-  #   mouth: mouth_hide
-  - name: badass
-    eyes: eyes_badass
-  - name: grin
-    eyes: eyes_grin
-  - name: worry
-    eyes: eyes_worry
-  - name: love
-    eyes: eyes_love
-  - name: confusion
-    eyes: eyes_confusion
-  - name: qmark
-    eyes: eyes_qmark
-  - name: unyuu
-    eyes: eyes_unyuu
-  - name: bean
-    eyes: eyes_bean
-  - name: bsod
-    eyes: bsod
-    nose: ''
-    mouth: ''
-  - name: loading
-    eyes: loading
-    nose: ''
-    mouth: ''
-  - name: video
-    eyes: video
-    nose: ''
-    mouth: ''
-
-
 hardware:
   # 메인 디스플레이 (HUB75)
   # Main display (HUB75)
@@ -131,7 +86,15 @@ hardware:
     # 사진 촬영시 플리커링이 발생한다면 50이나 60의 배수를 사용하되 가능한 높은 값을 사용해보세요.
     # Minimum refresh rate (1 to 255, default: 240)
     # If flickering occurs when taking photos, try using a multiple of 50 or 60, but as high as possible.
-    #min_refresh_rate: 240
+    # min_refresh_rate: 240
+
+    # RGB565 변환 여부 (기본값: true)
+    # RGB888 대신 RGB565로 변환하면 화질이 미세하게 저하되지만, 메모리를 절약 할 수 있습니다.
+    # (대부분의 프로토젠 표정은 투명도만 사용하므로, 화질 저하의 영향이 없습니다.)
+    # Whether to convert to RGB565 (default: true)
+    # If you use RGB565 instead of RGB888, the image quality will slightly reduced, but you can save memory.
+    # (Most Protogen emotions only use transparency, there is no loss of image quality.)
+    # use_rgb565: true
 
   # 사이드 패널 (NeoPixel)
   # Side panel (NeoPixel)
@@ -157,6 +120,12 @@ hardware:
   hud:
     fps: 30
     # i2c: 0x3C
+
+    # 디더링 (기본값: true)
+    # 디더링을 켜면 가시성이 향상됩니다.
+    # Dithering (default: true)
+    # Turning on dithering improves visibility.
+    dithering: true
 
   # ESP-Now
   i2c_esp_now:
@@ -208,13 +177,17 @@ hardware:
       - code: 0xf20dff00 # #
         emotion: bsod
       - code: 0xf708ff00 # left
-        keypress: H
+        keypress: 0x25
+        mode: keycode
       - code: 0xad52ff00 # down
-        keypress: J
+        keypress: 0x28
+        mode: keycode
       - code: 0xe718ff00 # up
-        keypress: K
+        keypress: 0x26
+        mode: keycode
       - code: 0xa55aff00 # right
-        keypress: L
+        keypress: 0x27
+        mode: keycode
       - code: 0xe31cff00 # ok
         keypress: A
 

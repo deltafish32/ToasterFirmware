@@ -1,0 +1,73 @@
+version: 1
+
+emotions:
+  - name: default
+    eyes: eyes_normal
+    nose: nose_default
+    mouth: mouth_default
+    special: ''
+    special2: ''
+    side: side_default
+  - name: normal
+    eyes: eyes_normal_boop
+    nose: nose_default_boop
+    mouth: mouth_normal_boop
+  - name: normal_alt
+    eyes: eyes_normal_boop2
+    nose: nose_hide
+    mouth: mouth_hide
+  - name: normal_blushing
+    eyes: eyes_normal_boop
+    nose: nose_default_boop
+    mouth: mouth_normal_boop
+    special: blushing
+  - name: badass
+    eyes: eyes_badass
+  - name: badass_alt
+    eyes: eyes_badass
+    mouth: mouth_badass
+  - name: badass_blushing
+    eyes: eyes_badass
+    special: blushing
+  - name: grin
+    eyes: eyes_grin
+  - name: worry
+    eyes: eyes_worry
+    mouth: mouth_badass
+  - name: sad
+    eyes: eyes_worry
+    mouth: mouth_badass
+    special: tear
+  - name: love
+    eyes: eyes_love
+  - name: confusion
+    eyes: eyes_confusion
+  - name: qmark
+    eyes: eyes_qmark
+  - name: unyuu
+    eyes: eyes_unyuu
+    nose: nose_cute
+    mouth: mouth_cute
+    special: blushing
+  - name: bean
+    eyes: eyes_bean
+  - name: bsod
+    eyes: bsod
+    nose: ''
+    mouth: ''
+  - name: loading
+    eyes: video_loading
+    nose: ''
+    mouth: ''
+  - name: video
+    eyes: video_gif
+    nose: ''
+    mouth: ''
+  # - name: video
+  #   eyes: video_mjpeg
+  #   nose: ''
+  #   mouth: ''
+  # - name: video
+  #   eyes: video_legacy
+  #   nose: ''
+  #   mouth: ''

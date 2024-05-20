@@ -1,0 +1,10 @@
+version: 1
+images:
+  - png/mouth_e.png
+  - png/mouth_cute_e.png
+sequences:
+  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
+  - draw, 0, mouth, mirror, 0, 16, 0
+boop_sequences:
+  - draw, 1, mouth, mirror, 0, 16, 0
+  

@@ -1,0 +1,8 @@
+version: 1
+video:
+  path: gif/loading.gif
+  mode: mirror_only_offset
+
+  offset: manual
+  offset_x: 22
+  offset_y: 0

@@ -1,0 +1,6 @@
+version: 1
+images:
+  - png/special/tear.png
+sequences:
+  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
+  - draw, 0, original, mirror, 28, 13, 0

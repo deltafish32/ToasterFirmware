@@ -1,0 +1,25 @@
+version: 1
+images:
+  - png/eyes/eye_con_0.png
+  - png/eyes/eye_con_1.png
+  - png/eyes/eye_con_2.png
+  - png/eyes/eye_con_3.png
+sequences:
+  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
+  - draw, 0, eyes, mirror, 22, 2, 0.05
+  - draw, 1, eyes, mirror, 22, 2, 0.05
+  - draw, 2, eyes, mirror, 22, 2, 0.05
+  - draw, 3, eyes, mirror, 22, 2, 0.05
+  - draw_90, 0, eyes, mirror, 22, 2, 0.05
+  - draw_90, 1, eyes, mirror, 22, 2, 0.05
+  - draw_90, 2, eyes, mirror, 22, 2, 0.05
+  - draw_90, 3, eyes, mirror, 22, 2, 0.05
+  - draw_180, 0, eyes, mirror, 22, 2, 0.05
+  - draw_180, 1, eyes, mirror, 22, 2, 0.05
+  - draw_180, 2, eyes, mirror, 22, 2, 0.05
+  - draw_180, 3, eyes, mirror, 22, 2, 0.05
+  - draw_270, 0, eyes, mirror, 22, 2, 0.05
+  - draw_270, 1, eyes, mirror, 22, 2, 0.05
+  - draw_270, 2, eyes, mirror, 22, 2, 0.05
+  - draw_270, 3, eyes, mirror, 22, 2, 0.05
+  

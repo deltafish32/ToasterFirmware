@@ -1,0 +1,52 @@
+version: 1
+
+emotions:
+  - name: normal_e
+    eyes: eyes_normal_e
+    nose: nose_e_boop
+    mouth: mouth_e_boop
+  - name: normal_e_alt
+    eyes: eyes_normal_e_alt
+    nose: nose_e_boop
+    mouth: mouth_e_boop
+  - name: badass_e
+    eyes: eyes_badass_e
+    nose: nose_e
+    mouth: mouth_e
+  - name: badass_e_alt
+    eyes: eyes_badass_e
+    mouth: mouth_badass_e
+    nose: nose_e
+    mouth: mouth_e
+  - name: badass_e_blushing
+    eyes: eyes_badass_e
+    mouth: mouth_e
+    nose: nose_e
+    mouth: mouth_e
+    special: blushing
+  - name: grin_e
+    eyes: eyes_grin_e
+    nose: nose_e
+    mouth: mouth_e
+  - name: worry_e
+    eyes: eyes_worry_e
+    nose: nose_e
+    mouth: mouth_badass_e
+  - name: sad_e
+    eyes: eyes_worry_e
+    nose: nose_e
+    mouth: mouth_badass_e
+    special: tear
+  - name: love_e
+    eyes: eyes_love_e
+    nose: nose_e
+    mouth: mouth_e
+  - name: unyuu_e
+    eyes: eyes_unyuu_e
+    nose: nose_cute_e
+    mouth: mouth_cute_e
+    special: blushing
+  - name: bean_e
+    eyes: eyes_bean_e
+    nose: nose_e
+    mouth: mouth_e

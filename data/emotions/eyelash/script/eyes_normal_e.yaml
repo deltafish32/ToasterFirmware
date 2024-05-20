@@ -1,0 +1,23 @@
+version: 1
+images:
+  - png/eye_normal_e_0.png
+  - png/eye_normal_e_1.png
+  - png/eye_normal_e_2.png
+  - png/eye_normal_e_3.png
+  - png/eye_normal_e_4.png
+  - png/eye_normal_e_5.png
+  - png/eye_unyuu_e.png
+sequences:
+  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
+  - draw, 0, eyes, mirror, 0, 0, 3.0
+  - draw, 1, eyes, mirror, 0, 0, 0.016
+  - draw, 2, eyes, mirror, 0, 0, 0.016
+  - draw, 3, eyes, mirror, 0, 0, 0.016
+  - draw, 4, eyes, mirror, 0, 0, 0.016
+  - draw, 5, eyes, mirror, 0, 0, 0.100
+  - draw, 4, eyes, mirror, 0, 0, 0.016
+  - draw, 3, eyes, mirror, 0, 0, 0.016
+  - draw, 2, eyes, mirror, 0, 0, 0.016
+  - draw, 1, eyes, mirror, 0, 0, 0.016
+boop_sequences:
+  - draw, 6, eyes, mirror, 0, 0, 0

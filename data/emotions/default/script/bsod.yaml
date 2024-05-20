@@ -1,0 +1,7 @@
+version: 1
+images:
+  - png/full/bsod.png
+sequences:
+  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
+  - draw, 0, original, mirror_only_offset, 12, 0, 0
+  

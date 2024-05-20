@@ -1,0 +1,8 @@
+version: 1
+images:
+  - png/nose/nose_default.png
+sequences:
+  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
+  - draw, 0, nose, mirror, 48, 0, 0
+boop_sequences:
+  - none, 0

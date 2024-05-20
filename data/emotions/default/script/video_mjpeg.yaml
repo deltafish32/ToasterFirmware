@@ -1,0 +1,13 @@
+version: 1
+video:
+  # ffmpeg -i test.mp4 -vf "fps=30,scale=-1:27:flags=lanczos" -q:v 3 test.mjpeg
+  path: mjpeg/test.mjpeg
+  fps: 30
+  mode: mirror_only_offset
+  loop: true
+
+  offset: auto
+
+  # offset: manual
+  # offset_x: 20
+  # offset_y: 2

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="48"
+   height="16"
+   viewBox="0 0 12.7 4.2333334"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.3 (0e150ed, 2023-07-21)"
+   sodipodi:docname="eye_worry_e.svg"
+   inkscape:export-filename="../../../data/emotions/eyelash/png/eye_worry_e.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="12.62582"
+     inkscape:cx="29.66144"
+     inkscape:cy="9.583536"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="px"
+     inkscape:window-width="1312"
+     inkscape:window-height="449"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="Layer 3"
+     style="display:inline">
+    <path
+       style="fill:#00ff00;fill-opacity:1;stroke:none;stroke-width:0.224506px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 5.9805604,3.5884567 C 5.5862934,3.5602924 6.4281291,2.8844199 7.4528757,2.6286158 9.192561,2.1943441 8.5447289,0.92606516 9.3445484,0.90955056 11.442595,0.86623029 12.734118,2.6262707 12.410741,2.9418153 12.283306,3.0661641 10.839022,3.0912543 9.3446146,3.2279306 7.8544389,3.3642199 6.314423,3.6123061 5.9805604,3.5884567 Z"
+       id="path828"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ssssss" />
+    <path
+       style="display:inline;fill:#00ff00;fill-opacity:1;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 6.5004464,3.0052793 C 6.1745664,3.144798 5.2244387,3.1028363 4.4938667,2.755228 c 0.146153,0.4880247 0.705611,0.8337398 1.455591,0.944033 0.118539,0.05996 -0.3721475,0.2699883 -0.8540065,0.2844207 0.570288,0.3860624 1.7491348,0.067603 1.8715708,-0.7469045 z"
+       id="path1"
+       sodipodi:nodetypes="cccccc" />
+  </g>
+</svg>

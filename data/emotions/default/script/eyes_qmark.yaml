@@ -1,0 +1,12 @@
+version: 1
+images:
+  - png/eyes/eye_qmark_0.png
+  - png/eyes/eye_qmark_1.png
+  - png/eyes/eye_qmark_2.png
+sequences:
+  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
+  - draw, 0, eyes, mirror_only_offset, 20, 0, 0.2
+  - draw, 1, eyes, mirror_only_offset, 20, 0, 0.2
+  - draw, 0, eyes, mirror_only_offset, 20, 0, 0.2
+  - draw, 2, eyes, mirror_only_offset, 20, 0, 0.2
+  

@@ -1,7 +1,0 @@
-version: 1
-images:
-  - /png/eyes/eye_worry.png
-sequences:
-  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
-  - draw, 0, eyes, mirror, 0, 0, 0
-  

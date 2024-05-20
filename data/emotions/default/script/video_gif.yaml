@@ -1,0 +1,10 @@
+version: 1
+video:
+  path: gif/test.gif
+  mode: mirror_only_offset
+
+  offset: auto
+
+  # offset: manual
+  # offset_x: 20
+  # offset_y: 2
