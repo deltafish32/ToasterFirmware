@@ -40,11 +40,7 @@ void HeadUpDisplay::pressKey(uint16_t key, uint8_t mode) {
   }
 
   if (_hud != nullptr) {
-    Protogen.syncLock();
-
     _hud->pressKey(key, mode);
-    
-    Protogen.syncUnlock();
   }
 }
 

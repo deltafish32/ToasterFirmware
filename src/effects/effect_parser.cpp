@@ -14,7 +14,7 @@ namespace toaster {
 static const char* TAG = "EffectParser";
 
 
-static const std::map<std::string, uint8_t> methods = {
+static const std::map<std::string, uint8_t> METHODS = {
   {"none", Effect::SM_NONE},
   {"draw", Effect::SM_DRAW},
   {"draw_90", Effect::SM_DRAW_90},
@@ -24,7 +24,7 @@ static const std::map<std::string, uint8_t> methods = {
   {"video_loop", Effect::SM_VIDEO_LOOP},
 };
 
-static const std::map<std::string, uint8_t> colors = {
+static const std::map<std::string, uint8_t> COLORS = {
   {"original", Effect::PC_ORIGINAL},
   {"eyes", Effect::PC_EYES},
   {"nose", Effect::PC_NOSE},
@@ -32,7 +32,7 @@ static const std::map<std::string, uint8_t> colors = {
   {"side", Effect::PC_SIDE},
 };
 
-static const std::map<std::string, uint8_t> modes = {
+static const std::map<std::string, uint8_t> MODES = {
   {"single", Effect::DM_SINGLE},
   {"copy", Effect::DM_COPY},
   {"mirror", Effect::DM_MIRROR},
@@ -111,19 +111,15 @@ bool EffectParser::open(const char* filename) {
     _video.end = yaml.getInt("video:end", 1);
     _video.fps = yaml.getInt("video:fps", 15);
     
-    auto mode = modes.find(yaml.getString("video:mode", "mirror_only_offset"));
-    if (mode == modes.end()) {
-      _video.mode = Effect::DM_MIRROR_ONLY_OFFSET;
-    }
-    else {
-      _video.mode = mode->second;
-    }
+    auto mode = MODES.find(yaml.getString("video:mode", "mirror_only_offset"));
+    _video.mode = (mode != MODES.end()) ? mode->second : Effect::DM_MIRROR_ONLY_OFFSET;
     
     _video.loop = parse_bool(yaml.getString("video:loop", "true").c_str());
 
     _video.offset_x = yaml.getInt("video:offset_x", 0);
     _video.offset_y = yaml.getInt("video:offset_y", 0);
     _video.offset_mode = (yaml.getString("video:offset", "auto") == "auto") ? 1 : 0;
+    _video.color = (yaml.getString("video:color", "original") == "original") ? 0 : 1;
   }
   
   TF_LOGD(TAG, "yaml parsed (%lld us)", Timer::get_micros() - tick);
@@ -138,8 +134,8 @@ uint8_t EffectParser::parseDrawSequence(const std::string& str, DRAW_SEQUENCE& d
     return PD_SKIP;
   }
 
-  auto method = methods.find(split_result[0].c_str());
-  if (method == methods.end()) {
+  auto method = METHODS.find(split_result[0].c_str());
+  if (method == METHODS.end()) {
     error = "failed to parse [method] in [sequences]";
     return PD_FAIL;
   }
@@ -164,15 +160,15 @@ uint8_t EffectParser::parseDrawSequence(const std::string& str, DRAW_SEQUENCE& d
 
     ds.image = atoi(split_result[1].c_str());
 
-    auto color = colors.find(split_result[2].c_str());
-    if (color == colors.end()) {
+    auto color = COLORS.find(split_result[2].c_str());
+    if (color == COLORS.end()) {
       error = "failed to parse [color] in [sequences]";
       return PD_FAIL;
     }
     ds.color = color->second;
 
-    auto mode = modes.find(split_result[3].c_str());
-    if (mode == modes.end()) {
+    auto mode = MODES.find(split_result[3].c_str());
+    if (mode == MODES.end()) {
       error = "failed to parse [mode] in [sequences]";
       return PD_FAIL;
     }
@@ -193,8 +189,8 @@ uint8_t EffectParser::parseDrawSequence(const std::string& str, DRAW_SEQUENCE& d
 
     ds.image = atoi(split_result[1].c_str());
 
-    auto mode = modes.find(split_result[2].c_str());
-    if (mode == modes.end()) {
+    auto mode = MODES.find(split_result[2].c_str());
+    if (mode == MODES.end()) {
       error = "failed to parse [mode] in [sequences]";
       return PD_FAIL;
     }

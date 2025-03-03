@@ -9,6 +9,11 @@ emotions:
     eyes: eyes_normal_e_alt
     nose: nose_e_boop
     mouth: mouth_e_boop
+  - name: normal_blushing_e
+    eyes: eyes_normal_e
+    nose: nose_e_boop
+    mouth: mouth_e_boop
+    special: blushing
   - name: badass_e
     eyes: eyes_badass_e
     nose: nose_e
@@ -26,6 +31,10 @@ emotions:
     special: blushing
   - name: grin_e
     eyes: eyes_grin_e
+    nose: nose_e
+    mouth: mouth_e
+  - name: closed_e
+    eyes: eyes_closed_e
     nose: nose_e
     mouth: mouth_e
   - name: worry_e
@@ -50,3 +59,7 @@ emotions:
     eyes: eyes_bean_e
     nose: nose_e
     mouth: mouth_e
+  - name: smirk_e
+    eyes: eyes_smirk_e
+    nose: nose_e
+    mouth: mouth_smirk_e

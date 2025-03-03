@@ -147,7 +147,7 @@ static uint8_t parse_key_value(const char* str, std::string& out_key, std::strin
 
   if (*ptr != ':') {
     if (is_array == false) {
-      return false;
+      return YamlNode::YAML_NONE;
     }
     else {
       out_key = "";
@@ -169,7 +169,11 @@ static uint8_t parse_key_value(const char* str, std::string& out_key, std::strin
   }
   else {
     if (!is_yaml_comment(ptr)) {
-      return false;
+      //return YamlNode::YAML_NONE;
+      out_key = "";
+      out_value = parse_value(str);
+
+      return YamlNode::YAML_ARRAY;
     }
 
     out_key = std::string(str, ptr2 - str);

@@ -218,7 +218,7 @@ Actions are case-sensitive.
 | C | Color mode - Rainbow(single) (rainbow_single) | |
 | V | Color mode - Rainbow (rainbow) | |
 | B | Color mode - Gradation (gradation) | |
-| A | Toggle Photo mode | Mode to stop screen changes |
+| E | Toggle Photo mode | Mode to stop screen changes |
 | LEFT | Left | Use in menu (back) |
 | DOWN | Down | Use in menu |
 | UP | Up | Use in menu |
@@ -243,3 +243,6 @@ Press the `Enter` key or `!` key and enter the command.
 | `noboop`               | Disable boop sensor. | |
 | `dithering`            | Enable HUD dithering. | |
 | `nodithering`          | Disable HUD dithering. | |
+| `datetime`             | Displays the date and time of the built-in clock. | |
+| `settime`              | Sets the time of the built-in clock. | 예제: `settime 12:34` 또는 `settime 12:34:56` |
+| `setdatetime`          | Sets the date and time of the built-in clock. | 예제: `setdatetime 2023-12-08 12:34:56` |

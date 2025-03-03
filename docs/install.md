@@ -218,7 +218,7 @@ Visual Studio Code 화면 하단의 `Platformio: Serial Monitor` 버튼을 누�
 | C | 색상 모드 - 무지개(단색) (rainbow_single) | |
 | V | 색상 모드 - 무지개 (rainbow) | |
 | B | 색상 모드 - 그라데이션 (gradation) | |
-| A | 사진 모드 토글 | 화면의 변화를 멈추는 모드 |
+| E | 사진 모드 토글 | 화면의 변화를 멈추는 모드 |
 | 왼쪽 방향키 | 왼쪽 | 메뉴에서 사용 (뒤로가기) |
 | 아래쪽 방향키  | 아래쪽 | 메뉴에서 사용 |
 | 위쪽 방향키 | 위쪽 | 메뉴에서 사용 |
@@ -243,3 +243,6 @@ Visual Studio Code 화면 하단의 `Platformio: Serial Monitor` 버튼을 누�
 | `noboop`               | Boop 센서를 비활성화합니다. | |
 | `dithering`            | HUD dithering을 활성화합니다. | |
 | `nodithering`          | HUD dithering을 비활성화합니다. | |
+| `datetime`             | 내장 시계의 날짜와 시간을 표시합니다. | |
+| `settime`              | 내장 시계의 시간을 설정합니다. | 예제: `settime 12:34` 또는 `settime 12:34:56` |
+| `setdatetime`          | 내장 시계의 날짜와 시간을 설정합니다. | 예제: `setdatetime 2023-12-08 12:34:56` |

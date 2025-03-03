@@ -61,6 +61,7 @@ protected:
   int _video_offset_y{0};
   bool _video_flag{false};
   size_t _video_index{0};
+  int _video_color{0};
 
 protected:
   std::string makeFileName(const char* filename);

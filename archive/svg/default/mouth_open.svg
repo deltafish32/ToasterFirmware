@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="64"
+   height="16"
+   viewBox="0 0 16.933333 4.2333334"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   sodipodi:docname="mouth_open.svg"
+   inkscape:export-filename="../../../data/emotions/default/png/mouth/mouth_open.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="22.4"
+     inkscape:cx="41.071428"
+     inkscape:cy="12.767857"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="px"
+     inkscape:window-width="2880"
+     inkscape:window-height="1676"
+     inkscape:window-x="-12"
+     inkscape:window-y="-12"
+     inkscape:window-maximized="1"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="Layer 3">
+    <path
+       style="fill:#000000;stroke-width:3.175;stroke-linecap:round;stroke-linejoin:round"
+       d="m 17.268787,1.6300223 1.003999,2.3505394"
+       id="path2" />
+    <path
+       id="path1"
+       style="fill:#00ff00;stroke-width:2.39487;stroke-linecap:round;stroke-linejoin:round"
+       d="m 16.609189,2.6834784 c 0.140986,0.5989056 -1.494205,0.8895121 -3.053231,0.8721838 -1.561038,-0.01735 -2.66552,-0.2012747 -2.66552,-0.6920144 0,-0.4907396 0.543248,-1.3635547 2.074259,-1.3635548 1.531011,1e-7 3.47312,0.4554003 3.644492,1.1833854 z"
+       sodipodi:nodetypes="sssss" />
+  </g>
+</svg>

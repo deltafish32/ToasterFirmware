@@ -24,6 +24,9 @@ public:
 
 public:
   virtual bool draw_image_newcolor(const Image* image, COLOR_FUNC color_func, uint8_t param = 0, DRAW_MODE draw_mode = DRAW_DEFAULT, int offset_x = 0, int offset_y = 0, int rotate_cw = 0);
+  virtual bool draw_image_newcolor_ex(const Image* image, COLOR_FUNC color_func, uint8_t param = 0, DRAW_MODE draw_mode = DRAW_DEFAULT, 
+    int offset_x = 0, int offset_y = 0, int w = 0, int h = 0, 
+    int source_x = 0, int source_y = 0, int rotate_cw = 0);
 
 protected:
   MatrixPanel_I2S_DMA *_dma_display{nullptr};

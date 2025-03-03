@@ -38,7 +38,15 @@ public:
     return false;
   }
 
+  virtual bool isNoShuffle() const {
+    return false;
+  }
+
   virtual bool isVideoMode() const {
+    return false;
+  }
+
+  virtual bool isGame() const {
     return false;
   }
 
@@ -129,10 +137,18 @@ public:
     setDirty();
   }
 
-  static void setGradationPoint(float p, uint8_t r, uint8_t g, uint8_t b) {
-    _gradation_r.pushDataPoint({p, r});
-    _gradation_g.pushDataPoint({p, g});
-    _gradation_b.pushDataPoint({p, b});
+  static void clearGradationPoint(uint8_t index) {
+    _gradation_r[index].clear();
+    _gradation_g[index].clear();
+    _gradation_b[index].clear();
+
+    setDirty();
+  }
+
+  static void setGradationPoint(uint8_t index, float p, uint8_t r, uint8_t g, uint8_t b) {
+    _gradation_r[index].pushDataPoint({p, r});
+    _gradation_g[index].pushDataPoint({p, g});
+    _gradation_b[index].pushDataPoint({p, b});
 
     setDirty();
   }
@@ -141,6 +157,8 @@ public:
     _rainbow_single_dirty = true;
     _rainbow_dirty = true;
     _gradation_dirty = true;
+
+    _sync_timer_us = Timer::get_micros();
   }
 
   static Effect* find(const char* name, uint8_t script_index, const char* base_path);
@@ -156,9 +174,10 @@ protected:
   const char* _name{0,};
   int _step{0};
   timer_us_t _tick_us{0};
+  static timer_us_t _sync_timer_us;
 
   void restartTimer() {
-    _tick_us = Timer::get_micros();
+    _tick_us = _sync_timer_us;
 
     if (_staticMode) {
       _static_mode_tick_us = _tick_us;
@@ -176,7 +195,7 @@ protected:
       return false;
     }
 
-    return ((Timer::get_micros() - _tick_us) >= (time_ms * 1000));
+    return ((_sync_timer_us - _tick_us) >= (time_ms * 1000));
   }
 
 
@@ -198,11 +217,13 @@ public:
   };
 
   enum {
-    PC_ORIGINAL = 0,
-    PC_EYES,
+    PC_ORIGINAL = 255,
+    PC_EYES = 0,
     PC_NOSE,
     PC_MOUTH,
     PC_SIDE,
+
+    PC_MAX
   };
 
   enum {
@@ -218,14 +239,15 @@ protected:
   static timer_us_t _static_mode_tick_us;
   static timer_us_t _color_tick_us;
   static PROTOGEN_COLOR_MODE _colorMode;
+public:
   static COLOR_FUNC _colorFunc;
-  static uint8_t _personalColor[4][3];
+  static uint8_t _personalColor[8][3];
   static uint32_t _rainbowSingleSpeed_ms;
   static uint32_t _rainbowSpeed_ms;
   static uint32_t _rainbowTransitionPixels;
-  static LinearCalibrate<float, uint32_t> _gradation_r;
-  static LinearCalibrate<float, uint32_t> _gradation_g;
-  static LinearCalibrate<float, uint32_t> _gradation_b;
+  static LinearCalibrate<float, uint32_t> _gradation_r[2];
+  static LinearCalibrate<float, uint32_t> _gradation_g[2];
+  static LinearCalibrate<float, uint32_t> _gradation_b[2];
   static bool _rainbow_single_dirty;
   static uint8_t _rainbow_single_red;
   static uint8_t _rainbow_single_green;
@@ -235,9 +257,9 @@ protected:
   static uint8_t _rainbow_green[HUB75_PANEL_RES_X];
   static uint8_t _rainbow_blue[HUB75_PANEL_RES_X];
   static bool _gradation_dirty;
-  static uint8_t _gradation_reds[HUB75_PANEL_RES_X];
-  static uint8_t _gradation_greens[HUB75_PANEL_RES_X];
-  static uint8_t _gradation_blues[HUB75_PANEL_RES_X];
+  static uint8_t _gradation_reds[2][HUB75_PANEL_RES_X];
+  static uint8_t _gradation_greens[2][HUB75_PANEL_RES_X];
+  static uint8_t _gradation_blues[2][HUB75_PANEL_RES_X];
 
 
 public: 
@@ -255,6 +277,11 @@ public:
   static void color_func_rainbow_single(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
   static void color_func_rainbow(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
   static void color_func_gradation(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
+  
+  static void color_func_gray_personal(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
+  static void color_func_gray_rainbow_single(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
+  static void color_func_gray_rainbow(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
+  static void color_func_gray_gradation(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
   
 };
 

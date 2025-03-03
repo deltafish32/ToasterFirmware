@@ -28,9 +28,8 @@ void HUDSelector::process(Adafruit_SSD1306& oled) {
       oled.drawBitmap((OLED_WIDTH - BITMAP_UP_WIDTH) / 2, 0, BITMAP_UP, BITMAP_UP_WIDTH, BITMAP_UP_HEIGHT, SSD1306_WHITE);
       oled.drawBitmap((OLED_WIDTH - BITMAP_DOWN_WIDTH) / 2, OLED_HEIGHT - BITMAP_DOWN_HEIGHT, BITMAP_DOWN, BITMAP_DOWN_WIDTH, BITMAP_DOWN_HEIGHT, SSD1306_WHITE);
 
-      oled.setTextColor(SSD1306_WHITE);
-      oled.setTextSize(2);
       oled.setCursor(12 * 4, 24);
+      setFont(oled);
 
       if (!_strings.empty()) {
         oled.write(_strings[_select_index].c_str());
@@ -38,7 +37,7 @@ void HUDSelector::process(Adafruit_SSD1306& oled) {
 
       oled.display();
     }
-    if (timeout(TIMEOUT_INACTIVE)) {
+    if (timeout(TIMEOUT_INACTIVE_MS)) {
       prevHUD();
     }
     break;

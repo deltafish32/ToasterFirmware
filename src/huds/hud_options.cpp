@@ -16,7 +16,8 @@ void HUDOptions::init() {
   HUDMenu::init();
 
   clearMenu();
-  addMenu("Boop",   [](HUDBase* p) { 
+  addMenu("Bright.",   [](HUDBase* p, const char*) { p->nextHUD(&hud_brightness); });
+  addMenu("Boop",      [](HUDBase* p, const char*) { 
     std::vector<std::string> list = {"off", "on"};
     hud_selector.selectString(list, Protogen._boopsensor.getEnabled() ? 1 : 0, [](int index, void*) {
       Protogen._boopsensor.setEnabled(index == 0 ? false : true);

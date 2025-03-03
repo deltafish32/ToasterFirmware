@@ -114,4 +114,24 @@ bool parse_separate(const char* str, const char* token, std::string& left, std::
 }
 
 
+bool parse_mac(const char* str, uint8_t* mac) {
+  if (strlen(str) != 17) {
+    return false;
+  }
+
+  if (str[2] != ':' || str[5] != ':' || str[8] != ':' || str[11] != ':' || str[14] != ':') {
+    return false;
+  }
+
+  mac[0] = (hex2dec(str[ 0]) << 4) | (hex2dec(str[ 1]) << 0);
+  mac[1] = (hex2dec(str[ 3]) << 4) | (hex2dec(str[ 4]) << 0);
+  mac[2] = (hex2dec(str[ 6]) << 4) | (hex2dec(str[ 7]) << 0);
+  mac[3] = (hex2dec(str[ 9]) << 4) | (hex2dec(str[10]) << 0);
+  mac[4] = (hex2dec(str[12]) << 4) | (hex2dec(str[13]) << 0);
+  mac[5] = (hex2dec(str[15]) << 4) | (hex2dec(str[16]) << 0);
+
+  return true;
+}
+
+
 };

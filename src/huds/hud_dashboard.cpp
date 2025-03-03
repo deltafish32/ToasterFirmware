@@ -10,6 +10,8 @@
 
 namespace toaster {
 
+static const char* TAG = "HUDDashboard";
+
 HUDDashboard hud_dashboard;
 
 static const int ADC_MAX = 4095;
@@ -30,40 +32,34 @@ void HUDDashboard::process(Adafruit_SSD1306& oled) {
   switch (_step) {
   case 0:
     oled.clearDisplay();
+    oled.setCursor(0, 0);
+    setFont(oled);
 
     if (_unlock_count > 0) {
       char sz[32];
-      oled.setCursor(12 * 0, 0);
       sprintf(sz, "%d", UNLOCK_COUNT - _unlock_count);
       oled.write(sz);
     }
     else if (Protogen.isBlank() == false) {
-      oled.drawBitmap(12 * 0, 0, BITMAP_LOCK, BITMAP_LOCK_WIDTH, BITMAP_LOCK_HEIGHT, SSD1306_WHITE);
+      writeSpecial(oled, BITMAP_LOCK);
     }
 
     if (Protogen.isBlank() == false) {
-      mirror(oled, 0, 32, Protogen._hud.getDithering());
+      mirror(oled, 0, 32, !Protogen.isGame() && Protogen._hud.getDithering());
 
       char sz[32];
 
-      oled.setTextColor(SSD1306_WHITE);
-      oled.setTextSize(2);
-      
-      // oled.setCursor(0, 0);
-      // sprintf(sz, "%d", Protogen.getRecentFPS());
-      // oled.write(sz);
-
       if (Protogen.getStaticMode()) {
-        oled.drawBitmap(12 * 1, 0, BITMAP_PAUSE, BITMAP_PAUSE_WIDTH, BITMAP_PAUSE_HEIGHT, SSD1306_WHITE);
+        writeSpecial(oled, BITMAP_PAUSE);
       }
       else {
         int n = Timer::get_millis() / 200 % 4;
         if (n == 3) n = 1;
-        oled.drawBitmap(12 * 1, 0, BITMAP_PLAY[n], BITMAP_PLAY_WIDTH, BITMAP_PLAY_HEIGHT, SSD1306_WHITE);
+        writeSpecial(oled, BITMAP_PLAY[n]);
       }
       
       if (Protogen._boopsensor.isBoop()) {
-        oled.drawBitmap(12 * 2, 0, BITMAP_EX_MARK, BITMAP_EX_MARK_WIDTH, BITMAP_EX_MARK_HEIGHT, SSD1306_WHITE);
+        writeSpecial(oled, BITMAP_EX_MARK);
       }
 
       if (Protogen._thermometer.isBegin()) {
@@ -74,11 +70,16 @@ void HUDDashboard::process(Adafruit_SSD1306& oled) {
         sprintf(sz, "%.1f", temperature);
         oled.write(sz);
         
-        oled.drawBitmap(12 * 9 + 8, 0, BITMAP_CELSIUS, BITMAP_CELSIUS_WIDTH, BITMAP_CELSIUS_HEIGHT, SSD1306_WHITE);
+        writeSpecial(oled, BITMAP_CELSIUS);
 
         oled.setCursor(12 * 7 + 8, 16 * 1);
         sprintf(sz, "%.f%%", humidity);
         oled.write(sz);
+      }
+
+      if (Protogen._rtc.isBegin()) {
+        oled.setCursor(12 * 0, 16 * 1);
+        oled.write(Protogen.getTimeStr());
       }
     }
 
@@ -119,6 +120,10 @@ void HUDDashboard::pressKey(uint16_t key, uint8_t mode) {
 
         }
       }
+    }
+    else if (key == 'E' || key == 'e') {
+      Protogen.setStaticMode(!Protogen.getStaticMode());
+      TF_LOGI(TAG, "%s", Protogen.getStaticMode() ? "pause" : "play");
     }
   }
   else {

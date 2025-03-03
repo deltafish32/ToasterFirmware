@@ -18,13 +18,24 @@ public:
 
 protected:
   std::string _group;
+
+protected:
+  virtual void refreshHighlight();
+
+  friend class HUDEmotionDir;
 };
+
 
 class HUDEmotionDir : public HUDMenu {
 public:
   virtual void init();
 
+protected:
+  virtual void refreshHighlight();
+  virtual void shuffle();
+
 };
+
 
 extern std::vector<HUDEmotions> hud_emotions;
 extern HUDEmotionDir hud_emotiondir;

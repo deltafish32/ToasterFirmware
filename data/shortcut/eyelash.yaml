@@ -1,0 +1,31 @@
+version: 2
+
+# 빠른 표정 변경
+# Emotion shortcut
+shortcut:
+  # 왼손 검지, 중지, 약지 (클릭 or 길게 클릭)
+  # Left index, middle, ring finger (click or long-click)
+  left:
+    index: normal_e
+    index_2: normal_e_alt
+    index_3: normal_blushing_e
+    index_long: grin_e
+    middle: badass_e
+    middle_2: badass_e_alt
+    middle_3: badass_e_blushing
+    middle_long: worry_e
+    ring: love_e
+    ring_2: smirk_e
+    ring_long: unyuu
+  # 오른손 검지, 중지, 약지 (클릭 or 길게 클릭)
+  # Right index, middle, ring finger (click or long-click)
+  right:
+    index: confusion
+    index_2: closed_e
+    index_long: qmark
+    middle: loading
+    middle_2: clock
+    middle_3: dino
+    middle_long: festive
+    ring: bean_e
+    ring_long: bsod

@@ -15,15 +15,14 @@ public:
 public:
   enum {
     MENU_FUNC = 0,
-    MENU_EMOTION,
     MENU_HUD,
   };
 
   typedef struct _MENU_ITEM {
     uint8_t type;
     std::string text;
-    std::function<void(HUDBase*)> func;
-    std::string emotion;
+    std::function<void(HUDBase*, const char*)> func;
+    std::string param;
     HUDBase* hud;
   } MENU_ITEM;
 
@@ -42,6 +41,7 @@ protected:
 
 protected:
   bool _menu_use_highlight{false};
+  bool _use_shuffle{false};
   bool _use_backbutton{true};
 
 public:
@@ -49,23 +49,26 @@ public:
     _menuData.clear();
   }
 
-  void addMenu(const char* text, std::function<void(HUDBase*)> func) {
-    _menuData.push_back({MENU_FUNC, text, func, "",});
-  }
-
-  void addEmotion(const char* text, const char* emotion) {
-    _menuData.push_back({MENU_EMOTION, text, nullptr, emotion,});
-  }
-
-  void addHUD(const char* text, HUDBase* hud) {
-    _menuData.push_back({MENU_HUD, text, nullptr, "", hud,});
-  }
+  void addMenu(const char* text, std::function<void(HUDBase*, const char*)> func, const std::string& param = "");
+  void addEmotion(const char* text, const char* emotion);
+  void addHUD(const char* text, HUDBase* hud);
 
 protected:
   void drawMenu(Adafruit_SSD1306& oled);
   size_t getMenuCount() const {
-    return _menuData.size() + (_use_backbutton ? 1 : 0);
+    return _menuData.size() + (_use_backbutton ? 1 : 0) + (_use_shuffle ? 1 : 0);
   }
+
+  int getBackbuttonIndex() const {
+    return getMenuCount() - 1;
+  }
+  int getShuffleIndex() const {
+    return getMenuCount() - 1 - (_use_backbutton ? 1 : 0);
+  }
+
+  virtual bool selectMenu(int index);
+  virtual void refreshHighlight();
+  virtual void shuffle();
 
 };
 

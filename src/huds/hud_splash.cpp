@@ -1,6 +1,7 @@
 #include "hud_splash.h"
 #include "lib/logger.h"
 #include "huds.h"
+#include "hud_font.h"
 
 
 namespace toaster {
@@ -146,14 +147,7 @@ bool HUDSplash::draw_oled_png(Adafruit_SSD1306& oled, const Image* image, int of
       uint8_t g1;
       uint8_t b1;
 
-      // if (bpp == 3) {
-      //   r1 = buffer[index + 0];
-      //   g1 = buffer[index + 1];
-      //   b1 = buffer[index + 2];
-      // }
-      // else {
-        Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
-      // }
+      Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
       
       if (r1 >= th || g1 >= th || b1 >= th) {
         oled.drawPixel(x + offset_x, y + offset_y, SSD1306_WHITE);

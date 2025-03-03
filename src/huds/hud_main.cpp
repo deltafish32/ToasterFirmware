@@ -14,10 +14,10 @@ void HUDMain::init() {
   HUDMenu::init();
 
   clearMenu();
-  addMenu("Emotion",   [](HUDBase* p) { p->nextHUD(&hud_emotiondir); });
-  addMenu("Bright.",   [](HUDBase* p) { p->nextHUD(&hud_brightness); });
-  addMenu("Options",   [](HUDBase* p) { p->nextHUD(&hud_options); });
-  addMenu("Color",     [](HUDBase* p) { p->nextHUD(&hud_colors); });
+  addMenu("Emotion",   [](HUDBase* p, const char*) { p->nextHUD(&hud_emotiondir); });
+  addMenu("Shortcut",  [](HUDBase* p, const char*) { p->nextHUD(&hud_shortcut_select); });
+  addMenu("Options",   [](HUDBase* p, const char*) { p->nextHUD(&hud_options); });
+  addMenu("Color",     [](HUDBase* p, const char*) { p->nextHUD(&hud_colors); });
 }
 
 };

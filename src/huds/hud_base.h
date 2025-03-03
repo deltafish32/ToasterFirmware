@@ -2,6 +2,7 @@
 #include "config/configure.h"
 #include "lib/timer.h"
 #include <Adafruit_SSD1306.h>
+#include "hud_font.h"
 
 
 namespace toaster {
@@ -57,8 +58,37 @@ protected:
     restartTimer();
   }
 
-  bool timeout(timer_ms_t time_ms) {
+  bool timeout(timer_ms_t time_ms) const {
     return ((Timer::get_millis() - _tick_ms) >= time_ms);
+  }
+
+  timer_ms_t getTimeElapsed() const {
+    return (Timer::get_millis() - _tick_ms);
+  }
+  
+  static void writeSpecial(Adafruit_SSD1306& oled, const uint8_t* bitmap) {
+    const int16_t BITMAP_W = 12;
+    const int16_t BITMAP_H = 16;
+
+    if (bitmap != nullptr) {
+      oled.drawBitmap(oled.getCursorX(), oled.getCursorY(), bitmap, BITMAP_W, BITMAP_H, SSD1306_WHITE);
+    }
+    oled.setCursor(oled.getCursorX() + BITMAP_W, oled.getCursorY());
+  }
+
+  static void writeCenter(Adafruit_SSD1306& oled, const char* str) {
+    int16_t x, y;
+    uint16_t w, h;
+    oled.getTextBounds(str, 0, 0, &x, &y, &w, &h);
+    oled.setCursor((oled.width() - w) / 2, oled.getCursorY());
+    oled.write(str);
+  }
+
+  void setFont(Adafruit_SSD1306& oled) {
+    oled.setTextSize(1);
+    oled.setFont(&Perfect_DOS_VGA_437_Win8pt7b);
+    oled.setTextWrap(false);
+    oled.setTextColor(SSD1306_WHITE);
   }
 
 public:
@@ -73,7 +103,7 @@ public:
   }
 
 protected:
-  static const timer_ms_t TIMEOUT_INACTIVE;
+  static const timer_ms_t TIMEOUT_INACTIVE_MS;
 };
 
 
@@ -105,25 +135,13 @@ extern const size_t BITMAP_DOWN_WIDTH;
 extern const size_t BITMAP_DOWN_HEIGHT;
 extern const uint8_t PROGMEM BITMAP_DOWN[];
 
-extern const size_t BITMAP_CELSIUS_WIDTH;
-extern const size_t BITMAP_CELSIUS_HEIGHT;
 extern const uint8_t PROGMEM BITMAP_CELSIUS[];
-
-extern const size_t BITMAP_EX_MARK_WIDTH;
-extern const size_t BITMAP_EX_MARK_HEIGHT;
 extern const uint8_t PROGMEM BITMAP_EX_MARK[];
-
-extern const size_t BITMAP_LOCK_WIDTH;
-extern const size_t BITMAP_LOCK_HEIGHT;
 extern const uint8_t PROGMEM BITMAP_LOCK[];
-
-extern const size_t BITMAP_PLAY_WIDTH;
-extern const size_t BITMAP_PLAY_HEIGHT;
 extern const uint8_t PROGMEM BITMAP_PLAY[3][32];
-
-extern const size_t BITMAP_PAUSE_WIDTH;
-extern const size_t BITMAP_PAUSE_HEIGHT;
 extern const uint8_t PROGMEM BITMAP_PAUSE[];
-
+extern const uint8_t PROGMEM BITMAP_SHUFFLE[];
+extern const uint8_t PROGMEM BITMAP_BACK[];
+extern const uint8_t PROGMEM BITMAP_CURSOR[];
 
 };

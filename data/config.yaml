@@ -10,6 +10,13 @@ my_protogen:
   color_mouth: color_eyes
   color_side: color_eyes
   
+  # 오른쪽 눈, 코, 입, 사이드 패널 색상
+  # Color of eyes, nose, mouth, side panel on the right.
+  # color_right_eyes: '#ff0000'
+  # color_right_nose: color_right_eyes
+  # color_right_mouth: color_right_eyes
+  # color_right_side: color_right_eyes
+  
   # 기본 표정
   # Default emotion
   default_emotion: normal
@@ -43,6 +50,13 @@ my_protogen:
   # 그라데이션 색상
   # Gradient color
   # gradation_points:
+  #   - 0.0 -> '#0000ff'
+  #   - 0.4 -> '#00ff00'
+  #   - 0.5 -> '#00ff00'
+  #   - 0.8 -> '#00ff00'
+  #   - 1.0 -> '#ffff00'
+  
+  # gradation_right_points:
   #   - 0.0 -> '#0000ff'
   #   - 0.4 -> '#00ff00'
   #   - 0.5 -> '#00ff00'
@@ -99,6 +113,10 @@ hardware:
   # 사이드 패널 (NeoPixel)
   # Side panel (NeoPixel)
   side_panel:
+    # 종류 (strip, circle, 기본값: strip)
+    # Type (strip, circle, default: strip)
+    type: strip
+    
     num_leds: 72
     pin: 17
     # NeoPixelBus 종류 변경은 컴파일이 필요합니다.
@@ -109,6 +127,10 @@ hardware:
     # Side panel brightness rate
     # less than 1.0, the side becomes darker, and larger than 1.0, the side becomes brighter.
     brightness_rate: 0.05
+
+    # 순서 뒤집기
+    # Reverse order
+    reversed: true
 
   # I2C Bus
   i2c:
@@ -130,6 +152,9 @@ hardware:
   # ESP-Now
   i2c_esp_now:
     i2c: 0x15
+
+    # whitelist:
+    #   - 00:00:00:00:00:00
 
   # IR 리모컨
   # IR remote
@@ -189,7 +214,7 @@ hardware:
         keypress: 0x27
         mode: keycode
       - code: 0xe31cff00 # ok
-        keypress: A
+        keypress: E
 
   # 조도 센서
   # Light Sensor
@@ -282,3 +307,21 @@ hardware:
     # 측정 주기
     # period
     period: 15s
+
+  # RTC
+  rtc:
+    # 종류: DS3231 (현재는 이것만 지원)
+    # type: DS3231 (currently only support this)
+    type: ds3231
+
+    # 연결 실패시 Uptime 표시 (기본값: true)
+    # Display uptime if failed to initialize (default: true)
+    nofail: true
+
+    # 표시 형식 (기본값: hm)
+    # Display format (default: hm)
+    # hm:              00:00    -> 00 00
+    # hms:             00:00:00 -> 00 00 00
+    # hm_no_blinking:  00:00
+    # hms_no_blinking: 00:00:00
+    format: hm

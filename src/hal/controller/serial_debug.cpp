@@ -173,17 +173,6 @@ void SerialDebug::loop() {
 bool SerialDebug::pressKey(uint16_t key, uint8_t mode) {
   if (mode == KM_ASCII) {
     switch (key) {
-    case 'F': case 'f':
-    case 'D': case 'd':
-    case 'S': case 's':
-    case 'A': case 'a':
-    case 'J': case 'j':
-    case 'K': case 'k':
-    case 'L': case 'l':
-    case ';': case ':':
-      Protogen._hud.pressKey(key);
-      return true;
-
     case '\e':
       Serial.println("esc");
       return true;
@@ -239,9 +228,9 @@ bool SerialDebug::pressKey(uint16_t key, uint8_t mode) {
       Protogen.setEmotion("bean");
       return true;
       break;
-    case 'P': case 'p':
-      TF_LOGI(TAG, "Set BSOD");
-      Protogen.setEmotion("bsod");
+    case 'Q': case 'q':
+      Protogen._boopsensor.setEmulation(!Protogen._boopsensor.getEmulation());
+      TF_LOGI(TAG, "Boop emulation: %s", Protogen._boopsensor.getEmulation() ? "on" : "off");
       return true;
       break;
     case 'W': case 'w':
@@ -249,19 +238,35 @@ bool SerialDebug::pressKey(uint16_t key, uint8_t mode) {
       Protogen.setEmotion("white");
       return true;
       break;
+    case 'E': case 'e':
+      Protogen.setStaticMode(!Protogen.getStaticMode());
+      TF_LOGI(TAG, "%s", Protogen.getStaticMode() ? "pause" : "play");
+      return true;
+      break;
     case 'O': case 'o':
       TF_LOGI(TAG, "Set Festive");
       Protogen.setEmotion("festive");
       return true;
       break;
+    case 'P': case 'p':
+      TF_LOGI(TAG, "Set BSOD");
+      Protogen.setEmotion("bsod");
+      return true;
+      break;
+
+    case 'A': case 'a':
+    case 'S': case 's':
+    case 'D': case 'd':
+    case 'F': case 'f':
+    case 'J': case 'j':
+    case 'K': case 'k':
+    case 'L': case 'l':
+    case ';': case ':':
+      Protogen._hud.pressKey(key);
+      return true;
     case '\'':
       TF_LOGI(TAG, "Set Loading");
       Protogen.setEmotion("loading");
-      return true;
-      break;
-    case 'Q': case 'q':
-      Protogen._boopsensor.setEmulation(!Protogen._boopsensor.getEmulation());
-      TF_LOGI(TAG, "Boop emulation: %s", Protogen._boopsensor.getEmulation() ? "on" : "off");
       return true;
       break;
 
@@ -344,7 +349,78 @@ typedef struct _COMMAND {
 } COMMAND;
 
 
-static const auto reset_func = [](const char*) { TF_LOGI(TAG, "soft reset"); ESP.restart(); };
+static uint8_t parse2d(const char* s) {
+  return (s[0] - '0') * 10 + (s[1] - '0');
+}
+
+
+static uint16_t parse4d(const char* s) {
+  return (s[0] - '0') * 1000 + (s[1] - '0') * 100 + (s[2] - '0') * 10 + (s[3] - '0');
+}
+
+
+static const auto settime_func = [](const char* param) {
+  int year = Protogen._rtc.getYear();
+  int month = Protogen._rtc.getMonth();
+  int day = Protogen._rtc.getDay();
+  int h, m, s, len = strlen(param);
+
+  if (len == 5
+   && isdigit(param[0]) && isdigit(param[1]) && param[2] == ':'
+   && isdigit(param[3]) && isdigit(param[4])) {
+    // hh:mm
+    h = parse2d(param + 0);
+    m = parse2d(param + 3);
+    s = 0;
+  }
+  else if (len == 8
+   && isdigit(param[0]) && isdigit(param[1]) && param[2] == ':'
+   && isdigit(param[3]) && isdigit(param[4]) && param[5] == ':'
+   && isdigit(param[6]) && isdigit(param[7])) {
+    // hh:mm:ss
+    h = parse2d(param + 0);
+    m = parse2d(param + 3);
+    s = parse2d(param + 6);
+  }
+  else {
+    TF_LOGW(TAG, "settime: format error");
+    return;
+  }
+
+  Protogen._rtc.setDateTime(year, month, day, h, m, s);
+  TF_LOGI(TAG, "settime: %d-%02d-%02d %02d:%02d:%02d", year, month, day, h, m, s);
+};
+
+
+// ISO 8601 except timezone (YYYY-mm-dd HH:MM:SS)
+static const auto setdatetime_func = [](const char* param) {
+  int year, month, day, h, m, s;
+  int len = strlen(param);
+
+  if (len >= 19) {
+    if (isdigit(param[0]) && isdigit(param[1]) && isdigit(param[2]) && isdigit(param[3]) && param[4] == '-'
+     && isdigit(param[5]) && isdigit(param[6]) && param[7] == '-'
+     && isdigit(param[8]) && isdigit(param[9])
+     && isdigit(param[11]) && isdigit(param[12]) && param[13] == ':'
+     && isdigit(param[14]) && isdigit(param[15]) && param[16] == ':'
+     && isdigit(param[17]) && isdigit(param[18])) {
+      year = parse4d(param + 0);
+      month = parse2d(param + 5);
+      day = parse2d(param + 8);
+      h = parse2d(param + 11);
+      m = parse2d(param + 14);
+      s = parse2d(param + 17);
+    }
+  }
+  else {
+    TF_LOGW(TAG, "setdatetime: format error");
+    return;
+  }
+
+  Protogen._rtc.setDateTime(year, month, day, h, m, s);
+  TF_LOGI(TAG, "setdatetime: %d-%02d-%02d %02d:%02d:%02d", year, month, day, h, m, s);
+};
+
 
 static const size_t getCommandCount();
 
@@ -356,7 +432,7 @@ static const COMMAND COMMAND_LIST[] = {
     }
     Serial.println();
   } },
-  { "reset|restart|reboot", "Soft reset.",                            reset_func },
+  { "reset|restart|reboot", "Soft reset.",                            [](const char*) { TF_LOGI(TAG, "soft reset"); ESP.restart(); } },
   { "b",                    "Set display brightness.",                [](const char* param) { float brightness = atoi(param) / 100.0f; Protogen.refreshAutoBrightness(brightness); TF_LOGI(TAG, "Set brightness: %.3f", brightness); } },
   { "ls|emotions",          "Show list of loaded emotions.",          [](const char*) { Protogen.displayEmotionList(); } },
   { "set",                  "Change to the entered emotion.",         [](const char* param) { TF_LOGI(TAG, "Set %s", param); Protogen.setEmotion(param); } },
@@ -365,6 +441,9 @@ static const COMMAND COMMAND_LIST[] = {
   { "noboop",               "Disable boop sensor.",                   [](const char*) { Protogen._boopsensor.setEnabled(false);  TF_LOGI(TAG, "Boop sensor disabled"); } },
   { "dithering",            "Enable HUD dithering.",                  [](const char*) { Protogen._hud.setDithering(true); TF_LOGI(TAG, "HUD dithering enabled"); } },
   { "nodithering",          "Disable HUD dithering.",                 [](const char*) { Protogen._hud.setDithering(false); TF_LOGI(TAG, "HUD dithering disabled"); } },
+  { "datetime",             "Display RTC time.",                      [](const char*) { TF_LOGI(TAG, "%d-%02d-%02d %02d:%02d:%02d", Protogen._rtc.getYear(), Protogen._rtc.getMonth(), Protogen._rtc.getDay(), Protogen._rtc.getHour(), Protogen._rtc.getMinute(), Protogen._rtc.getSecond()); } },
+  { "settime",              "Set RTC time (HH:MM or HH:MM:SS).",      settime_func },
+  { "setdatetime",          "Set RTC date and time (YYYY-mm-dd HH:MM:SS).", setdatetime_func },
 };
 
 static const size_t getCommandCount() {

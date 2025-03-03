@@ -130,61 +130,46 @@ static void gif_draw(GIFDRAW *pDraw) {
     return;
   }
   
-  int y = pDraw->iY + pDraw->y; // current line
-  uint8_t *ptr_pixel = pDraw->pPixels;
-  
-  // if (pDraw->ucDisposalMethod == 2) { // restore to background color
-  //   for (int x = 0; x < width; x++) {
-  //     if (ptr_pixel[x] == pDraw->ucTransparent) {
-  //       ptr_pixel[x] = pDraw->ucBackground;
-  //     }
-  //   }
-  //   pDraw->ucHasTransparency = 0;
-  // }
-
   typedef struct _rgb888_t {
     uint8_t r;
     uint8_t g;
     uint8_t b;
   } rgb888_t;
   
-  static const size_t MAX_GIF_WIDTH = HUB75_PANEL_RES_X * HUB75_PANEL_CHAIN;
-  rgb888_t palette_temp[MAX_GIF_WIDTH];
-  rgb888_t *palette = (rgb888_t*)pDraw->pPalette;
-
+  auto palette = (const rgb888_t*)pDraw->pPalette;
   auto buffer = image->getBuffer();
   auto width = image->getWidth();
+  const uint8_t ucTransparent = pDraw->ucTransparent;
 
   // Apply the new pixels to the main image
-  if (pDraw->ucHasTransparency) { // if transparency used
-    uint8_t color_transparent = pDraw->ucTransparent;
-    uint8_t *ptr_end = ptr_pixel + pDraw->iWidth;
+  if (pDraw->ucHasTransparency && pDraw->ucDisposalMethod != 2) { // if transparency used
+    auto palette_temp = new rgb888_t[pDraw->iWidth];
+    const uint8_t *ptr_color = pDraw->pPixels;
+    const uint8_t *ptr_end = ptr_color + pDraw->iWidth;
     int x = 0;
-    int opaque_count = 0; // count non-transparent pixels
 
     while (x < pDraw->iWidth) {
-      uint8_t c = color_transparent - 1;
-      rgb888_t *d = palette_temp;
+      uint8_t color = ucTransparent - 1;
+      rgb888_t *ptr_palette = palette_temp;
+      int opaque_count = 0; // count non-transparent pixels
 
-      while (c != color_transparent && ptr_pixel < ptr_end) {
-        c = *ptr_pixel++;
-        if (c == color_transparent) { // done, stop
-          ptr_pixel--; // back up to treat it like transparent
+      while (color != ucTransparent && ptr_color < ptr_end) {
+        color = *ptr_color++;
+        if (color == ucTransparent) { // done, stop
+          ptr_color--; // back up to treat it like transparent
         }
         else { // opaque
-          *d++ = palette[c];
+          *ptr_palette++ = palette[color];
           opaque_count++;
         }
       } // while looking for opaque pixels
 
       if (opaque_count) { // any opaque pixels?
-        rgb888_t *data = palette_temp;
+        auto ptr_buffer = buffer + (((pDraw->iY + pDraw->y) * width + (pDraw->iX + x)) * 3);
         for (int i = 0; i < opaque_count; i++) {
-          int index = (y * width + (pDraw->iX + x + i)) * 3;
-          buffer[index + 0] = data->r;
-          buffer[index + 1] = data->g;
-          buffer[index + 2] = data->b;
-          data++;
+          *ptr_buffer++ = palette_temp[i].r;
+          *ptr_buffer++ = palette_temp[i].g;
+          *ptr_buffer++ = palette_temp[i].b;
         }
 
         x += opaque_count;
@@ -192,14 +177,14 @@ static void gif_draw(GIFDRAW *pDraw) {
       }
 
       // no, look for a run of transparent pixels
-      c = color_transparent;
-      while (c == color_transparent && ptr_pixel < ptr_end) {
-        c = *ptr_pixel++;
-        if (c == color_transparent) {
+      color = ucTransparent;
+      while (color == ucTransparent && ptr_color < ptr_end) {
+        color = *ptr_color++;
+        if (color == ucTransparent) {
           opaque_count++;
         }
         else {
-          ptr_pixel--;
+          ptr_color--;
         }
       }
 
@@ -208,21 +193,25 @@ static void gif_draw(GIFDRAW *pDraw) {
         opaque_count = 0;
       }
     }
+
+    delete[] palette_temp;
   }
   else {
-    ptr_pixel = pDraw->pPixels;
     // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
+    auto ptr_buffer = buffer + (((pDraw->iY + pDraw->y) * width + (pDraw->iX)) * 3);
     for (int x = 0; x < pDraw->iWidth; x++) {
-      palette_temp[x] = palette[*ptr_pixel++];
-    }
-
-    rgb888_t *data = palette_temp;
-    for (int i = 0; i < pDraw->iWidth; i++) {
-      int index = (y * width + (pDraw->iX + i)) * 3;
-      buffer[index + 0] = data->r;
-      buffer[index + 1] = data->g;
-      buffer[index + 2] = data->b;
-      data++;
+      uint8_t color = pDraw->pPixels[x];
+      if (color == pDraw->ucTransparent) {
+        *ptr_buffer++ = 0;
+        *ptr_buffer++ = 0;
+        *ptr_buffer++ = 0;
+      }
+      else {
+        const auto& pal = palette[color];
+        *ptr_buffer++ = pal.r;
+        *ptr_buffer++ = pal.g;
+        *ptr_buffer++ = pal.b;
+      }
     }
   }
 };
@@ -271,6 +260,8 @@ bool Video::load_gif(const char* path) {
     return false;
   }
 
+  _image->clear();
+
   if (!load_gif_frame()) {
     release();
     return false;
@@ -288,6 +279,7 @@ bool Video::next_gif(bool loop, bool init) {
   auto gif = (AnimatedGIF *)_gif;
   if (!gif->nextFrame(init)) {
     if (loop) {
+      _image->clear();
       return next_gif(loop, true);
     }
     
@@ -305,8 +297,6 @@ bool Video::load_gif_frame() {
     return false;
   }
   
-  _image->clear();
-
   auto gif = (AnimatedGIF *)_gif;
 
   int frame_delay = 0;

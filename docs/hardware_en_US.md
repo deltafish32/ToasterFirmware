@@ -15,7 +15,9 @@ Optional
     - ESP32 for ESP-Now reception (additional board required due to lack of RAM)
     - IR Remote (inexpensive method, but not recommended for public events)
 
-> Note: Boards such as ESP32-C3, ESP32-S2, ESP32-S3 are different from regular ESP32. Please be careful when purchasing!
+> Note: Boards such as ESP32-C3, ESP32-S2 are different from regular ESP32. Please be careful when purchasing!
+
+> ESP32-S3 will be supported soon. Please wait a little longer!
 
 This is why we recommend a regular ESP32.
 1. It is cheap, easy to obtain, and has a variety of boards.
@@ -74,6 +76,7 @@ Pin maps except for I2C can be changed. Please see [here](https://randomnerdtuto
 # Side panel
 Any type that uses NeoPixel, such as WS2812B, is available. There is no perfect way to this part, so please just use it as a reference.
 
+## V1
 I made this using WS2812B LED strips, with 144 LEDs per meter.
 
 ![side_panel_en_US.png](side_panel_en_US.png)
@@ -82,6 +85,35 @@ It was made using multi-color 3D printing. Please refer to the link below for th
 
 <https://www.printables.com/model/803669-side-panel-for-cm1-protogen>
 
+The recommended configurations are as follows:
+
+```yaml
+  # in config.yaml
+
+  side_panel:
+    type: strip
+    num_leds: 72
+    brightness_rate: 0.05
+    reversed: true
+```
+
+
+## V2
+The light spread has been improved significantly compared to the V1 by using a NeoPixel ring and diffuser.
+
+<https://www.printables.com/model/1195381-side-panel-for-cm1-protogen-v2>
+
+The recommended configurations are as follows:
+
+```yaml
+  # in config.yaml
+
+  side_panel:
+    type: circle
+    num_leds: 74
+    brightness_rate: 0.03
+    reversed: false
+```
 
 
 # I2C

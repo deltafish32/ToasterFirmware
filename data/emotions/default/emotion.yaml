@@ -31,6 +31,8 @@ emotions:
     special: blushing
   - name: grin
     eyes: eyes_grin
+  - name: closed
+    eyes: eyes_closed
   - name: worry
     eyes: eyes_worry
     mouth: mouth_badass
@@ -51,6 +53,9 @@ emotions:
     special: blushing
   - name: bean
     eyes: eyes_bean
+  - name: smirk
+    eyes: eyes_smirk
+    mouth: mouth_smirk
   - name: bsod
     eyes: bsod
     nose: ''

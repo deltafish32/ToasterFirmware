@@ -26,5 +26,6 @@ uint32_t parse_time_str(const char* str);
 uint32_t parse_hex(const char* str);
 bool parse_bool(const char* str);
 bool parse_separate(const char* str, const char* token, std::string& left, std::string& right);
+bool parse_mac(const char* str, uint8_t* mac);
 
 };

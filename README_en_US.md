@@ -46,7 +46,8 @@ A: Tested only on ESP32, not on ESP32-C3, ESP32-S2, ESP32-S3, etc. boards. Since
 
 # Special Thanks
 - 사토루 [X(Twitter)](https://x.com/leopard_sato_)
-- 양말 / SheepPony [X(Twitter)](https://x.com/sheeppony)
+- 수면양말 [X(Twitter)](https://x.com/SheepPonyFP)
+- 유진 [X(Twitter)](https://x.com/Unknown_1251)
 
 
 

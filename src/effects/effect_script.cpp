@@ -8,7 +8,7 @@ namespace toaster {
 
 static const char* TAG = "EffectScript";
 
-static const int DYNAMIC_LOAD_MIN = 8;
+static const int DYNAMIC_LOAD_COUNT = 8;
 
 
 EffectScript::EffectScript(const char* name) : FixedEffect(name) {
@@ -157,7 +157,7 @@ bool EffectScript::initSequence(Display& display) {
   size_t image_loaded = 0;
   for (int i = 0; i < image_count; i++) {
     std::string filename = makeFileName(_parser.getImages()[i].c_str());
-    bool image_load = (image_usage[i] != 0 && (image_usage_count < DYNAMIC_LOAD_MIN || image_loaded < DYNAMIC_LOAD_MIN));
+    bool image_load = (image_usage[i] != 0 && (image_usage_count < DYNAMIC_LOAD_COUNT || image_loaded < DYNAMIC_LOAD_COUNT));
     auto asset = image_load ? new Asset(filename.c_str(), Protogen.isRGB565()) : nullptr;
     
     if (asset != nullptr) {
@@ -436,7 +436,29 @@ void EffectScript::processVideo(Display& display) {
       return;
     }
 
-    display.draw_image(asset->getVideo()->getImage(), (DRAW_MODE)video_info.mode, _video_offset_x, _video_offset_y, 0);
+    if (video_info.color == 0) {
+      display.draw_image(asset->getVideo()->getImage(), (DRAW_MODE)video_info.mode, _video_offset_x, _video_offset_y, 0);
+    }
+    else {
+      COLOR_FUNC color_func = color_func_original;
+
+      switch (_colorMode) {
+      case PCM_PERSONAL:
+        color_func = color_func_gray_personal;
+        break;
+      case PCM_RAINBOW_SINGLE:
+        color_func = color_func_gray_rainbow_single;
+        break;
+      case PCM_RAINBOW:
+        color_func = color_func_gray_rainbow;
+        break;
+      case PCM_GRADATION:
+        color_func = color_func_gray_gradation;
+        break;
+      }
+
+      display.draw_image_newcolor(asset->getVideo()->getImage(), color_func, 0, (DRAW_MODE)video_info.mode, _video_offset_x, _video_offset_y, 0);
+    }
 
     if (_staticMode == false) {
       if (Protogen.isAdaptiveFps() || timeout(asset->getVideo()->getPF_ms())) {

@@ -85,179 +85,109 @@ bool Hub75Display::draw_image_newcolor(const Image* image, COLOR_FUNC color_func
   auto has_alpha = image->getHasAlpha();
   auto buffer = image->getBuffer();
 
-  if (draw_mode == DRAW_SINGLE) {
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        int index = (y * width + x) * (bpp + has_alpha);
-        uint8_t a = has_alpha ? buffer[index + bpp] : 255;
-        if (a == 0) continue;
-        
-        uint8_t r1;
-        uint8_t g1;
-        uint8_t b1;
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      int index = (y * width + x) * (bpp + has_alpha);
+      uint8_t a = has_alpha ? buffer[index + bpp] : 255;
+      if (a == 0) continue;
+      
+      uint8_t r1;
+      uint8_t g1;
+      uint8_t b1;
 
-        if (bpp == 3) {
-          r1 = buffer[index + 0];
-          g1 = buffer[index + 1];
-          b1 = buffer[index + 2];
-        }
-        else {
-          Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
-        }
-        
-        int xr, yr;
-        xy_rotate(xr, yr, x, y, width, height, rotate_cw);
-        
-        int x1 = xr + offset_x;
-        int y1 = yr + offset_y;
+      if (bpp == 3) {
+        r1 = buffer[index + 0];
+        g1 = buffer[index + 1];
+        b1 = buffer[index + 2];
+      }
+      else {
+        Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
+      }
+      
+      int xr, yr;
+      xy_rotate(xr, yr, x, y, width, height, rotate_cw);
+      
+      int x1 = xr + offset_x;
+      int y1 = yr + offset_y;
 
+      if (x1 >= 0 && x1 < _panel_width
+       && y1 >= 0 && y1 < _height) {
         color_func(x1, y1, r1, g1, b1, a, param);
+        setPixelAlpha(x1, y1, r1, g1, b1, a);
 
-        int index0 = (y1 * _width + x1) * 3;
-        uint8_t r0 = _buffer[index0 + 0];
-        uint8_t g0 = _buffer[index0 + 1];
-        uint8_t b0 = _buffer[index0 + 2];
+        if (draw_mode != DRAW_SINGLE) {
+          int x2 = (draw_mode == DRAW_COPY) ? (x1 + _panel_width) : 
+                   (draw_mode == DRAW_MIRROR) ? (_width - (xr + offset_x) - 1) : (xr + _width - offset_x - width);
+          int y2 = (draw_mode == DRAW_COPY) ? y1 : (yr + offset_y);
 
-        uint8_t r2 = (uint8_t)(((uint16_t)r1 * a / 255) + ((uint16_t)r0 * (255 - a) / 255));
-        uint8_t g2 = (uint8_t)(((uint16_t)g1 * a / 255) + ((uint16_t)g0 * (255 - a) / 255));
-        uint8_t b2 = (uint8_t)(((uint16_t)b1 * a / 255) + ((uint16_t)b0 * (255 - a) / 255));
-        setPixel(x1, y1, r2, g2, b2);
+          color_func(x2, y2, r1, g1, b1, a, param);
+          setPixelAlpha(x2, y2, r1, g1, b1, a);
+        }
       }
     }
   }
-  else if (draw_mode == DRAW_COPY) {
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        int index = (y * width + x) * (bpp + has_alpha);
-        uint8_t a = has_alpha ? buffer[index + bpp] : 255;
-        if (a == 0) continue;
-        
-        uint8_t r1;
-        uint8_t g1;
-        uint8_t b1;
+  
+  return true;
+}
 
-        if (bpp == 3) {
-          r1 = buffer[index + 0];
-          g1 = buffer[index + 1];
-          b1 = buffer[index + 2];
-        }
-        else {
-          Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
-        }
-        
-        int xr, yr;
-        xy_rotate(xr, yr, x, y, width, height, rotate_cw);
-        
-        int x1 = xr + offset_x;
-        int y1 = yr + offset_y;
 
-        color_func(x1, y1, r1, g1, b1, a, param);
+bool Hub75Display::draw_image_newcolor_ex(const Image* image, COLOR_FUNC color_func, uint8_t param, DRAW_MODE draw_mode, 
+  int offset_x, int offset_y, int w, int h, int source_x, int source_y, int rotate_cw) {
 
-        int index0 = (y1 * _width + x1) * 3;
-        uint8_t r0 = _buffer[index0 + 0];
-        uint8_t g0 = _buffer[index0 + 1];
-        uint8_t b0 = _buffer[index0 + 2];
-
-        uint8_t r2 = (uint8_t)(((uint16_t)r1 * a / 255) + ((uint16_t)r0 * (255 - a) / 255));
-        uint8_t g2 = (uint8_t)(((uint16_t)g1 * a / 255) + ((uint16_t)g0 * (255 - a) / 255));
-        uint8_t b2 = (uint8_t)(((uint16_t)b1 * a / 255) + ((uint16_t)b0 * (255 - a) / 255));
-        setPixel(x1, y1, r2, g2, b2);
-
-        int x2 = x1 + _panel_width;
-        int y2 = y1;
-        setPixel(x2, y2, r2, g2, b2);
-      }
-    }
-  }
-  else if (draw_mode == DRAW_MIRROR) {
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        int index = (y * width + x) * (bpp + has_alpha);
-        uint8_t a = has_alpha ? buffer[index + bpp] : 255;
-        if (a == 0) continue;
-        
-        uint8_t r1;
-        uint8_t g1;
-        uint8_t b1;
-
-        if (bpp == 3) {
-          r1 = buffer[index + 0];
-          g1 = buffer[index + 1];
-          b1 = buffer[index + 2];
-        }
-        else {
-          Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
-        }
-        
-        int xr, yr;
-        xy_rotate(xr, yr, x, y, width, height, rotate_cw);
-        
-        int x1 = xr + offset_x;
-        int y1 = yr + offset_y;
-
-        color_func(x1, y1, r1, g1, b1, a, param);
-
-        int index0 = (y1 * _width + x1) * 3;
-        uint8_t r0 = _buffer[index0 + 0];
-        uint8_t g0 = _buffer[index0 + 1];
-        uint8_t b0 = _buffer[index0 + 2];
-
-        uint8_t r2 = (uint8_t)(((uint16_t)r1 * a / 255) + ((uint16_t)r0 * (255 - a) / 255));
-        uint8_t g2 = (uint8_t)(((uint16_t)g1 * a / 255) + ((uint16_t)g0 * (255 - a) / 255));
-        uint8_t b2 = (uint8_t)(((uint16_t)b1 * a / 255) + ((uint16_t)b0 * (255 - a) / 255));
-        setPixel(x1, y1, r2, g2, b2);
-
-        int x2 = _width - (xr + offset_x) - 1;
-        int y2 = (yr + offset_y);
-        setPixel(x2, y2, r2, g2, b2);
-      }
-    }
-  }
-  else if (draw_mode == DRAW_MIRROR_ONLY_OFFSET) {
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        int index = (y * width + x) * (bpp + has_alpha);
-        uint8_t a = has_alpha ? buffer[index + bpp] : 255;
-        if (a == 0) continue;
-        
-        uint8_t r1;
-        uint8_t g1;
-        uint8_t b1;
-
-        if (bpp == 3) {
-          r1 = buffer[index + 0];
-          g1 = buffer[index + 1];
-          b1 = buffer[index + 2];
-        }
-        else {
-          Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
-        }
-        
-        int xr, yr;
-        xy_rotate(xr, yr, x, y, width, height, rotate_cw);
-        
-        int x1 = xr + offset_x;
-        int y1 = yr + offset_y;
-
-        color_func(x1, y1, r1, g1, b1, a, param);
-
-        int index0 = (y1 * _width + x1) * 3;
-        uint8_t r0 = _buffer[index0 + 0];
-        uint8_t g0 = _buffer[index0 + 1];
-        uint8_t b0 = _buffer[index0 + 2];
-
-        uint8_t r2 = (uint8_t)(((uint16_t)r1 * a / 255) + ((uint16_t)r0 * (255 - a) / 255));
-        uint8_t g2 = (uint8_t)(((uint16_t)g1 * a / 255) + ((uint16_t)g0 * (255 - a) / 255));
-        uint8_t b2 = (uint8_t)(((uint16_t)b1 * a / 255) + ((uint16_t)b0 * (255 - a) / 255));
-        setPixel(x1, y1, r2, g2, b2);
-
-        int x2 = xr + _width - offset_x - width;
-        int y2 = (yr + offset_y);
-        setPixel(x2, y2, r2, g2, b2);
-      }
-    }
+  if (image == nullptr) {
+    TF_LOGE(TAG, "image draw failed (nullptr).");
+    return false;
   }
 
+  auto image_width = image->getWidth();
+  auto width = std::min(w, (int)image_width);
+  auto height = std::min(h, (int)image->getHeight());
+  auto bpp = image->getBpp();
+  auto has_alpha = image->getHasAlpha();
+  auto buffer = image->getBuffer();
+
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      int index = ((y + source_y) * image_width + (x + source_x)) * (bpp + has_alpha);
+      uint8_t a = has_alpha ? buffer[index + bpp] : 255;
+      if (a == 0) continue;
+      
+      uint8_t r1;
+      uint8_t g1;
+      uint8_t b1;
+
+      if (bpp == 3) {
+        r1 = buffer[index + 0];
+        g1 = buffer[index + 1];
+        b1 = buffer[index + 2];
+      }
+      else {
+        Image::rgb565be_to_rgb888(*((uint16_t*)(buffer + index)), r1, g1, b1);
+      }
+      
+      int xr, yr;
+      xy_rotate(xr, yr, x, y, width, height, rotate_cw);
+      
+      int x1 = xr + offset_x;
+      int y1 = yr + offset_y;
+
+      if (x1 >= 0 && x1 < (draw_mode == DRAW_SINGLE ? _width : _panel_width)
+       && y1 >= 0 && y1 < _height) {
+        color_func(x1, y1, r1, g1, b1, a, param);
+        setPixelAlpha(x1, y1, r1, g1, b1, a);
+
+        if (draw_mode != DRAW_SINGLE) {
+          int x2 = (draw_mode == DRAW_COPY) ? (x1 + _panel_width) : 
+                   (draw_mode == DRAW_MIRROR) ? (_width - (xr + offset_x) - 1) : (xr + _width - offset_x - width);
+          int y2 = (draw_mode == DRAW_COPY) ? y1 : (yr + offset_y);
+
+          color_func(x2, y2, r1, g1, b1, a, param);
+          setPixelAlpha(x2, y2, r1, g1, b1, a);
+        }
+       }
+    }
+  }
+  
   return true;
 }
 

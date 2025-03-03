@@ -1,0 +1,7 @@
+version: 1
+images:
+  - png/eye_smirk_e.png
+sequences:
+  # draw, IMAGE_NO, COLOR, MODE, OFFSET_X, OFFSET_Y, TIME
+  - draw, 0, eyes, mirror, 0, 0, 0
+  

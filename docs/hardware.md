@@ -20,7 +20,9 @@
     - BH1750
     - CDS를 이용한 자작 센서
 
-> 주의: ESP32-C3, ESP32-S2, ESP32-S3 등의 보드는 일반 ESP32와 다릅니다. 구입시 주의해주세요!
+> 주의: ESP32-C3, ESP32-S2 등의 보드는 일반 ESP32와 다릅니다. 구입시 주의해주세요!
+
+> ESP32-S3 는 곧 지원 예정입니다. 조금만 더 기다려주세요!
 
 일반 ESP32를 권장하는 이유입니다.
 1. 저렴하고 구하기 쉬우며 보드 종류가 다양합니다.
@@ -79,6 +81,7 @@ I2C를 제외한 핀맵은 변경 가능합니다. 사용 가능한 핀은 [여�
 # 사이드 패널
 WS2812B 등 NeoPixel을 사용하는 어떤 형태든 가능합니다. 이 부분에는 정답이 없으므로 참고만 해 주세요.
 
+## V1
 저는 WS2812B LED 스트립을 이용해 만들었으며, 미터당 144개의 LED가 달린 제품을 사용했습니다.
 
 ![side_panel.png](side_panel.png)
@@ -87,6 +90,35 @@ WS2812B 등 NeoPixel을 사용하는 어떤 형태든 가능합니다. 이 부�
 
 <https://www.printables.com/model/803669-side-panel-for-cm1-protogen>
 
+권장 설정은 아래와 같습니다.
+
+```yaml
+  # config.yaml 중
+
+  side_panel:
+    type: strip
+    num_leds: 72
+    brightness_rate: 0.05
+    reversed: true
+```
+
+
+## V2
+네오픽셀 링과 확산판을 이용하여 V1 대비 빛 퍼짐이 훨씬 균열하도록 개선했습니다.
+
+<https://www.printables.com/model/1195381-side-panel-for-cm1-protogen-v2>
+
+권장 설정은 아래와 같습니다.
+
+```yaml
+  # config.yaml 중
+
+  side_panel:
+    type: circle
+    num_leds: 74
+    brightness_rate: 0.03
+    reversed: false
+```
 
 
 # I2C

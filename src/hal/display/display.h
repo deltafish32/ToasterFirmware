@@ -37,6 +37,8 @@ public:
   void clear();
   void fill(uint8_t r, uint8_t g, uint8_t b);
   void fillWhite();
+  
+  void fillHalf(uint8_t lr, uint8_t r, uint8_t g, uint8_t b);
 
 public:
   inline void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
@@ -46,25 +48,33 @@ public:
     _buffer[index + 2] = b;
   }
 
-  inline uint32_t getPixel(int x, int y) const {
+  inline void setPixelAlpha(int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     int index = (y * _width + x) * 3;
-    return (_buffer[index + 0] | (_buffer[index + 1] << 8) | (_buffer[index + 2] << 16));
+
+    _buffer[index + 0] = (uint8_t)(((uint16_t)r * a / 255) + ((uint16_t)_buffer[index + 0] * (255 - a) / 255));
+    _buffer[index + 1] = (uint8_t)(((uint16_t)g * a / 255) + ((uint16_t)_buffer[index + 1] * (255 - a) / 255));
+    _buffer[index + 2] = (uint8_t)(((uint16_t)b * a / 255) + ((uint16_t)_buffer[index + 2] * (255 - a) / 255));
   }
 
-  inline uint8_t getPixelR(int x, int y) const {
-    int index = (y * _width + x) * 3;
-    return (_buffer[index + 0]);
-  }
+  // inline uint32_t getPixel(int x, int y) const {
+  //   int index = (y * _width + x) * 3;
+  //   return (_buffer[index + 0] | (_buffer[index + 1] << 8) | (_buffer[index + 2] << 16));
+  // }
 
-  inline uint8_t getPixelG(int x, int y) const {
-    int index = (y * _width + x) * 3;
-    return (_buffer[index + 1]);
-  }
+  // inline uint8_t getPixelR(int x, int y) const {
+  //   int index = (y * _width + x) * 3;
+  //   return (_buffer[index + 0]);
+  // }
 
-  inline uint8_t getPixelB(int x, int y) const {
-    int index = (y * _width + x) * 3;
-    return (_buffer[index + 2]);
-  }
+  // inline uint8_t getPixelG(int x, int y) const {
+  //   int index = (y * _width + x) * 3;
+  //   return (_buffer[index + 1]);
+  // }
+
+  // inline uint8_t getPixelB(int x, int y) const {
+  //   int index = (y * _width + x) * 3;
+  //   return (_buffer[index + 2]);
+  // }
 
   inline bool getPixelOn(int x, int y) const {
     int index = (y * _width + x) * 3;
@@ -108,6 +118,9 @@ public:
     return draw_image_newcolor(image, [](int, int, uint8_t&, uint8_t&, uint8_t&, uint8_t, uint8_t) {}, param, draw_mode, offset_x, offset_y, rotate_cw);
   }
   virtual bool draw_image_newcolor(const Image* image, COLOR_FUNC color_func, uint8_t param = 0, DRAW_MODE draw_mode = DRAW_DEFAULT, int offset_x = 0, int offset_y = 0, int rotate_cw = 0);
+  virtual bool draw_image_newcolor_ex(const Image* image, COLOR_FUNC color_func, uint8_t param = 0, DRAW_MODE draw_mode = DRAW_DEFAULT, 
+    int offset_x = 0, int offset_y = 0, int w = 0, int h = 0, 
+    int source_x = 0, int source_y = 0, int rotate_cw = 0);
 
 protected:
   uint8_t* _buffer{nullptr};

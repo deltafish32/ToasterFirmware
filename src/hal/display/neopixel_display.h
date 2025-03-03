@@ -12,7 +12,7 @@ public:
   NeoPixelDisplay();
 
 public:
-  virtual bool begin(int numleds, int pin);
+  virtual bool begin(int numleds, int pin, bool reversed);
 
 public:
   virtual void beginDraw();
@@ -20,6 +20,7 @@ public:
 
 protected:
   NEOPIXEL_TYPE* _neopixel{nullptr};
+  bool _reversed{false};
 
   static uint8_t calcBrightness(uint8_t value, uint8_t brightness) {
     return (uint8_t)((uint16_t)value * brightness / 255);

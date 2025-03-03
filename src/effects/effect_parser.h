@@ -29,6 +29,7 @@ typedef struct _VIDEO_INFO {
   uint32_t fps{0};
   uint8_t mode{0}; // 0: single, 1: copy, 2: mirror, 3: mirror_only_offset
   uint8_t offset_mode{0}; // 0: manual, 1: auto
+  uint8_t color{0}; // 0: original, 1: changed
   bool loop{0};
   int32_t offset_x{0};
   int32_t offset_y{0};
