@@ -1,7 +1,7 @@
 
 # Open-source license
-소스가 삽입된 오픈소스 목록입니다. 그 외 사용된 라이브러리는 `platformio.ini` 파일을 참고해주세요.
-This is a list of open sources with embedded sources. Please refer to the `platformio.ini` file for other libraries used.
+소스에 포함되거나 참고한 오픈소스와, 펌웨어에 함께 빌드되는 라이브러리 목록입니다.
+This is a list of open source code embedded in or referenced by this project, and the libraries built into the firmware.
 
 
 ## ESP32-upng
@@ -40,6 +40,209 @@ freely, subject to the following restrictions:
 
 ## ESP32 ADC Calibrate
 <https://github.com/e-tinkers/esp32-adc-calibrate>
+
+Based on ESP32-ADC by Helmut Weber (<https://github.com/MacLeod-D/ESP32-ADC>), licensed under the GNU General Public License v3.0.
+Used for the ADC correction lookup table in `src/lib/esp32_adc_lut.h`.
+
+
+## dithering_halftoning
+<https://github.com/deeptronix/dithering_halftoning>
+
+Used as a reference for `src/lib/dither.cpp`.
+
+MIT License
+
+Copyright (c) 2021 deeptronix
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+## GifDecoder
+<https://github.com/pixelmatix/GifDecoder>
+
+Used as a reference for `src/lib/video.cpp`.
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Craig A. Lindley
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+## Perfect DOS VGA 437 (font)
+<https://www.dafont.com/perfect-dos-vga-437.font>
+
+Font by Zeh Fernando, distributed as "100% Free" on dafont.com.
+Converted to Adafruit GFX format with truetype2gfx (<https://rop.nl/truetype2gfx/>) and embedded in `src/huds/hud_font.cpp`.
+
+
+
+# Libraries
+빌드 시 펌웨어에 함께 포함되는 라이브러리 목록입니다. 전체 목록은 `platformio.ini` 파일을 참고해주세요.
+These libraries are compiled into the firmware. See `platformio.ini` for the full list.
+
+| Library | License | Copyright |
+|---|---|---|
+| [Arduino core for ESP32](https://github.com/espressif/arduino-esp32) (incl. Wire) | LGPL-2.1 | Espressif Systems and contributors |
+| [ESP-IDF](https://github.com/espressif/esp-idf) | Apache-2.0 | Espressif Systems (Shanghai) Co., Ltd. |
+| [Adafruit BusIO](https://github.com/adafruit/Adafruit_BusIO) | MIT | Copyright (c) 2017 Adafruit Industries |
+| [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) | BSD | Copyright (c) 2012 Adafruit Industries |
+| [Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306) | BSD | Copyright (c) 2012, Adafruit Industries |
+| [Adafruit SHT31](https://github.com/adafruit/Adafruit_SHT31) | BSD | Copyright (c) 2012, Adafruit Industries |
+| [ESP32-HUB75-MatrixPanel-DMA](https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA) ([fork](https://github.com/deltafish32/ESP32-HUB75-MatrixPanel-DMA)) | MIT | Copyright (c) 2018-2032 Faptastic |
+| [IRremoteESP8266](https://github.com/crankyoldgit/IRremoteESP8266) ([fork](https://github.com/deltafish32/IRremoteESP8266)) | LGPL-2.1 | Copyright 2009 Ken Shirriff, David Conran and contributors |
+| [NeoPixelBus](https://github.com/Makuna/NeoPixelBus) | LGPL-3.0 | Michael C. Miller |
+| [VL53L1X_ULD](https://github.com/rneurink/VL53L1X_ULD) | BSD-3-Clause | Copyright (c) 2020, rneurink |
+| [BH1750](https://github.com/claws/BH1750) | MIT | Copyright (c) 2018 claws |
+| [JPEGDEC](https://github.com/bitbank2/JPEGDEC) ([fork](https://github.com/deltafish32/JPEGDEC)) | Apache-2.0 | Copyright 2020 BitBank Software, Inc. |
+| [AnimatedGIF](https://github.com/bitbank2/AnimatedGIF) ([fork](https://github.com/deltafish32/AnimatedGIF)) | Apache-2.0 | Copyright 2020 BitBank Software, Inc. |
+| [Arduino-DS3231](https://github.com/jarzebski/Arduino-DS3231) | MIT | Copyright (c) 2014-2023 Korneliusz Jarzębski |
+
+LGPL, Apache-2.0 라이선스 전문은 각 링크를 참고해주세요.
+For the full texts of the LGPL and Apache-2.0 licenses, see:
+- LGPL-2.1: <https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html>
+- LGPL-3.0: <https://www.gnu.org/licenses/lgpl-3.0.html>
+- Apache-2.0: <https://www.apache.org/licenses/LICENSE-2.0>
+
+
+## MIT License
+Applies to: Adafruit BusIO, ESP32-HUB75-MatrixPanel-DMA, BH1750, Arduino-DS3231 (with the copyright notices listed above).
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+## BSD License (Adafruit SSD1306, Adafruit SHT31)
+Software License Agreement (BSD License)
+
+Copyright (c) 2012, Adafruit Industries
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holders nor the
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+## BSD License (Adafruit GFX Library)
+Software License Agreement (BSD License)
+
+Copyright (c) 2012 Adafruit Industries.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+- Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+- Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+
+## BSD 3-Clause License (VL53L1X_ULD)
+Copyright (c) 2020, rneurink
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 

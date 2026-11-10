@@ -29,9 +29,6 @@ Open source Protogen Firmware. ^w^
 Q: Can i ask a question via PM?<br>
 A: Of course!
 
-Q: Can I use it commercially?<br>
-A: No.
-
 Q: Is there a board I can purchase?<br>
 A: `Adafruit MatrixPortal S3` recommended.
 

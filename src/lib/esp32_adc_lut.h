@@ -1,4 +1,5 @@
 // https://github.com/e-tinkers/esp32-adc-calibrate
+// Based on ESP32-ADC by Helmut Weber: https://github.com/MacLeod-D/ESP32-ADC (GPL-3.0)
 
 #pragma once
 
