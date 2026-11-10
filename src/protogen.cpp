@@ -156,9 +156,9 @@ bool Toaster::begin() {
     TF_LOGD(TAG, "begin: %s does not exist or format error (%s). try load in config.yaml", EMOTIONS_DEFAULT_YAML, emotion_yaml.getLastError());
   }
   else {
-    int emotion_version = config_yaml.getInt("version", 0);
+    int emotion_version = emotion_yaml.getInt("version", 0);
     if (emotion_version > MAX_YAML_VERSION) {
-      TF_LOGE(TAG, "begin: emotions.yaml version error (%d, required %d)", emotion_version, MAX_YAML_VERSION);
+      TF_LOGE(TAG, "begin: %s version error (%d, required %d)", EMOTIONS_DEFAULT_YAML, emotion_version, MAX_YAML_VERSION);
       return false;
     }
   }
@@ -229,8 +229,6 @@ bool Toaster::begin() {
   if (core_result != pdPASS) {
     TF_LOGE(TAG, "xTaskCreatePinnedToCore failed (%d).", core_result);
   }
-  
-  loadDefaultEmotion(config_yaml);
 
   return true;
 }
@@ -311,32 +309,32 @@ bool Toaster::workPerSecond() {
   }
 
   char sz[256] = {0, };
-  char* p = sz;
+  size_t len = 0;
 
-  p += sprintf(p, "FPS: %d", getRecentFPS());
+  appendf(sz, sizeof(sz), len, "FPS: %d", getRecentFPS());
 
   if (_hud_use) {
-    p += sprintf(p, ", HUD: %d", _hud.getRecentFPS());
+    appendf(sz, sizeof(sz), len, ", HUD: %d", _hud.getRecentFPS());
   }
 
   if (_boopsensor_use) {
-    p += sprintf(p, ", Boop: %d (%d)", _boopsensor.getRecentFPS(), _boopsensor.getErrorTotal());
+    appendf(sz, sizeof(sz), len, ", Boop: %d (%d)", _boopsensor.getRecentFPS(), _boopsensor.getErrorTotal());
   }
 
   if (_lightsensor_use) {
-    p += sprintf(p, ", LS: %d (%.1f -> %.2f)", _lightsensor.getRecentFPS(), _lightsensor.getValue(), _display.getBrightness() / 255.0f);
+    appendf(sz, sizeof(sz), len, ", LS: %d (%.1f -> %.2f)", _lightsensor.getRecentFPS(), _lightsensor.getValue(), _display.getBrightness() / 255.0f);
   }
   else {
-    p += sprintf(p, ", B: %.2f", _display.getBrightness() / 255.0f);
+    appendf(sz, sizeof(sz), len, ", B: %.2f", _display.getBrightness() / 255.0f);
   }
 
-  p += sprintf(p, ", heap: %d", ESP.getFreeHeap());
-  
+  appendf(sz, sizeof(sz), len, ", heap: %d", ESP.getFreeHeap());
+
   if (psramFound()) {
-  	p += sprintf(p, " (%d)", ESP.getFreePsram());
+    appendf(sz, sizeof(sz), len, " (%d)", ESP.getFreePsram());
   }
 
-  TF_LOGD(TAG, sz);
+  TF_LOGD(TAG, "%s", sz);
 
   return true;
 }
@@ -464,20 +462,21 @@ void Toaster::displayEmotionList() {
 
 
 bool Toaster::loadShortcut(const char* shortcut) {
-  for (size_t i = 0; i < _shortcut_list.size(); i++) {
-    if (_shortcut_list[i] == shortcut) {
-      _shortcut_index = i;
-    }
-  }
-
   YamlNodeArray yaml = YamlNodeArray::fromFile((std::string(SHORTCUT_DIR) + "/" + shortcut + ".yaml").c_str(), FFat);
   if (yaml.isError() && strcasecmp(shortcut, SHORTCUT_DEFAULT) == 0) {
     yaml = YamlNodeArray::fromFile(EMOTIONS_SHORTCUT_YAML, FFat);
   }
 
   if (yaml.isError()) {
-    TF_LOGW(TAG, "loadShortcut: %s not found");
+    TF_LOGW(TAG, "loadShortcut: %s not found", shortcut);
     return false;
+  }
+
+  for (size_t i = 0; i < _shortcut_list.size(); i++) {
+    if (_shortcut_list[i] == shortcut) {
+      _shortcut_index = i;
+      break;
+    }
   }
 
   _shortcuts[0][0][0] = yaml.getString("shortcut:left:index");
@@ -657,16 +656,16 @@ const char* Toaster::getTimeStr() const {
 
   switch (_rtc_format) {
   case RTC_FORMAT_HM:
-    sprintf(time_str, "%02d%c%02d", _rtc.getHour(), _rtc.getBlink() == 0 ? ':' : ' ', _rtc.getMinute());
+    snprintf(time_str, sizeof(time_str), "%02d%c%02d", _rtc.getHour(), _rtc.getBlink() == 0 ? ':' : ' ', _rtc.getMinute());
     break;
   case RTC_FORMAT_HMS: 
-    sprintf(time_str, "%02d%c%02d%c%02d", _rtc.getHour(), _rtc.getBlink() == 0 ? ':' : ' ', _rtc.getMinute(), _rtc.getBlink() == 0 ? ':' : ' ', _rtc.getSecond());
+    snprintf(time_str, sizeof(time_str), "%02d%c%02d%c%02d", _rtc.getHour(), _rtc.getBlink() == 0 ? ':' : ' ', _rtc.getMinute(), _rtc.getBlink() == 0 ? ':' : ' ', _rtc.getSecond());
     break;
   case RTC_FORMAT_HM_NO_BLINKING:
-    sprintf(time_str, "%02d:%02d", _rtc.getHour(), _rtc.getMinute());
+    snprintf(time_str, sizeof(time_str), "%02d:%02d", _rtc.getHour(), _rtc.getMinute());
     break;
   case RTC_FORMAT_HMS_NO_BLINKING: 
-    sprintf(time_str, "%02d:%02d:%02d", _rtc.getHour(), _rtc.getMinute(), _rtc.getSecond());
+    snprintf(time_str, sizeof(time_str), "%02d:%02d:%02d", _rtc.getHour(), _rtc.getMinute(), _rtc.getSecond());
     break;
   }
   

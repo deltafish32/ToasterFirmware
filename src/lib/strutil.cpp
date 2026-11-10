@@ -1,8 +1,11 @@
 #include "strutil.h"
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <math.h>
+#include <algorithm>
 
 
 namespace toaster {
@@ -131,6 +134,60 @@ bool parse_mac(const char* str, uint8_t* mac) {
   mac[5] = (hex2dec(str[15]) << 4) | (hex2dec(str[16]) << 0);
 
   return true;
+}
+
+
+void appendf(char* buf, size_t buf_size, size_t& len, const char* fmt, ...) {
+  if (buf_size == 0 || len >= buf_size - 1) {
+    return;
+  }
+
+  va_list args;
+  va_start(args, fmt);
+  int written = vsnprintf(buf + len, buf_size - len, fmt, args);
+  va_end(args);
+
+  if (written > 0) {
+    len = std::min(len + (size_t)written, buf_size - 1);
+  }
+}
+
+
+bool format_frame_path(char* out, size_t out_size, const char* fmt, int frame) {
+  if (out == nullptr || out_size == 0 || fmt == nullptr) {
+    return false;
+  }
+
+  int conversions = 0;
+
+  for (const char* p = fmt; *p != 0; p++) {
+    if (*p != '%') {
+      continue;
+    }
+
+    ++p;
+    if (*p == '%') {
+      continue;
+    }
+
+    while (*p == '-' || *p == '+' || *p == ' ' || *p == '0' || *p == '#') ++p;
+    while (*p >= '0' && *p <= '9') ++p;
+    if (*p == '.') {
+      ++p;
+      while (*p >= '0' && *p <= '9') ++p;
+    }
+
+    if (*p != 'd' && *p != 'i' && *p != 'u') {
+      return false;
+    }
+
+    if (++conversions > 1) {
+      return false;
+    }
+  }
+
+  int written = snprintf(out, out_size, fmt, frame);
+  return (written >= 0 && (size_t)written < out_size);
 }
 
 

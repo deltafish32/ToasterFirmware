@@ -36,7 +36,7 @@ void HUDBrightness::process(Adafruit_SSD1306& oled) {
       oled.setCursor(12 * 4, 24);
 
       char str[16];
-      sprintf(str, "%3d", getBrightness());
+      snprintf(str, sizeof(str), "%3d", getBrightness());
       oled.write(str);
 
       oled.display();

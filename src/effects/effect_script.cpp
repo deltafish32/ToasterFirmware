@@ -1,6 +1,7 @@
 #include "effect_script.h"
 
 #include "lib/logger.h"
+#include "lib/strutil.h"
 #include "protogen.h"
 
 
@@ -89,7 +90,7 @@ bool EffectScript::loadScript(const char* name, const char* base_path) {
   _base_path = base_path;
 
   char s[256] = {0, };
-  sprintf(s, "script/%s.yaml", name);
+  snprintf(s, sizeof(s), "script/%s.yaml", name);
 
   _from_sd = false;
   if (strncmp(_base_path.c_str(), "/sd/", 4) == 0) {
@@ -206,7 +207,11 @@ bool EffectScript::initVideo(Display& display) {
       }
 
       char s[256] = {0, };
-      sprintf(s, video.path.c_str(), _step);
+      if (!format_frame_path(s, sizeof(s), video.path.c_str(), _step)) {
+        TF_LOGE(TAG, "initVideo: invalid video path format (%s)", video.path.c_str());
+        _error = true;
+        return false;
+      }
       std::string filename = makeFileName(s);
 
       _video_legacy_frame = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
@@ -254,7 +259,11 @@ bool EffectScript::initVideo(Display& display) {
       
       if (_video_legacy) {
         char s[256] = {0, };
-        sprintf(s, video.path.c_str(), video.start);
+        if (!format_frame_path(s, sizeof(s), video.path.c_str(), video.start)) {
+          TF_LOGE(TAG, "initVideo: invalid video path format (%s)", video.path.c_str());
+          _error = true;
+          return false;
+        }
         std::string filename = makeFileName(s);
 
         _assets.push_back(new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false));
@@ -390,7 +399,11 @@ void EffectScript::processVideo(Display& display) {
         }
         
         char s[256] = {0, };
-        sprintf(s, video_info.path.c_str(), _step);
+        if (!format_frame_path(s, sizeof(s), video_info.path.c_str(), _step)) {
+          TF_LOGE(TAG, "processVideo: invalid video path format (%s)", video_info.path.c_str());
+          _error = true;
+          return;
+        }
         std::string filename = makeFileName(s);
 
         _video_legacy_frame = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);

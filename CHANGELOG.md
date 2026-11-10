@@ -1,6 +1,24 @@
 # Changelog
 
 
+## Unreleased
+### 버그 수정
+- `emotion.yaml`의 버전을 검사할 때 `config.yaml`의 버전을 읽던 버그 수정
+- 부팅 시 기본 표정을 두 번 불러오던 문제 수정
+- 존재하지 않는 빠른 표정 변경 프리셋을 불러올 때 오류가 발생할 수 있는 문제 수정
+- 빠른 표정 변경 프리셋을 불러오지 못해도 선택된 프리셋이 바뀌던 문제 수정
+- 잠재적인 Buffer Overflow 가능성 문제 수정
+  - 이에 따라 연속된 이미지 영상의 `path`에는 정수 서식(`%d`, `%03d` 등)을 하나만 사용할 수 있습니다.
+
+### Bugfix
+- Fixed a bug where the version check of `emotion.yaml` read the version of `config.yaml`.
+- Fixed the default emotion being loaded twice at boot.
+- Fixed a possible error when loading an emotion shortcut preset that does not exist.
+- Fixed the selected emotion shortcut preset changing even when the preset failed to load.
+- Fixed potential buffer overflows.
+  - As a result, the `path` of image sequence videos may contain only one integer format (`%d`, `%03d`, etc.).
+
+
 ## 2026.1.1
 ### 기능
 - ESP32-S3 지원 추가. `Adafruit MatrixPortal S3` 보드를 정식 지원합니다.

@@ -46,7 +46,7 @@ void HUDTimeset::process(Adafruit_SSD1306& oled) {
       setFont(oled);
 
       char time_str[16];
-      sprintf(time_str, "%02d:%02d", _hour, _minute);
+      snprintf(time_str, sizeof(time_str), "%02d:%02d", _hour, _minute);
       oled.write(time_str);
 
       oled.display();

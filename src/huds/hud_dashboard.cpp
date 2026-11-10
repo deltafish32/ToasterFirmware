@@ -37,7 +37,7 @@ void HUDDashboard::process(Adafruit_SSD1306& oled) {
 
     if (_unlock_count > 0) {
       char sz[32];
-      sprintf(sz, "%d", UNLOCK_COUNT - _unlock_count);
+      snprintf(sz, sizeof(sz), "%d", UNLOCK_COUNT - _unlock_count);
       oled.write(sz);
     }
     else if (Protogen.isBlank() == false) {
@@ -67,13 +67,13 @@ void HUDDashboard::process(Adafruit_SSD1306& oled) {
         float humidity = Protogen._thermometer.getHumidity();
 
         oled.setCursor(12 * 5 + 8, 0);
-        sprintf(sz, "%.1f", temperature);
+        snprintf(sz, sizeof(sz), "%.1f", temperature);
         oled.write(sz);
         
         writeSpecial(oled, BITMAP_CELSIUS);
 
         oled.setCursor(12 * 7 + 8, 16 * 1);
-        sprintf(sz, "%.f%%", humidity);
+        snprintf(sz, sizeof(sz), "%.f%%", humidity);
         oled.write(sz);
       }
 

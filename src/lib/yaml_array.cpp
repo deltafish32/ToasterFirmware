@@ -344,7 +344,7 @@ YamlNodeArray YamlNodeArray::fromBytes(const char* data, size_t data_size) {
     }
     else if (type == YamlNode::YAML_ARRAY) {
       char index_str[16];
-      sprintf(index_str, "%d", stack.back()->size());
+      snprintf(index_str, sizeof(index_str), "%d", stack.back()->size());
 
       if (key.empty()) {
         stack.back()->pushString(index_str, value.c_str());
