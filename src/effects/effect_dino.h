@@ -1,5 +1,6 @@
 #pragma once
 #include "effect_base.h"
+#include <memory>
 
 
 namespace toaster {
@@ -11,6 +12,7 @@ class DinoObject {
 public:
   DinoObject(int x, int y, int w, int h, bool hitable) : _x(x), _y(y), _width(w), _height(h), _hitable(hitable), _valid(true) {
   }
+  virtual ~DinoObject() = default;
 
   virtual void process() {
     _x -= 1;
@@ -69,7 +71,7 @@ protected:
   timer_ms_t _next_block_time{0};
   timer_ms_t _ded_time{0};
   timer_ms_t _score_highlight_time{0};
-  std::vector<DinoObject*> _objects;
+  std::vector<std::unique_ptr<DinoObject>> _objects;
   std::vector<int> _tiles;
   int _tile_x{0};
   bool _prev_static_mode{false};

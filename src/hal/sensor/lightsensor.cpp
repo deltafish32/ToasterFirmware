@@ -31,7 +31,7 @@ bool LightSensor::beginLDR(int pin, float alpha, float alpha_init) {
 
   _pin = pin;
   _alpha = alpha;
-  _alpha_init = isnan(alpha_init) ? _alpha : _alpha_init;
+  _alpha_init = isnan(alpha_init) ? _alpha : alpha_init;
 
   pinMode(_pin, INPUT);
   
@@ -42,7 +42,7 @@ bool LightSensor::beginLDR(int pin, float alpha, float alpha_init) {
 bool LightSensor::beginBH1750(uint8_t i2c, float alpha, float alpha_init) {
   _pin = i2c;
   _alpha = alpha;
-  _alpha_init = isnan(alpha_init) ? _alpha : _alpha_init;
+  _alpha_init = isnan(alpha_init) ? _alpha : alpha_init;
 
   _bh1750 = new BH1750;
   if (!_bh1750->begin(BH1750::CONTINUOUS_LOW_RES_MODE, _pin)) {

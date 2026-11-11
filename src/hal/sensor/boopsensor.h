@@ -53,7 +53,7 @@ public:
 
 protected:
   bool tof_init();
-  void tof_error(bool critical = false);
+  void tof_error(bool force_reset = false);
   void tof_no_error();
 
 protected:
@@ -71,6 +71,7 @@ protected:
   int _boop_count{0};
   bool _boop{false};
   timer_ms_t _boop_tick_ms{0};
+  timer_ms_t _data_tick_ms{0};
 
 protected:
   bool _error{false};

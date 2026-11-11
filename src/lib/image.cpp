@@ -55,6 +55,10 @@ Image::Image(size_t width, size_t height, uint8_t bpp, uint8_t has_alpha) {
   _size = _width * _height * (_bpp + _has_alpha);
 
   _buffer = (uint8_t *)malloc_auto(_size);
+  if (_buffer == nullptr) {
+    TF_LOGE(TAG, "image memory allocation failed (%d x %d).", (int)width, (int)height);
+    release();
+  }
 }
 
 
@@ -68,10 +72,14 @@ void Image::release() {
     free_auto(_buffer);
     _buffer = nullptr;
   }
+
+  _width = 0;
+  _height = 0;
+  _size = 0;
 }
 
 
-bool Image::isLoaded() {
+bool Image::isLoaded() const {
   return (_buffer != nullptr);
 }
 

@@ -221,7 +221,9 @@ bool Toaster::begin() {
       pthis->_boopsensor.loop();
       pthis->_lightsensor.loop();
       pthis->_thermometer.loop();
+      if (pthis->_rtc.isBegin()) {
       pthis->_rtc.loop();
+      }
 
       delay(1);
     }
@@ -287,7 +289,7 @@ bool Toaster::work() {
     _side_display.endDraw();
   }
 
-  if (_lightsensor_use) {
+  if (_lightsensor_use && _auto_brightness) {
     float light = _lightsensor.getValue();
     if (light <= _ls_auto.getDataPoints().front().data_from
       || light >= _ls_auto.getDataPoints().back().data_from
@@ -524,14 +526,15 @@ const char* Toaster::getEmotionShortcut(uint8_t hand, uint8_t finger, uint8_t ac
 
 
 void Toaster::setEffect(int index, const char* new_effect, const char* base_path) {
-  const char* prev_effect = (_effect[index] != nullptr) ? _effect[index]->getName() : "";
+  const char* path = (base_path[0] == 0) ? DEFAULT_BASE_PATH : base_path;
+  bool same = (_effect[index] != nullptr) ? _effect[index]->isSameEffect(new_effect, path) : (new_effect[0] == 0);
 
-  if (strcasecmp(prev_effect, new_effect) != 0) {
+  if (!same) {
     if (_effect[index] != nullptr) {
       _effect[index]->release(_display);
     }
 
-    _effect[index] = Effect::find(new_effect, index, base_path[0] == 0 ? DEFAULT_BASE_PATH : base_path);
+    _effect[index] = Effect::find(new_effect, index, path);
 
     if (_effect[index] != nullptr) {
       _effect[index]->init(_display);
@@ -545,10 +548,10 @@ void Toaster::setSideEffect(const char* new_effect1, const char* base_path) {
     return;
   }
 
-  const char* prev_effect = (_side_effect != nullptr) ? _side_effect->getName() : "";
   const char* new_effect = (new_effect1 != nullptr) ? new_effect1 : "";
+  bool same = (_side_effect != nullptr) ? _side_effect->isSameEffect(new_effect, base_path) : (new_effect[0] == 0);
 
-  if (strcasecmp(prev_effect, new_effect) != 0) {
+  if (!same) {
     if (_side_effect != nullptr) {
       _side_effect->release(_side_display);
     }
@@ -591,6 +594,26 @@ void Toaster::refreshAutoBrightness(float brightness) {
     float new_brightness_side = std::min(brightness * _side_brightness_rate, 1.0f);
     uint8_t new_brightness_side_8 = (uint8_t)(new_brightness_side * 255.0f);
     _side_display.setBrightness(new_brightness_side_8);
+  }
+}
+
+
+void Toaster::setManualBrightness(float brightness) {
+  if (_lightsensor_use && _auto_brightness) {
+    _auto_brightness = false;
+    TF_LOGI(TAG, "auto brightness paused (manual brightness).");
+  }
+
+  refreshAutoBrightness(brightness);
+}
+
+
+void Toaster::setAutoBrightness(bool enable) {
+  _auto_brightness = enable;
+  TF_LOGI(TAG, "auto brightness %s.", enable ? "enabled" : "paused");
+
+  if (enable && _lightsensor_use) {
+    refreshAutoBrightness();
   }
 }
 
@@ -737,7 +760,8 @@ void Toaster::addHUDEmotion(const char* base_path, const char* emotion, const ch
 
 
 bool Toaster::removeHUDEmotion(const char* base_path, const char* emotion) {
-  std::string group = makeGroupName(base_path, true);
+  // base_path is the stored path of the emotion (may be /sd/...), resolve the group like addHUDEmotion
+  std::string group = makeGroupName(base_path);
 
   for (auto it = hud_emotions.begin(); it != hud_emotions.end(); ++it) {
     if (strcasecmp(it->getGroupName(), group.c_str()) == 0) {
@@ -750,9 +774,12 @@ bool Toaster::removeHUDEmotion(const char* base_path, const char* emotion) {
 
 
 void Toaster::clearEmptyHUDEmotions() {
-  for (auto it = hud_emotions.begin(); it != hud_emotions.end(); ++it) {
+  for (auto it = hud_emotions.begin(); it != hud_emotions.end(); ) {
     if (it->isEmpty()) {
-      hud_emotions.erase(it);
+      it = hud_emotions.erase(it);
+    }
+    else {
+      ++it;
     }
   }
 }
@@ -1032,8 +1059,14 @@ bool Toaster::loadRemote(const YamlNodeArray& yaml) {
   bool key_exist2 = yaml.isKeysExist("hardware:i2c_esp_now");
   _espnow_use = key_exist || key_exist2;
   if (_espnow_use) {
-    auto type = ESP_NOW_TYPE.find(yaml.getString("hardware:esp_now:type", "none"));
-    _esp_now_type = (type != ESP_NOW_TYPE.end()) ? type->second : ESP_NOW_NONE;
+    if (key_exist) {
+      auto type = ESP_NOW_TYPE.find(yaml.getString("hardware:esp_now:type", "none"));
+      _esp_now_type = (type != ESP_NOW_TYPE.end()) ? type->second : ESP_NOW_NONE;
+    }
+    else {
+      // legacy key (hardware:i2c_esp_now) always means the I2C receiver
+      _esp_now_type = ESP_NOW_I2C;
+    }
     if (_esp_now_type == ESP_NOW_I2C) {
       uint8_t i2c = parse_hex(yaml.getString(key_exist ? "hardware:esp_now:i2c" : "hardware:i2c_esp_now:i2c", "0x15").c_str());
       if (_espnow.beginI2C(i2c)) {
@@ -1392,8 +1425,9 @@ size_t Toaster::loadEmotionEachYaml(const YamlNodeArray& yaml, const char* base_
     int find = findEmotion(name->asString().c_str());
     if (find >= 0) {
       if (from_sd) {
+        // remove from the group of the emotion being replaced, before it is overwritten
+        removeHUDEmotion(_emotions[find].base_path.c_str(), _emotions[find].name.c_str());
         _emotions[find] = data;
-        removeHUDEmotion(data.base_path.c_str(), data.name.c_str());
         TF_LOGI(TAG, "emotion (%s) already exist. replaced.", name->asString().c_str());
       }
       else {

@@ -83,7 +83,7 @@ void Video::release() {
 }
 
 
-bool Video::isLoaded() {
+bool Video::isLoaded() const {
   return (_image != nullptr);
 }
 
@@ -183,6 +183,9 @@ static void gif_draw(GIFDRAW *pDraw) {
   
   auto palette = (const rgb888_t*)pDraw->pPalette;
   auto buffer = image->getBuffer();
+  if (buffer == nullptr) {
+    return;
+  }
   auto width = image->getWidth();
   const uint8_t ucTransparent = pDraw->ucTransparent;
 
@@ -308,7 +311,7 @@ bool Video::load_gif(const char* path, bool from_sd, bool loop) {
     delete _image;
   }
   _image = new Image(width, height, 3, 0);
-  if (_image == nullptr) {
+  if (_image == nullptr || !_image->isLoaded()) {
     TF_LOGE(TAG, "gif memory allocation failed.");
     release();
     return false;
@@ -538,6 +541,7 @@ bool Video::load_mjpeg_frame() {
 
     if (!_image->isLoaded()) {
       delete _image;
+      _image = nullptr;
       return false;
     }
     

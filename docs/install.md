@@ -248,7 +248,7 @@ Visual Studio Code 화면 하단의 `Platformio: Serial Monitor` 버튼을 누�
 | - | - | - |
 | `help`                 | 사용 가능한 명령어를 모두 표시합니다. | |
 | `reset`, `restart` or `reboot` | Soft reset | |
-| `b`                    | 밝기를 해당 값으로 설정합니다. | 예제: `b 100` |
+| `b`                    | 밝기를 해당 값(0-100)으로 설정합니다. 조도센서 사용 중에는 자동 밝기가 일시 중지되며, `b auto`로 다시 켤 수 있습니다. | 예제: `b 100`, `b auto` |
 | `ls` or `emotions`     | 로딩된 모든 표정을 표시합니다. | |
 | `set`                  | 해당 표정으로 변경합니다. | 예제: `set normal` |
 | `mac`                  | mac 주소를 표시합니다. | |

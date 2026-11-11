@@ -248,11 +248,20 @@ void HUDMenu::shuffle() {
     deck.push_back(i);
   }
 
+  if (deck.empty()) {
+    return;
+  }
+
   Random rnd;
   int n = rnd.random(deck.size());
 
-  selectMenu(deck[n]);
-  refreshHighlight();
+  // selectMenu may only queue the change (setNextEmotion), so highlight the selection directly
+  // instead of re-reading the current state, same as pressKey does
+  if (selectMenu(deck[n])) {
+    _menuHighlight = deck[n];
+    _menuHasHighlight = true;
+  }
+  setDirty();
 }
 
 };

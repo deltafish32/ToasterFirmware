@@ -25,7 +25,7 @@ public:
     g = _personalColor[Effect::_personalIndex][PC_SIDE + PC_MAX][1];
     b = _personalColor[Effect::_personalIndex][PC_SIDE + PC_MAX][2];
 
-    _colorFunc(HUB75_PANEL_RES_X * HUB75_PANEL_CHAIN - 1, 0, r, g, b, 255, PC_SIDE + PC_MAX);
+    _colorFunc(HUB75_PANEL_RES_X * HUB75_PANEL_CHAIN - 1, 0, r, g, b, 255, PC_SIDE);
     display.fillHalf(1, r, g, b);
   }
 

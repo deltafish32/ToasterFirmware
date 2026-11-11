@@ -30,6 +30,10 @@ public:
     return _name;
   }
 
+  virtual bool isSameEffect(const char* name, const char* base_path) const {
+    return strcasecmp(getName(), name) == 0;
+  }
+
   virtual bool isBlank() const {
     return false;
   }
@@ -283,6 +287,7 @@ protected:
 
 
 public:
+  static int personal_color_index(int x, uint8_t param);
   static void color_func_original(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
   static void color_func_personal(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
   static void color_func_personal2(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);

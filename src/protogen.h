@@ -137,6 +137,17 @@ public:
   void refreshAutoBrightness();
   void refreshAutoBrightness(float brightness);
 
+  void setManualBrightness(float brightness);
+  void setAutoBrightness(bool enable);
+
+  bool getAutoBrightness() const {
+    return _auto_brightness;
+  }
+
+  bool isLightSensorUse() const {
+    return _lightsensor_use;
+  }
+
   void toast();
 
 public:
@@ -194,6 +205,7 @@ protected:
   bool _side_display_use{false};
   bool _hud_use{false};
   bool _lightsensor_use{false};
+  volatile bool _auto_brightness{true}; // paused by manual brightness until re-enabled (HUD Options) or reboot
   bool _boopsensor_use{false};
   bool _thermometer_use{false};
   bool _espnow_use{false};

@@ -18,6 +18,9 @@ EffectScript::EffectScript(const char* name) : FixedEffect(name) {
 
 void EffectScript::init(Display& display) {
   Effect::init(display);
+
+  _error = false;
+  _video_flag = false;
   
   if (_parser.getType() == ST_SEQUENCE) {
     initSequence(display);
@@ -88,6 +91,7 @@ void EffectScript::release(Display& display) {
 bool EffectScript::loadScript(const char* name, const char* base_path) {
   _script_name = name;
   _base_path = base_path;
+  _requested_base_path = base_path;
 
   char s[256] = {0, };
   snprintf(s, sizeof(s), "script/%s.yaml", name);
@@ -171,6 +175,12 @@ bool EffectScript::initSequence(Display& display) {
     bool image_load = (image_usage[i] != 0 && (psramFound() || (image_usage_count < DYNAMIC_LOAD_COUNT || image_loaded < DYNAMIC_LOAD_COUNT)));
     auto asset = image_load ? new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false) : nullptr;
     
+    if (asset != nullptr && !asset->isLoaded()) {
+      TF_LOGW(TAG, "initSequence: image load failed (%d, %s)", i, filename.c_str());
+      delete asset;
+      asset = nullptr;
+    }
+
     if (asset != nullptr) {
       ++image_loaded;
     }
@@ -188,108 +198,90 @@ bool EffectScript::initSequence(Display& display) {
 bool EffectScript::initVideo(Display& display) {
   auto& video = _parser.getVideoInfo();
 
-  _video_legacy = true;
+  _video_legacy = false;
   _video_index = 0;
   
   const char* ext = strrchr(video.path.c_str(), '.');
-  if (ext != nullptr) {
-    ++ext;
+  if (ext == nullptr) {
+    TF_LOGE(TAG, "initVideo: unknown video type (%s)", video.path.c_str());
+    _error = true;
+    return false;
+  }
+
+  ++ext;
+  
+  if (strcasecmp(ext, "png") == 0 || strcasecmp(ext, "jpg") == 0 || strcasecmp(ext, "jpeg") == 0) {
+    // legacy video: a sequence of image files (path contains a frame number format, e.g. %d.png)
+    _video_legacy = true;
+
+    if (video.path.length() > 255) {
+      TF_LOGE(TAG, "initVideo: video path length exceededs 255 (%d, %s)", video.path.length(), video.path.c_str());
+      _error = true;
+      return false;
+    }
     
-    if (strcasecmp(ext, "png") == 0 || strcasecmp(ext, "jpg") == 0 || strcasecmp(ext, "jpeg") == 0) {
-      if (video.path.length() > 255) {
-        TF_LOGE(TAG, "initVideo: video path length exceededs 255 (%d, %s)", video.path.length(), video.path.c_str());
-        _error = true;
-        return false;
-      }
-      
+    if (_video_legacy_frame != nullptr) {
+      delete _video_legacy_frame;
+      _video_legacy_frame = nullptr;
+    }
+
+    char s[256] = {0, };
+    if (!format_frame_path(s, sizeof(s), video.path.c_str(), video.start)) {
+      TF_LOGE(TAG, "initVideo: invalid video path format (%s)", video.path.c_str());
+      _error = true;
+      return false;
+    }
+    std::string filename = makeFileName(s);
+
+    _video_legacy_frame = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
+    if (_video_legacy_frame == nullptr || !_video_legacy_frame->isLoaded()) {
+      TF_LOGE(TAG, "initVideo: video first frame load failed. (%s)", video.path.c_str());
+      _error = true;
       if (_video_legacy_frame != nullptr) {
         delete _video_legacy_frame;
+        _video_legacy_frame = nullptr;
       }
-
-      char s[256] = {0, };
-      if (!format_frame_path(s, sizeof(s), video.path.c_str(), _step)) {
-        TF_LOGE(TAG, "initVideo: invalid video path format (%s)", video.path.c_str());
-        _error = true;
-        return false;
-      }
-      std::string filename = makeFileName(s);
-
-      _video_legacy_frame = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
-      if (_video_legacy_frame == nullptr || !_video_legacy_frame->isLoaded()) {
-        TF_LOGE(TAG, "initVideo: video first frame load failed. (%s)", video.path.c_str());
-        _error = true;
-        if (_video_legacy_frame != nullptr) {
-          delete _video_legacy_frame;
-          _video_legacy_frame = nullptr;
-        }
-        return false;
-      }
+      return false;
     }
-    else { // gif, mjpeg
-      std::string filename = makeFileName(video.path.c_str());
-      auto asset = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), _parser.getVideoInfo().loop, _parser.getVideoInfo().fps);
+  }
+  else { // gif, mjpeg
+    std::string filename = makeFileName(video.path.c_str());
+    auto asset = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), _parser.getVideoInfo().loop, _parser.getVideoInfo().fps);
+    if (asset == nullptr || !asset->isLoaded() || asset->getType() != Asset::ASSET_VIDEO) {
+      TF_LOGE(TAG, "initVideo: video load failed. (%s)", video.path.c_str());
+      _error = true;
       if (asset != nullptr) {
-        if (!asset->isLoaded()) {
-          delete asset;
-        }
-        else {
-          _assets.push_back(asset);
-
-          _video_legacy = false;
-        }
+        delete asset;
       }
+      return false;
     }
+
+    _assets.push_back(asset);
   }
 
   _video_offset_x = video.offset_x;
   _video_offset_y = video.offset_y;
 
   if (video.offset_mode != 0) {
-    if (video.path.length() > 255) {
-      TF_LOGW(TAG, "process: video path length exceededs 255 (%d, %s)", video.path.length(), video.path.c_str());
+    // legacy: size of the first frame (loaded above), otherwise: size of the video
+    const Asset* asset = _video_legacy ? _video_legacy_frame : (_assets.empty() ? nullptr : _assets.front());
+    if (asset == nullptr) {
+      TF_LOGE(TAG, "initVideo: asset load failed.");
+      _error = true;
+      return false;
     }
-    else {
-      if (_assets.empty()) {
-        TF_LOGE(TAG, "asset load failed.");
-        _error = true;
-        return false;
-      }
 
-      Asset* asset;
-      
-      if (_video_legacy) {
-        char s[256] = {0, };
-        if (!format_frame_path(s, sizeof(s), video.path.c_str(), video.start)) {
-          TF_LOGE(TAG, "initVideo: invalid video path format (%s)", video.path.c_str());
-          _error = true;
-          return false;
-        }
-        std::string filename = makeFileName(s);
-
-        _assets.push_back(new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false));
-
-        asset = _assets.front();
-        if (asset == nullptr || asset->getType() != Asset::ASSET_IMAGE) {
-          TF_LOGE(TAG, "asset is not image.");
-          _error = true;
-          return false;
-        }
-      }
-      else {
-        asset = _assets.front();
-        if (asset == nullptr || asset->getType() != Asset::ASSET_VIDEO) {
-          TF_LOGE(TAG, "asset is not video.");
-          _error = true;
-          return false;
-        }
-      }
-
-      int video_width = asset->getWidth();
-      int video_height = asset->getHeight();
-
-      _video_offset_x = (display.getWidth() / HUB75_PANEL_CHAIN) - video_width;
-      _video_offset_y = (display.getHeight() - video_height) / 2;
+    if (asset->getType() != (_video_legacy ? Asset::ASSET_IMAGE : Asset::ASSET_VIDEO)) {
+      TF_LOGE(TAG, "initVideo: unexpected asset type (%d).", asset->getType());
+      _error = true;
+      return false;
     }
+
+    int video_width = asset->getWidth();
+    int video_height = asset->getHeight();
+
+    _video_offset_x = (display.getWidth() / HUB75_PANEL_CHAIN) - video_width;
+    _video_offset_y = (display.getHeight() - video_height) / 2;
   }
 
   setStep(video.start);
@@ -426,8 +418,8 @@ void EffectScript::processVideo(Display& display) {
 
       display.draw_image(_video_legacy_frame->getImage(), (DRAW_MODE)video_info.mode, _video_offset_x, _video_offset_y, 0);
 
-      if (_staticMode == false) {
-        if (_step >= video_info.end - 1) {
+      if (_staticMode == false && (Protogen.isAdaptiveFps() || timeout(getLegacyVideoPF_ms()))) {
+        if (_step >= video_info.end) {
           setStep(video_info.loop ? video_info.start : -1);
 
           if (video_info.loop == false) {
@@ -567,6 +559,10 @@ size_t EffectScript::loadNextImages(Display& display, int current_sequence, cons
       if (_assets[image_index] == nullptr) {
         std::string filename = makeFileName(_parser.getImages()[image_index].c_str());
         _assets[image_index] = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
+        if (_assets[image_index] != nullptr && !_assets[image_index]->isLoaded()) {
+          delete _assets[image_index];
+          _assets[image_index] = nullptr;
+        }
         if (_assets[image_index] == nullptr) {
           TF_LOGW(TAG, "loadNextImages failed (%d, %s)", image_index, _parser.getImages()[image_index].c_str());
           return false;

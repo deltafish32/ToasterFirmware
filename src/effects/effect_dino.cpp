@@ -214,6 +214,8 @@ void EffectDino::release(Display& display) {
     _image_dino = nullptr;
   }
 
+  _objects.clear();
+
   setStaticMode(_prev_static_mode);
 
   Effect::release(display);
@@ -322,7 +324,7 @@ void EffectDino::processGames() {
       for (auto it = _objects.begin(); it != _objects.end(); ) {
         (*it)->process();
         if (!(*it)->_valid) {
-          _objects.erase(it);
+          it = _objects.erase(it);
         }
         else {
           ++it;
@@ -359,8 +361,7 @@ void EffectDino::processGames() {
 
 void EffectDino::generateCactus() {
   int type = Random::random(CACTUS_TYPE_COUNT);
-  auto cactus = new DinoCactus(type, HUB75_PANEL_RES_X + CACTUS_DATA[type].w / 2, 16, CACTUS_DATA[type].w, CACTUS_DATA[type].h, true);
-  _objects.push_back(cactus);
+  _objects.emplace_back(new DinoCactus(type, HUB75_PANEL_RES_X + CACTUS_DATA[type].w / 2, 16, CACTUS_DATA[type].w, CACTUS_DATA[type].h, true));
 }
 
 

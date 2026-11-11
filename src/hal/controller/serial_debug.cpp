@@ -359,6 +359,18 @@ static uint16_t parse4d(const char* s) {
 }
 
 
+static bool is_valid_time(int h, int m, int s) {
+  return (h >= 0 && h < 24) && (m >= 0 && m < 60) && (s >= 0 && s < 60);
+}
+
+
+static bool is_valid_date(int year, int month, int day) {
+  return (year >= 2000 && year <= 2099)
+      && (month >= 1 && month <= 12)
+      && (day >= 1 && day <= RTC::getDaysInMonth(year, month));
+}
+
+
 static const auto settime_func = [](const char* param) {
   int year = Protogen._rtc.getYear();
   int month = Protogen._rtc.getMonth();
@@ -387,6 +399,11 @@ static const auto settime_func = [](const char* param) {
     return;
   }
 
+  if (!is_valid_time(h, m, s)) {
+    TF_LOGW(TAG, "settime: out of range (%02d:%02d:%02d)", h, m, s);
+    return;
+  }
+
   Protogen._rtc.setDateTime(year, month, day, h, m, s);
   TF_LOGI(TAG, "settime: %d-%02d-%02d %02d:%02d:%02d", year, month, day, h, m, s);
 };
@@ -411,15 +428,48 @@ static const auto setdatetime_func = [](const char* param) {
       m = parse2d(param + 14);
       s = parse2d(param + 17);
     }
+    else {
+      TF_LOGW(TAG, "setdatetime: format error");
+      return;
+    }
   }
   else {
     TF_LOGW(TAG, "setdatetime: format error");
     return;
   }
 
+  if (!is_valid_date(year, month, day) || !is_valid_time(h, m, s)) {
+    TF_LOGW(TAG, "setdatetime: out of range (%d-%02d-%02d %02d:%02d:%02d)", year, month, day, h, m, s);
+    return;
+  }
+
   Protogen._rtc.setDateTime(year, month, day, h, m, s);
   TF_LOGI(TAG, "setdatetime: %d-%02d-%02d %02d:%02d:%02d", year, month, day, h, m, s);
 };
+
+// b <0-100>: manual brightness (pauses auto brightness), b auto: resume auto brightness (light sensor)
+static const auto brightness_func = [](const char* param) {
+  if (strcasecmp(param, "auto") == 0) {
+    if (!Protogen.isLightSensorUse()) {
+      TF_LOGW(TAG, "b auto: light sensor is not configured.");
+      return;
+    }
+
+    Protogen.setAutoBrightness(true);
+    return;
+  }
+
+  if (!isdigit(param[0])) {
+    TF_LOGW(TAG, "b: invalid value [%s] (0-100 or auto)", param);
+    return;
+  }
+
+  int value = std::min(std::max(atoi(param), 0), 100);
+  float brightness = value / 100.0f;
+  Protogen.setManualBrightness(brightness);
+  TF_LOGI(TAG, "Set brightness: %.3f", brightness);
+};
+
 
 static const auto color_func = [](const char* param) {
   if (Protogen.setColorMode(param)) {
@@ -442,7 +492,7 @@ static const COMMAND COMMAND_LIST[] = {
     Serial.println();
   } },
   { "reset|restart|reboot", "Soft reset.",                            [](const char*) { TF_LOGI(TAG, "soft reset"); ESP.restart(); } },
-  { "b",                    "Set display brightness.",                [](const char* param) { float brightness = atoi(param) / 100.0f; Protogen.refreshAutoBrightness(brightness); TF_LOGI(TAG, "Set brightness: %.3f", brightness); } },
+  { "b",                    "Set display brightness (0-100, or auto).", brightness_func },
   { "ls|emotions",          "Show list of loaded emotions.",          [](const char*) { Protogen.displayEmotionList(); } },
   { "set",                  "Change to the entered emotion.",         [](const char* param) { TF_LOGI(TAG, "Set %s", param); Protogen.setEmotion(param); } },
   { "mac",                  "Display mac address.",                   [](const char*) { uint8_t mac[6]; esp_read_mac(mac, ESP_MAC_WIFI_STA); TF_LOGI(TAG, "MAC: %02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); } },

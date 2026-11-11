@@ -17,6 +17,11 @@ public:
     return _script_name.c_str();
   }
 
+  virtual bool isSameEffect(const char* name, const char* base_path) const {
+    return strcasecmp(getName(), name) == 0
+        && _requested_base_path == ((base_path != nullptr) ? base_path : "");
+  }
+
   virtual bool isScript() const {
     return true;
   }
@@ -26,7 +31,16 @@ public:
   }
 
   virtual timer_pf_t getVideoPF() const {
-    if (_video_index >= _assets.size() || _assets[_video_index] == nullptr) {
+    if (_parser.getType() == ST_VIDEO && _video_legacy) {
+      timer_pf_t pf{PF_NONE, };
+      if (_parser.getVideoInfo().fps > 0) {
+        pf.type = PF_FREQUENCY;
+        pf.frequency = _parser.getVideoInfo().fps;
+      }
+      return pf;
+    }
+
+    if (_video_index >= _assets.size() || _assets[_video_index] == nullptr || _assets[_video_index]->getVideo() == nullptr) {
       return {PF_NONE, };
     }
 
@@ -52,6 +66,7 @@ protected:
   EffectParser _parser;
   std::string _script_name;
   std::string _base_path;
+  std::string _requested_base_path;
   bool _from_sd{false};
   bool _boop{false};
 
@@ -65,6 +80,11 @@ protected:
   int _video_color{0};
 
 protected:
+  uint32_t getLegacyVideoPF_ms() const {
+    uint32_t fps = _parser.getVideoInfo().fps;
+    return (fps > 0) ? (1000 / fps) : 0;
+  }
+
   std::string makeFileName(const char* filename);
   bool initSequence(Display& display);
   bool initVideo(Display& display);

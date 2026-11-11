@@ -60,7 +60,7 @@ void HUDBrightness::pressKey(uint16_t key, uint8_t mode) {
     int brightness = getBrightness();
     brightness -= 25;
     if (brightness < 0) brightness = 0;
-    Protogen.refreshAutoBrightness(brightness / 100.0f);
+    Protogen.setManualBrightness(brightness / 100.0f);
     
     restartTimer();
   }
@@ -69,7 +69,7 @@ void HUDBrightness::pressKey(uint16_t key, uint8_t mode) {
     int brightness = getBrightness();
     brightness += 25;
     if (brightness > 100) brightness = 100;
-    Protogen.refreshAutoBrightness(brightness / 100.0f);
+    Protogen.setManualBrightness(brightness / 100.0f);
     
     restartTimer();
   }

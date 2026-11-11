@@ -13,8 +13,9 @@ public:
 
 public:
   void release();
-  bool isLoaded() {
-    return (_type != ASSET_NONE);
+  bool isLoaded() const {
+    return (_type == ASSET_IMAGE) ? (_image != nullptr && _image->isLoaded()) :
+           (_type == ASSET_VIDEO) ? (_video != nullptr && _video->isLoaded()) : false;
   }
 
   uint8_t getType() const {

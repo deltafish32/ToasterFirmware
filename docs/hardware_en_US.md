@@ -175,6 +175,8 @@ This is a laser ToF sensor that can measure up to 4m distance and up to 50Hz cyc
 
 This is a sensor for automatic brightness adjustment. Currently only 2 types are supported.
 
+If you change the brightness manually from the HUD or with the serial command (`b`), auto brightness is paused and your brightness is kept. Set `Options` > `Auto B.` to `on` in the HUD, or enter the serial command `b auto`, to return to auto brightness. Auto brightness is always on after a reboot.
+
 
 ## BH1750
 This is a digital light sensor that supports light intensity measurement in LUX units. It is connected via I2C, just connect SCL and SDA.

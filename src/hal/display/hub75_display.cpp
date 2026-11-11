@@ -90,6 +90,10 @@ bool Hub75Display::draw_image_newcolor(const Image* image, COLOR_FUNC color_func
   auto bpp = image->getBpp();
   auto has_alpha = image->getHasAlpha();
   auto buffer = image->getBuffer();
+  if (buffer == nullptr) {
+    TF_LOGE(TAG, "image draw failed (not loaded).");
+    return false;
+  }
 
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
@@ -118,6 +122,11 @@ bool Hub75Display::draw_image_newcolor(const Image* image, COLOR_FUNC color_func
 
       if (x1 >= 0 && x1 < _panel_width
        && y1 >= 0 && y1 < _height) {
+        // color_func modifies the color in place; keep the source color for the mirrored pixel
+        const uint8_t r0 = r1;
+        const uint8_t g0 = g1;
+        const uint8_t b0 = b1;
+
         color_func(x1, y1, r1, g1, b1, a, param);
         setPixelAlpha(x1, y1, r1, g1, b1, a);
 
@@ -126,8 +135,14 @@ bool Hub75Display::draw_image_newcolor(const Image* image, COLOR_FUNC color_func
                    (draw_mode == DRAW_MIRROR) ? (_width - (xr + offset_x) - 1) : (xr + _width - offset_x - width);
           int y2 = (draw_mode == DRAW_COPY) ? y1 : (yr + offset_y);
 
-          color_func(x2, y2, r1, g1, b1, a, param);
-          setPixelAlpha(x2, y2, r1, g1, b1, a);
+          if (x2 >= 0 && x2 < _width
+           && y2 >= 0 && y2 < _height) {
+            uint8_t r2 = r0;
+            uint8_t g2 = g0;
+            uint8_t b2 = b0;
+            color_func(x2, y2, r2, g2, b2, a, param);
+            setPixelAlpha(x2, y2, r2, g2, b2, a);
+          }
         }
       }
     }
@@ -151,6 +166,10 @@ bool Hub75Display::draw_image_newcolor_ex(const Image* image, COLOR_FUNC color_f
   auto bpp = image->getBpp();
   auto has_alpha = image->getHasAlpha();
   auto buffer = image->getBuffer();
+  if (buffer == nullptr) {
+    TF_LOGE(TAG, "image draw failed (not loaded).");
+    return false;
+  }
 
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
@@ -179,6 +198,11 @@ bool Hub75Display::draw_image_newcolor_ex(const Image* image, COLOR_FUNC color_f
 
       if (x1 >= 0 && x1 < (draw_mode == DRAW_SINGLE ? _width : _panel_width)
        && y1 >= 0 && y1 < _height) {
+        // color_func modifies the color in place; keep the source color for the mirrored pixel
+        const uint8_t r0 = r1;
+        const uint8_t g0 = g1;
+        const uint8_t b0 = b1;
+
         color_func(x1, y1, r1, g1, b1, a, param);
         setPixelAlpha(x1, y1, r1, g1, b1, a);
 
@@ -187,8 +211,14 @@ bool Hub75Display::draw_image_newcolor_ex(const Image* image, COLOR_FUNC color_f
                    (draw_mode == DRAW_MIRROR) ? (_width - (xr + offset_x) - 1) : (xr + _width - offset_x - width);
           int y2 = (draw_mode == DRAW_COPY) ? y1 : (yr + offset_y);
 
-          color_func(x2, y2, r1, g1, b1, a, param);
-          setPixelAlpha(x2, y2, r1, g1, b1, a);
+          if (x2 >= 0 && x2 < _width
+           && y2 >= 0 && y2 < _height) {
+            uint8_t r2 = r0;
+            uint8_t g2 = g0;
+            uint8_t b2 = b0;
+            color_func(x2, y2, r2, g2, b2, a, param);
+            setPixelAlpha(x2, y2, r2, g2, b2, a);
+          }
         }
        }
     }

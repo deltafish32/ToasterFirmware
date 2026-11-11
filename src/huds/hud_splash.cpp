@@ -135,6 +135,9 @@ bool HUDSplash::draw_oled_png(Adafruit_SSD1306& oled, const Image* image, int of
   auto bpp = image->getBpp();
   auto has_alpha = image->getHasAlpha();
   auto buffer = image->getBuffer();
+  if (buffer == nullptr) {
+    return false;
+  }
   
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {

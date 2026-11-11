@@ -51,6 +51,11 @@ bool RTC::work() {
   if (_blink >= 2) {
     _blink = 0;
     ++_second;
+
+    if (_synced && _second == 30 && (_minute % RESYNC_MINUTES) == 0) {
+      sync();
+      return true;
+    }
     if (_second >= 60) {
       _second = 0;
       ++_minute;
@@ -121,9 +126,11 @@ bool RTC::sync() {
       _second = datetime.second;
       _blink = 0;
 
+      if (!_synced) {
+        TF_LOGI("RTC", "datetime: %s", _ds3231->dateFormat("Y-m-d H:i:s", datetime));
+      }
       _synced = true;
 
-      TF_LOGI("RTC", "datetime: %s", _ds3231->dateFormat("Y-m-d H:i:s", datetime));
       return true;
     }
   }
@@ -139,6 +146,10 @@ bool RTC::isLeapYear(uint16_t year) {
 
 uint8_t RTC::getDaysInMonth(uint16_t year, uint8_t month) {
   static const uint8_t DAYS[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+  if (month < 1 || month > 12) {
+    return 31; // not synced yet (uptime mode)
+  }
 
   return DAYS[month - 1] + ((month == 2 && isLeapYear(year)) ? 1 : 0);
 }

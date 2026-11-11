@@ -17,7 +17,7 @@ public:
 
 public:
   void release();
-  bool isLoaded();
+  bool isLoaded() const;
 
   const Image* getImage() const;
   bool nextFrame(bool loop, bool init = false);

@@ -17,7 +17,7 @@ public:
 
 public:
   void release();
-  bool isLoaded();
+  bool isLoaded() const;
 
   uint8_t* getBuffer() {
     return _buffer;

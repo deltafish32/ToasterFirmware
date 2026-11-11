@@ -12,6 +12,26 @@
 - 빠른 표정 변경 프리셋을 불러오지 못해도 선택된 프리셋이 바뀌던 문제 수정
 - 잠재적인 Buffer Overflow 가능성 문제 수정
   - 이에 따라 연속된 이미지 영상의 `path`에는 정수 서식(`%d`, `%03d` 등)을 하나만 사용할 수 있습니다.
+- ESP-NOW 수신, 이미지 그리기, 이미지·영상 로드 실패 시 메모리 손상이나 재부팅이 발생할 수 있는 문제 수정
+- 오른쪽 개인 색상(`color_right_*`)과 오른쪽 그라데이션(`gradation_right_points`)이 적용되지 않던 문제 수정
+- 색상 모드를 적용한 영상(`video: color`)의 오른쪽이 어둡게 표시되던 문제 수정
+- 연속된 이미지 영상이 재생되지 않던 문제 수정 (`offset: auto`, 시작 프레임, `fps`, 마지막 프레임)
+- 다른 그룹이나 SD 카드에 이름이 같은 스크립트가 있으면 이전 스크립트가 그대로 표시되던 문제 수정
+- 스크립트 오류가 한 번 나면 그 부위(눈, 코, 입 등)가 재부팅 전까지 표시되지 않던 문제 수정
+- 조도센서 사용 중 직접 조절한 밝기가 곧바로 자동 밝기로 덮어써지던 문제 수정
+  - 이제 밝기를 직접 조절하면 자동 밝기가 꺼집니다. HUD의 `Options` > `Auto B.` 또는 시리얼 명령 `b auto`로 다시 켤 수 있으며, 재부팅하면 자동 밝기로 시작합니다.
+- 조도센서의 `alpha_init` 설정이 무시되던 문제 수정
+- 구버전 설정 키 `hardware:i2c_esp_now`로는 ESP-NOW 수신기가 동작하지 않던 문제 수정
+- `setdatetime` 명령에 형식이 틀린 값을 넣으면 잘못된 시간이 기록되던 문제 수정. `settime`, `setdatetime`은 범위를 벗어난 값도 거부합니다.
+- RTC 없이 `clock` 표정을 고르면 시계가 비정상적으로 빨리 흐르던 문제 수정.
+- `/splash.png`가 없을 때 기본 로고 대신 빈 화면이 나오던 문제 수정
+- Boop 센서 응답이 끊겨도 감지하지 못하던 문제 수정. 측정이 0.5초 이상 끊기면 센서를 다시 초기화합니다.
+- 공룡 게임의 메모리 누수 수정
+- 셔플 후 HUD에서 이전 표정이 강조 표시되던 문제 수정
+- SD 카드의 표정이 기본 표정을 대체하면 HUD 메뉴에 중복으로 표시되던 문제 수정
+
+### 기타
+- RTC(DS3231) 사용 시 10분마다 시간을 다시 맞추도록 변경
 
 ### Bugfix
 - (ESP32-S3) Fixed firmware uploads possibly corrupting some files in FFAT.
@@ -23,6 +43,26 @@
 - Fixed the selected emotion shortcut preset changing even when the preset failed to load.
 - Fixed potential buffer overflows.
   - As a result, the `path` of image sequence videos may contain only one integer format (`%d`, `%03d`, etc.).
+- Fixed possible memory corruption or reboots in ESP-NOW receiving, image drawing, and failed image/video loading.
+- Fixed the right-side personal colors (`color_right_*`) and right-side gradation (`gradation_right_points`) not being applied.
+- Fixed the right side of videos with a color mode (`video: color`) appearing darker.
+- Fixed image sequence videos not playing (`offset: auto`, start frame, `fps`, last frame).
+- Fixed the previous script staying on screen when a script with the same name exists in another group or on the SD card.
+- Fixed a part (eyes, nose, mouth, etc.) staying blank until reboot after a single script error.
+- Fixed manually set brightness being overwritten by auto brightness right away when using a light sensor.
+  - Changing the brightness manually now turns auto brightness off. Turn it back on with `Options` > `Auto B.` in the HUD or the serial command `b auto`. Auto brightness is always on after a reboot.
+- Fixed the light sensor's `alpha_init` setting being ignored.
+- Fixed the ESP-NOW receiver not working with the legacy config key `hardware:i2c_esp_now`.
+- Fixed `setdatetime` writing a wrong time when given a malformed value. `settime` and `setdatetime` also reject out-of-range values.
+- Fixed the clock running abnormally fast when the `clock` emotion is selected without an RTC.
+- Fixed a blank screen instead of the default logo when `/splash.png` is missing.
+- Fixed boop sensor dropouts going undetected. The sensor is now reset when no measurement arrives for 0.5 seconds.
+- Fixed a memory leak in the dino game.
+- Fixed the HUD highlighting the previous emotion after shuffling.
+- Fixed duplicate entries in the HUD menu when an SD card emotion replaces a built-in one.
+
+### Misc.
+- With an RTC (DS3231), the time is re-synchronized every 10 minutes.
 
 
 ## 2026.1.1

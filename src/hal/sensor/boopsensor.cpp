@@ -11,6 +11,7 @@ static const char* TAG = "BoopSensor";
 
 static const uint32_t TOF_FREQUENCY = 50;
 static const uint32_t TOF_TIMEOUT_MS = 100;
+static const uint32_t TOF_DATA_TIMEOUT_MS = 500;
 static const uint32_t TOF_INIT_TIMEOUT_MS = 500;
 static const uint32_t BOOP_TIMEOUT_MS = 1000;
 
@@ -41,8 +42,6 @@ bool BoopSensor::work() {
     return false;
   }
 
-  timer_ms_t tick_ms = Timer::get_millis();
-
   uint8_t dataReady = false;
   if (VL53L1_ERROR_NONE != _tof.CheckForDataReady(&dataReady)) {
     tof_error();
@@ -50,7 +49,8 @@ bool BoopSensor::work() {
   }
 
   if (!dataReady) {
-    if (Timer::get_millis() - tick_ms >= TOF_TIMEOUT_MS) {
+    if (Timer::get_millis() - _data_tick_ms >= TOF_DATA_TIMEOUT_MS) {
+      TF_LOGW(TAG, "VL53L1X data timeout.");
       tof_error(true);
     }
 
@@ -66,7 +66,8 @@ bool BoopSensor::work() {
     TF_LOGI(TAG, "%d", _value);
   }
 
-  _boop_tick_ms = Timer::get_millis();
+  tof_no_error();
+  _data_tick_ms = _boop_tick_ms = Timer::get_millis();
   bool boop = (_value >= 0 && _value <= _threshold);
 
   if (_boop != boop) {
@@ -153,17 +154,22 @@ bool BoopSensor::tof_init() {
     return false;
   }
 
-  return (VL53L1_ERROR_NONE == _tof.StartRanging());
+  if (VL53L1_ERROR_NONE != _tof.StartRanging()) {
+    return false;
+  }
+
+  _data_tick_ms = Timer::get_millis();
+  return true;
 }
 
-void BoopSensor::tof_error(bool critical) {
+void BoopSensor::tof_error(bool force_reset) {
   ++_error_total;
   ++_errors;
 
-  if (critical || _errors >= 2) {
+  if (force_reset || _errors >= 2) {
     _errors = 0;
 
-    if (critical || !tof_init()) {
+    if (!tof_init()) {
       _error = true;
 
       TF_LOGE(TAG, "VL53L1X reset failed. now disabled.");

@@ -61,6 +61,8 @@ public:
   static uint8_t getDaysInMonth(uint16_t year, uint8_t month);
 
 protected:
+  static const uint8_t RESYNC_MINUTES = 10;
+
   enum {
     RST_NONE = 0,
     RST_DS3231,

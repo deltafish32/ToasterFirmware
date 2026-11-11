@@ -84,6 +84,10 @@ bool Display::draw_image_newcolor(const Image* image, COLOR_FUNC color_func, uin
   auto bpp = image->getBpp();
   auto has_alpha = image->getHasAlpha();
   auto buffer = image->getBuffer();
+  if (buffer == nullptr) {
+    TF_LOGE(TAG, "image draw failed (not loaded).");
+    return false;
+  }
 
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
@@ -110,6 +114,11 @@ bool Display::draw_image_newcolor(const Image* image, COLOR_FUNC color_func, uin
       int x1 = xr + offset_x;
       int y1 = yr + offset_y;
 
+      if (x1 < 0 || x1 >= _width
+       || y1 < 0 || y1 >= _height) {
+        continue;
+      }
+
       color_func(x1, y1, r1, g1, b1, a, param);
 
       setPixelAlpha(x1, y1, r1, g1, b1, a);
@@ -134,6 +143,10 @@ bool Display::draw_image_newcolor_ex(const Image* image, COLOR_FUNC color_func, 
   auto bpp = image->getBpp();
   auto has_alpha = image->getHasAlpha();
   auto buffer = image->getBuffer();
+  if (buffer == nullptr) {
+    TF_LOGE(TAG, "image draw failed (not loaded).");
+    return false;
+  }
 
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
@@ -159,6 +172,11 @@ bool Display::draw_image_newcolor_ex(const Image* image, COLOR_FUNC color_func, 
       
       int x1 = xr + offset_x;
       int y1 = yr + offset_y;
+
+      if (x1 < 0 || x1 >= _width
+       || y1 < 0 || y1 >= _height) {
+        continue;
+      }
 
       color_func(x1, y1, r1, g1, b1, a, param);
 

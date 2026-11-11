@@ -136,41 +136,44 @@ bool ESPNowRemote::checkWhitelist(const uint8_t* mac) const {
 
 
 void ESPNowRemote::onReceive(const uint8_t* mac, const uint8_t* incomingData, int len) {
-  if (len < sizeof(ESP_NOW_DATA_REMOTE) - 6) {
+  // payload excludes the 6-byte MAC address
+  static const size_t PAYLOAD_SIZE = sizeof(ESP_NOW_DATA_REMOTE) - sizeof(ESP_NOW_DATA_BASE::mac);
+
+  if (len < 0 || (size_t)len < PAYLOAD_SIZE) {
     TF_LOGW(TAG, "TF length error");
     return;
   }
 
+  if (!espnowremote->checkWhitelist(mac)) {
+    TF_LOGW(TAG, "unregistered mac: %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    return;
+  }
+
+  // copy only the known payload; ignore any trailing bytes
   ESP_NOW_DATA_REMOTE data;
-  memcpy(&data, mac, 6);
-  memcpy((uint8_t*)(&data) + 6, incomingData, len);
-  
+  memcpy(data.mac, mac, sizeof(data.mac));
+  memcpy((uint8_t*)(&data) + sizeof(data.mac), incomingData, PAYLOAD_SIZE);
+
   // TF_LOGD(TAG, "recv mac: %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   // uint16_t battery = (data.battery < 4096) ? ADC_LUT[data.battery] : data.battery;
   // TF_LOGD(TAG, "%d", battery);
 
-  if (espnowremote->checkWhitelist(mac)) {
-    if (data.sign[0] == 'T' && data.sign[1] == 'F') {
-      timer_ms_t tick_ms = Timer::get_millis();
+  if (data.sign[0] == 'T' && data.sign[1] == 'F') {
+    timer_ms_t tick_ms = Timer::get_millis();
 
-      if (tick_ms - _recent_tick_ms >= 1000
-       || _recent_data != data.data
-       || _recent_msgid != data.msgid
-       || data.msgid == 0) {
-        _recent_tick_ms = tick_ms;
-        _recent_data = data.data;
-        _recent_msgid = data.msgid;
-      
-        if (data.data != 0) {
-          Protogen._hud.pressKey(data.data);
-        }
+    if (tick_ms - _recent_tick_ms >= 1000
+     || _recent_data != data.data
+     || _recent_msgid != data.msgid
+     || data.msgid == 0) {
+      _recent_tick_ms = tick_ms;
+      _recent_data = data.data;
+      _recent_msgid = data.msgid;
+
+      if (data.data != 0) {
+        Protogen._hud.pressKey(data.data);
       }
     }
   }
-  else {
-    TF_LOGW(TAG, "unregistered mac: %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-  }
-
 }
 
 
@@ -256,7 +259,8 @@ void ESPNowRemote::commReadData(uint8_t len) {
     return;
   }
 
-  onReceive(buffer, buffer + 6, BUFFER_SIZE - 1);
+  // buffer: [mac(6)][payload(len - 6)][checksum(1)]
+  onReceive(buffer, buffer + sizeof(ESP_NOW_DATA_BASE::mac), len - sizeof(ESP_NOW_DATA_BASE::mac));
 }
 
 

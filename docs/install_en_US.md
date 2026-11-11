@@ -248,7 +248,7 @@ Press the `Enter` key or `!` key and enter the command.
 | - | - | - |
 | `help`                 | Display information about builtin commands. | |
 | `reset`, `restart` or `reboot` | Soft reset | |
-| `b`                    | Set the brightness to that value. | ex: `b 100` |
+| `b`                    | Set the brightness to that value (0-100). With a light sensor, this pauses auto brightness; `b auto` turns it back on. | ex: `b 100`, `b auto` |
 | `ls` or `emotions`     | Show list of loaded emotions | |
 | `set`                  | Change to the entered emotion. | ex: `set normal` |
 | `mac`                  | Display mac address. | |

@@ -175,40 +175,53 @@ timer_ms_t Effect::color_millis() {
 }
 
 
+// Left panel uses param as-is, right panel uses the color_right_* slot (param + PC_MAX).
+// Returns -1 when param is not a personal color slot.
+int Effect::personal_color_index(int x, uint8_t param) {
+  if (param >= PC_MAX) {
+    return -1;
+  }
+
+  return (x < HUB75_PANEL_RES_X) ? param : (param + PC_MAX);
+}
+
 void Effect::color_func_original(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param) {
 }
 
 void Effect::color_func_personal(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param) {
-  if (param >= PC_MAX) {
+  int index = personal_color_index(x, param);
+  if (index < 0) {
     return;
   }
 
   _personalIndex = 0;
-  r = _personalColor[_personalIndex][param][0];
-  g = _personalColor[_personalIndex][param][1];
-  b = _personalColor[_personalIndex][param][2];
+  r = _personalColor[_personalIndex][index][0];
+  g = _personalColor[_personalIndex][index][1];
+  b = _personalColor[_personalIndex][index][2];
 }
 
 void Effect::color_func_personal2(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param) {
-  if (param >= PC_MAX) {
+  int index = personal_color_index(x, param);
+  if (index < 0) {
     return;
   }
 
   _personalIndex = 1;
-  r = _personalColor[_personalIndex][param][0];
-  g = _personalColor[_personalIndex][param][1];
-  b = _personalColor[_personalIndex][param][2];
+  r = _personalColor[_personalIndex][index][0];
+  g = _personalColor[_personalIndex][index][1];
+  b = _personalColor[_personalIndex][index][2];
 }
 
 void Effect::color_func_personal3(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param) {
-  if (param >= PC_MAX) {
+  int index = personal_color_index(x, param);
+  if (index < 0) {
     return;
   }
 
   _personalIndex = 2;
-  r = _personalColor[_personalIndex][param][0];
-  g = _personalColor[_personalIndex][param][1];
-  b = _personalColor[_personalIndex][param][2];
+  r = _personalColor[_personalIndex][index][0];
+  g = _personalColor[_personalIndex][index][1];
+  b = _personalColor[_personalIndex][index][2];
 }
 
 void Effect::color_func_rainbow_single(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param) {
@@ -267,7 +280,7 @@ void Effect::color_func_gradation(int x, int y, uint8_t& r, uint8_t& g, uint8_t&
     return;
   }
 
-  int g_index = 0;
+  int g_index = (x < HUB75_PANEL_RES_X) ? 0 : 1;
 
   if (_gradation_dirty) {
     _gradation_dirty = false;
@@ -294,39 +307,42 @@ void Effect::color_func_gradation(int x, int y, uint8_t& r, uint8_t& g, uint8_t&
 }
 
 void Effect::color_func_gray_personal(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param) {
-  if (param >= PC_MAX) {
+  int index = personal_color_index(x, param);
+  if (index < 0) {
     return;
   }
 
   // Rec. 601
   uint8_t gray = (uint8_t)(((2990 * r) + (5870 * g) + (1140 * b)) / 10000);
-  r = (uint8_t)((uint16_t)_personalColor[0][param][0] * gray / 255);
-  g = (uint8_t)((uint16_t)_personalColor[0][param][1] * gray / 255);
-  b = (uint8_t)((uint16_t)_personalColor[0][param][2] * gray / 255);
+  r = (uint8_t)((uint16_t)_personalColor[0][index][0] * gray / 255);
+  g = (uint8_t)((uint16_t)_personalColor[0][index][1] * gray / 255);
+  b = (uint8_t)((uint16_t)_personalColor[0][index][2] * gray / 255);
 }
 
 void Effect::color_func_gray_personal2(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param) {
-  if (param >= PC_MAX) {
+  int index = personal_color_index(x, param);
+  if (index < 0) {
     return;
   }
 
   // Rec. 601
   uint8_t gray = (uint8_t)(((2990 * r) + (5870 * g) + (1140 * b)) / 10000);
-  r = (uint8_t)((uint16_t)_personalColor[1][param][0] * gray / 255);
-  g = (uint8_t)((uint16_t)_personalColor[1][param][1] * gray / 255);
-  b = (uint8_t)((uint16_t)_personalColor[1][param][2] * gray / 255);
+  r = (uint8_t)((uint16_t)_personalColor[1][index][0] * gray / 255);
+  g = (uint8_t)((uint16_t)_personalColor[1][index][1] * gray / 255);
+  b = (uint8_t)((uint16_t)_personalColor[1][index][2] * gray / 255);
 }
 
 void Effect::color_func_gray_personal3(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param) {
-  if (param >= PC_MAX) {
+  int index = personal_color_index(x, param);
+  if (index < 0) {
     return;
   }
 
   // Rec. 601
   uint8_t gray = (uint8_t)(((2990 * r) + (5870 * g) + (1140 * b)) / 10000);
-  r = (uint8_t)((uint16_t)_personalColor[2][param][0] * gray / 255);
-  g = (uint8_t)((uint16_t)_personalColor[2][param][1] * gray / 255);
-  b = (uint8_t)((uint16_t)_personalColor[2][param][2] * gray / 255);
+  r = (uint8_t)((uint16_t)_personalColor[2][index][0] * gray / 255);
+  g = (uint8_t)((uint16_t)_personalColor[2][index][1] * gray / 255);
+  b = (uint8_t)((uint16_t)_personalColor[2][index][2] * gray / 255);
 }
 
 void Effect::color_func_gray_rainbow_single(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param) {
@@ -389,7 +405,7 @@ void Effect::color_func_gray_gradation(int x, int y, uint8_t& r, uint8_t& g, uin
     return;
   }
 
-  int g_index = 0;
+  int g_index = (x < HUB75_PANEL_RES_X) ? 0 : 1;
 
   if (_gradation_dirty) {
     _gradation_dirty = false;
