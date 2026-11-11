@@ -150,6 +150,9 @@ public:
 
   void toast();
 
+  // Requests reboot into USB storage mode (handled in the main loop after turning off LEDs).
+  bool requestUsbStorage();
+
 public:
   void syncLock(TickType_t xBlockTime = portMAX_DELAY);
   void syncUnlock();
@@ -184,6 +187,12 @@ protected:
   SemaphoreHandle_t _interruptSemaphore{nullptr};
   uint32_t _sync_count{0};
   uint8_t _sync_core{0};
+  volatile bool _usb_storage_request{false};
+  volatile bool _hud_task_paused{false};
+
+protected:
+  void enterUsbStorage();
+  void prepareUsbStorage();
 
 public:
   static const char* DEFAULT_BASE_PATH;

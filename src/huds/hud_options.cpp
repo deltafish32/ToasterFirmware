@@ -3,6 +3,7 @@
 
 #include "huds.h"
 #include "protogen.h"
+#include "hal/usb_storage.h"
 
 #include "lib/logger.h"
 
@@ -38,6 +39,16 @@ void HUDOptions::init() {
   if (Protogen._rtc.isBegin()) {
     addMenu("Time",      [](HUDBase* p, const char*) { 
       p->nextHUD(&hud_timeset);
+    });
+  }
+
+  if (UsbStorage::isSupported()) {
+    addMenu("USB",       [](HUDBase* p, const char*) {
+      std::vector<std::string> list = {"confirm"};
+      hud_selector.selectString(list, 0, [](int, void*) {
+        Protogen.requestUsbStorage();
+      });
+      p->nextHUD(&hud_selector);
     });
   }
 }

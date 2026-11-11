@@ -2,6 +2,12 @@
 
 
 ## Unreleased
+### 기능
+- (Beta) USB 저장소 모드 추가 (ESP32-S3 전용, `adafruit_matrixportal_esp32s3_usbm` 빌드)
+  - PC에 USB로 연결하면 내장 플래시(FFAT)가 USB 드라이브로 나타나, `Upload Filesystem Image` 없이 탐색기에서 파일을 바로 고칠 수 있습니다.
+  - HUD의 `Options` > `USB` 또는 시리얼 명령 `usb`로 진입합니다. PC에서 꺼내기를 하거나 USB 연결을 해제하면 재부팅합니다.
+  - 설정 오류로 부팅하지 못하면 USB 저장소 모드로 자동 진입합니다.
+
 ### 버그 수정
 - (ESP32-S3) 펌웨어를 업로드하면 FFAT의 일부 파일이 손상될 수 있던 문제 수정
   - 보드 정의가 업로드 시 TinyUF2 이미지를 함께 기록했는데, 그 위치가 FFAT 파티션 안이라 약 2MB 지점 이후 172KB의 데이터를 덮어썼습니다.
@@ -32,6 +38,12 @@
 
 ### 기타
 - RTC(DS3231) 사용 시 10분마다 시간을 다시 맞추도록 변경
+
+### Feature
+- (Beta) Added USB storage mode (ESP32-S3 only, `adafruit_matrixportal_esp32s3_usbm` build).
+  - When connected to a PC over USB, the internal flash (FFAT) appears as a USB drive, so you can edit files directly in your file manager without `Upload Filesystem Image`.
+  - Enter it with `Options` > `USB` in the HUD or the serial command `usb`. Ejecting it on the PC or disconnecting USB reboots the device.
+  - If the device fails to boot because of a configuration error, it enters USB storage mode automatically.
 
 ### Bugfix
 - (ESP32-S3) Fixed firmware uploads possibly corrupting some files in FFAT.

@@ -28,6 +28,8 @@ public:
   virtual void beginDraw();
   virtual void endDraw();
 
+  void off();
+
 protected:
   NEOPIXEL_TYPE* _neopixel{nullptr};
   bool _reversed{false};

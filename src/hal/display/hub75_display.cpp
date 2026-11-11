@@ -55,6 +55,16 @@ bool Hub75Display::begin(int width, int height, int chain, HUB75_I2S_CFG::i2s_pi
 }
 
 
+void Hub75Display::off() {
+  if (_dma_display == nullptr) {
+    return;
+  }
+
+  _dma_display->setBrightness8(0);
+  _dma_display->clearScreen();
+}
+
+
 void Hub75Display::beginDraw() {
   _dma_display->setBrightness8(_brightness);
 }

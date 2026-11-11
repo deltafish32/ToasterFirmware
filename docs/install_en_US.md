@@ -168,6 +168,8 @@ Changing any settings does not take effect immediately; you must upload a file t
 
 Connect the ESP32 board and do `Upload Filesystem Image` first in PlatformIO on the left. If you are in `Monitoring` status, please exit.
 
+On the ESP32-S3, you can also edit files directly in [USB storage mode](#usb-storage-mode).
+
 
 
 # SD Card
@@ -176,6 +178,40 @@ The ESP32-S3 supports using an SD card. This allows you to store and play much l
 If there are duplicate emotions on the FFAT and SD card, the SD card will be used first.
 
 If the SD card isn't recognized, format it with the file system set to `FAT32` and the allocation unit size set to `4096 bytes` and try again.
+
+
+
+# USB Storage Mode
+> NOTE: This is a beta feature. Keep a backup of important files on your PC.
+
+On the ESP32-S3, the internal flash (FFAT) can be connected to a PC as a USB drive. You can edit `config.yaml` or emotion files directly in your file manager without `Upload Filesystem Image`.
+
+## Build
+USB storage mode requires a separate build environment. Select `env:adafruit_matrixportal_esp32s3_usbm` in the environment selector at the bottom of PlatformIO, then click `Upload`.
+
+This environment uses USB differently (TinyUSB instead of USB-CDC).
+- The serial monitor still works, but the COM port number may change after uploading.
+- The connection drops every time the firmware restarts, so early boot messages are hard to see.
+- The built-in USB JTAG debugging is not available.
+- If uploading fails, hold the `BOOT` button and press the `RESET` button to enter download mode, then try again.
+
+## Usage
+1. Select `ok` in `Options` > `USB` in the HUD, or enter the serial command `usb`.
+1. All LEDs turn off and the device reboots into USB storage mode.
+1. Connect it to a PC over USB and a drive appears. Copy or edit files.
+1. When you are done, **eject** the drive in your file manager. The device reboots automatically and applies the changes.
+
+- If you have a HUD, the USB storage mode screen shows the connection status and the amount read/written.
+- Unplugging USB without ejecting also powers off or reboots the device within 3 seconds, but data the PC has not finished writing may be lost and files may be corrupted. Always eject first.
+- The device also treats the PC going to sleep as a disconnect and reboots.
+- If you entered USB storage mode without a USB connection, turn the power off and on to boot normally.
+- Writing is slow due to the nature of flash memory. Folders with many small files may take a long time to copy.
+- If files are corrupted and cause read errors:
+  - Write them again with `Upload Filesystem Image`.
+  - Or format the drive with file system `FAT` and allocation unit size `4096 bytes`, then copy the data back.
+
+## Automatic entry on configuration errors
+In the USB storage mode build, if the device fails to boot because of an error in `config.yaml` or similar, it enters USB storage mode automatically. Connect it to a PC, fix the files, and eject the drive to boot again.
 
 
 
@@ -260,3 +296,4 @@ Press the `Enter` key or `!` key and enter the command.
 | `settime`              | Sets the time of the built-in clock. | ex: `settime 12:34` 또는 `settime 12:34:56` |
 | `setdatetime`          | Sets the date and time of the built-in clock. | ex: `setdatetime 2023-12-08 12:34:56` |
 | `color`                | Change the color preset. | ex: `color personal2` |
+| `usb`                  | Reboot into USB storage mode. | Only in the [USB storage mode](#usb-storage-mode) build |

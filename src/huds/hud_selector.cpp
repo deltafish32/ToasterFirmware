@@ -29,14 +29,16 @@ void HUDSelector::process(Adafruit_SSD1306& oled) {
       oled.drawBitmap(0, (OLED_HEIGHT - BITMAP_PREV_HEIGHT) / 2, BITMAP_PREV, BITMAP_PREV_WIDTH, BITMAP_PREV_HEIGHT, SSD1306_WHITE);
       oled.drawBitmap(OLED_WIDTH - BITMAP_OK_WIDTH, (OLED_HEIGHT - BITMAP_OK_HEIGHT) / 2, BITMAP_OK, BITMAP_OK_WIDTH, BITMAP_OK_HEIGHT, SSD1306_WHITE);
 
-      oled.drawBitmap((OLED_WIDTH - BITMAP_UP_WIDTH) / 2, 0, BITMAP_UP, BITMAP_UP_WIDTH, BITMAP_UP_HEIGHT, SSD1306_WHITE);
-      oled.drawBitmap((OLED_WIDTH - BITMAP_DOWN_WIDTH) / 2, OLED_HEIGHT - BITMAP_DOWN_HEIGHT, BITMAP_DOWN, BITMAP_DOWN_WIDTH, BITMAP_DOWN_HEIGHT, SSD1306_WHITE);
+      if (_strings.size() > 1) {
+        oled.drawBitmap((OLED_WIDTH - BITMAP_UP_WIDTH) / 2, 0, BITMAP_UP, BITMAP_UP_WIDTH, BITMAP_UP_HEIGHT, SSD1306_WHITE);
+        oled.drawBitmap((OLED_WIDTH - BITMAP_DOWN_WIDTH) / 2, OLED_HEIGHT - BITMAP_DOWN_HEIGHT, BITMAP_DOWN, BITMAP_DOWN_WIDTH, BITMAP_DOWN_HEIGHT, SSD1306_WHITE);
+      }
 
       oled.setCursor(12 * 4, 24);
       setFont(oled);
 
       if (!_strings.empty()) {
-        oled.write(_strings[_select_index].c_str());
+        writeCenter(oled, _strings[_select_index].c_str());
       }
 
       oled.display();

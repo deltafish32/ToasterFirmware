@@ -3,6 +3,8 @@
 
 #include "huds/hud.h"
 #include "huds/hud_emotions.h"
+#include "huds/hud_usb_storage.h"
+#include "hal/usb_storage.h"
 #include "lib/logger.h"
 #include "lib/strutil.h"
 #include <map>
@@ -11,6 +13,8 @@
 namespace toaster {
 
 static const char* TAG = "Protogen";
+
+static void drawUsbStorageHUD(const UsbStorage::Status& status);
 
 
 Toaster Protogen;
@@ -110,6 +114,16 @@ bool Toaster::begin() {
   _serialdebug.begin();
 
   TF_LOGI(TAG, "ToasterFirmware %s", _tf_version);
+
+  if (UsbStorage::isActive()) {
+    prepareUsbStorage();
+
+    // Does not return on success (reboots on eject/disconnect).
+    UsbStorage::run(_hud_use ? drawUsbStorageHUD : nullptr);
+
+    TF_LOGE(TAG, "begin: USB storage mode failed");
+    return false;
+  }
 
   if (psramFound()) {
     psramInit();
@@ -216,13 +230,27 @@ bool Toaster::begin() {
   auto core_result = xTaskCreatePinnedToCore([](void* param) {
     auto pthis = (Toaster*)param;
     while (1) {
+      // Entering USB storage mode: stop here so that the reboot does not interrupt an I2C transfer.
+      if (pthis->_usb_storage_request) {
+        if (!pthis->_hud_task_paused) {
+          if (pthis->_hud_use && pthis->_hud._oled.getBuffer() != nullptr) {
+            UsbStorage::Status status = {};
+            status.state = UsbStorage::STATE_RESTARTING;
+            hud_usb_storage.draw(pthis->_hud._oled, status);
+          }
+          pthis->_hud_task_paused = true;
+        }
+        delay(10);
+        continue;
+      }
+
       pthis->_hud.loop();
       pthis->_espnow.loop();
       pthis->_boopsensor.loop();
       pthis->_lightsensor.loop();
       pthis->_thermometer.loop();
       if (pthis->_rtc.isBegin()) {
-      pthis->_rtc.loop();
+        pthis->_rtc.loop();
       }
 
       delay(1);
@@ -240,7 +268,124 @@ void Toaster::loop() {
   _serialdebug.loop();
   _ir_remote.loop();
 
+  if (_usb_storage_request) {
+    enterUsbStorage();
+  }
+
   Worker::loop();
+}
+
+
+bool Toaster::requestUsbStorage() {
+  if (!UsbStorage::isSupported()) {
+    TF_LOGW(TAG, "requestUsbStorage: USB storage is not supported in this build.");
+    return false;
+  }
+
+  _usb_storage_request = true;
+
+  return true;
+}
+
+
+void Toaster::enterUsbStorage() {
+  // Called from the rendering task, so LEDs are not turned off mid-frame.
+  _display.off();
+
+  if (_side_display_use) {
+    _side_display.off();
+  }
+
+  // Wait until the HUD task finishes its I2C transfer and stops.
+  uint32_t wait_start = millis();
+  while (!_hud_task_paused && millis() - wait_start < 1000) {
+    delay(1);
+  }
+
+  UsbStorage::reboot();
+}
+
+
+// A reset in the middle of an I2C transfer can leave a slave holding SDA low; release the bus with SCL pulses and a STOP.
+static void recoverI2CBus(int sda, int scl) {
+  pinMode(sda, INPUT_PULLUP);
+  pinMode(scl, INPUT_PULLUP);
+  delayMicroseconds(10);
+
+  pinMode(scl, OUTPUT_OPEN_DRAIN);
+  for (int i = 0; i < 9 && digitalRead(sda) == LOW; i++) {
+    digitalWrite(scl, LOW);
+    delayMicroseconds(10);
+    digitalWrite(scl, HIGH);
+    delayMicroseconds(10);
+  }
+
+  // STOP: SDA LOW -> HIGH while SCL is HIGH
+  pinMode(sda, OUTPUT_OPEN_DRAIN);
+  digitalWrite(scl, LOW);
+  delayMicroseconds(10);
+  digitalWrite(sda, LOW);
+  delayMicroseconds(10);
+  digitalWrite(scl, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(sda, HIGH);
+  delayMicroseconds(10);
+
+  pinMode(sda, INPUT_PULLUP);
+  pinMode(scl, INPUT_PULLUP);
+}
+
+
+void Toaster::prepareUsbStorage() {
+  // If the config cannot be read (e.g. fatal config error), try the HUD at the default address.
+  bool hud_use = true;
+  uint8_t hud_i2c = 0x3C;
+  uint32_t i2c_freq = 100000;
+
+  if (FFat.begin(false)) {
+    YamlNodeArray config_yaml = YamlNodeArray::fromFile("/config.yaml", FFat);
+    FFat.end();
+
+    if (!config_yaml.isError()) {
+      // HUB75 OE is active low: hold it HIGH to blank the panel.
+      int oe_pin = config_yaml.getInt("hardware:hub75:oe_pin", 15);
+      pinMode(oe_pin, OUTPUT);
+      digitalWrite(oe_pin, HIGH);
+
+      // NeoPixels keep their last color across resets, so send black.
+      if (config_yaml.isKeysExist("hardware:side_panel")) {
+        int side_panel_num_leds = config_yaml.getInt("hardware:side_panel:num_leds", 1);
+        int side_panel_pin = config_yaml.getInt("hardware:side_panel:pin", 17);
+
+        if (_side_display.begin(side_panel_num_leds, side_panel_pin, false)) {
+          _side_display.off();
+        }
+      }
+
+      hud_use = config_yaml.isKeysExist("hardware:hud");
+      hud_i2c = parse_hex(config_yaml.getString("hardware:hud:i2c", "0x3C").c_str());
+      i2c_freq = config_yaml.getInt("hardware:i2c:frequency", 100000);
+    }
+  }
+
+  // HUD: used only if it responds
+  if (hud_use) {
+    recoverI2CBus(SDA, SCL);
+
+    if (Wire.begin(-1, -1, i2c_freq)) {
+      Wire.beginTransmission(hud_i2c);
+      if (Wire.endTransmission() == 0 && _hud._oled.begin(SSD1306_SWITCHCAPVCC, hud_i2c)) {
+        _hud_use = true;
+      }
+    }
+
+    TF_LOGI(TAG, "prepareUsbStorage: HUD(0x%02x) %s", hud_i2c, _hud_use ? "found" : "not found");
+  }
+}
+
+
+static void drawUsbStorageHUD(const UsbStorage::Status& status) {
+  hud_usb_storage.draw(Protogen._hud._oled, status);
 }
 
 

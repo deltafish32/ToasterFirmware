@@ -1,4 +1,5 @@
 #include "protogen.h"
+#include "hal/usb_storage.h"
 
 
 using namespace toaster;
@@ -9,6 +10,10 @@ void setup() {
 
   if (!Protogen.begin()) {
     // error
+    if (!UsbStorage::isActive()) {
+      UsbStorage::reboot(true);
+    }
+
     while (1) { delay(1); }
   }
 }

@@ -504,6 +504,9 @@ static const COMMAND COMMAND_LIST[] = {
   { "settime",              "Set RTC time (HH:MM or HH:MM:SS).",      settime_func },
   { "setdatetime",          "Set RTC date and time (YYYY-mm-dd HH:MM:SS).", setdatetime_func },
   { "color",                "Change the color preset.",               color_func },
+#ifdef USE_USB_MSC
+  { "usb",                  "Reboot into USB storage mode.",          [](const char*) { Protogen.requestUsbStorage(); } },
+#endif
 };
 
 static const size_t getCommandCount() {

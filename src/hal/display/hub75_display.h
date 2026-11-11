@@ -22,6 +22,8 @@ public:
   virtual void beginDraw();
   virtual void endDraw();
 
+  void off();
+
 public:
   virtual bool draw_image_newcolor(const Image* image, COLOR_FUNC color_func, uint8_t param = 0, DRAW_MODE draw_mode = DRAW_DEFAULT, int offset_x = 0, int offset_y = 0, int rotate_cw = 0);
   virtual bool draw_image_newcolor_ex(const Image* image, COLOR_FUNC color_func, uint8_t param = 0, DRAW_MODE draw_mode = DRAW_DEFAULT, 

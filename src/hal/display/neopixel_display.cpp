@@ -27,6 +27,16 @@ bool NeoPixelDisplay::begin(int numleds, int pin, bool reversed) {
 }
 
 
+void NeoPixelDisplay::off() {
+  if (_neopixel == nullptr) {
+    return;
+  }
+
+  _neopixel->ClearTo(RgbColor(0));
+  _neopixel->Show();
+}
+
+
 void NeoPixelDisplay::beginDraw() {
 }
 
