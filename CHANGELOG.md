@@ -3,6 +3,9 @@
 
 ## Unreleased
 ### 버그 수정
+- (ESP32-S3) 펌웨어를 업로드하면 FFAT의 일부 파일이 손상될 수 있던 문제 수정
+  - 보드 정의가 업로드 시 TinyUF2 이미지를 함께 기록했는데, 그 위치가 FFAT 파티션 안이라 약 2MB 지점 이후 172KB의 데이터를 덮어썼습니다.
+  - 이전 버전에서 업로드한 적이 있다면 이번 버전을 업로드한 뒤 `Upload Filesystem Image`로 파일을 다시 올리는 것을 권장합니다.
 - `emotion.yaml`의 버전을 검사할 때 `config.yaml`의 버전을 읽던 버그 수정
 - 부팅 시 기본 표정을 두 번 불러오던 문제 수정
 - 존재하지 않는 빠른 표정 변경 프리셋을 불러올 때 오류가 발생할 수 있는 문제 수정
@@ -11,6 +14,9 @@
   - 이에 따라 연속된 이미지 영상의 `path`에는 정수 서식(`%d`, `%03d` 등)을 하나만 사용할 수 있습니다.
 
 ### Bugfix
+- (ESP32-S3) Fixed firmware uploads possibly corrupting some files in FFAT.
+  - The board definition also flashed the TinyUF2 image on upload, at an address inside the FFAT partition, overwriting about 172KB of data from around the 2MB point.
+  - If you uploaded an earlier version, it is recommended to upload this version and then re-upload your files with `Upload Filesystem Image`.
 - Fixed a bug where the version check of `emotion.yaml` read the version of `config.yaml`.
 - Fixed the default emotion being loaded twice at boot.
 - Fixed a possible error when loading an emotion shortcut preset that does not exist.
