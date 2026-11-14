@@ -17,6 +17,7 @@ namespace toaster {
 static const char* TAG = "Video";
 
 static const size_t MJPEG_WINDOW_SIZE = 64 * 1024;
+static const uint32_t MJPEG_DEFAULT_FPS = 15;
 
 enum {
   FRAME_FOUND = 0,
@@ -284,13 +285,26 @@ bool Video::next_gif(bool loop, bool init) {
     return false;
   }
 
+  if (_gif == nullptr || _image == nullptr) {
+    return false;
+  }
+
+  if (init) {
+    _image->clear();
+  }
+
   auto gif = (AnimatedGIF *)_gif;
   if (!gif->nextFrame(init)) {
+    if (init) {
+      return false;
+    }
+
     if (loop) {
-      _image->clear();
       return next_gif(loop, true);
     }
-    
+
+    // end of a non-looping play: prepare the first frame for the next play
+    next_gif(false, true);
     return false;
   }
 
@@ -349,10 +363,12 @@ bool Video::load_mjpeg(const char* path, bool from_sd, bool loop, uint32_t fps) 
     _mjpeg_run = true;
     _mjpeg_task_end = false;
     _mjpeg_fail = false;
+    _mjpeg_rewind = false;
 
-    auto core_result = xTaskCreatePinnedToCore(mjpeg_entry_point, "mjpeg", 8192, this, 1, nullptr, PRO_CPU_NUM);
+    auto core_result = xTaskCreatePinnedToCore(mjpeg_entry_point, "mjpeg", 8192, this, 1, &_mjpeg_task, PRO_CPU_NUM);
     if (core_result != pdPASS) {
       TF_LOGE(TAG, "xTaskCreatePinnedToCore failed (%d).", core_result);
+      _mjpeg_task = nullptr;
       _mjpeg_run = false;
       _mjpeg_task_end = true;
       release();
@@ -367,7 +383,7 @@ bool Video::load_mjpeg(const char* path, bool from_sd, bool loop, uint32_t fps) 
   }
 
   _pf.type = PF_FREQUENCY;
-  _pf.frequency = fps;
+  _pf.frequency = (fps > 0) ? fps : MJPEG_DEFAULT_FPS;
 
   return true;
 }
@@ -381,16 +397,8 @@ bool Video::next_mjpeg(bool loop, bool init) {
 bool Video::next_mjpeg_decoded(bool loop, bool init) {
   static const timer_ms_t FIRST_FRAME_TIMEOUT_MS = 1000;
 
-  timer_ms_t tick = Timer::get_millis();
-
-  while (true) {
-    if (_mjpeg_fail) {
-      return false;
-    }
-
+  auto pop = [this](Image*& image) {
     bool popped = false;
-    Image* image = nullptr;
-
     if (xSemaphoreTake(_interlock, portMAX_DELAY)) {
       if (!_decoded.empty()) {
         image = _decoded.front();
@@ -399,20 +407,45 @@ bool Video::next_mjpeg_decoded(bool loop, bool init) {
       }
       xSemaphoreGive(_interlock);
     }
+    return popped;
+  };
 
-    if (popped) {
+  auto set_image = [this](Image* image, bool first) {
+    if (_image != nullptr) {
+      delete _image;
+    }
+    _image = image;
+    _frame = first ? 0 : _frame + 1;
+  };
+
+  timer_ms_t tick = Timer::get_millis();
+
+  // the decode task drops the queued frames and starts again from the beginning
+  if (init) {
+    _mjpeg_rewind = true;
+  }
+
+  while (true) {
+    if (_mjpeg_fail) {
+      return false;
+    }
+
+    Image* image = nullptr;
+    if (!_mjpeg_rewind && pop(image)) {
       if (image == nullptr) {
         if (loop || init) {
           continue;
         }
+
+        // end of a non-looping play: prepare the first frame for the next play if it is ready
+        Image* first = nullptr;
+        if (pop(first) && first != nullptr) {
+          set_image(first, true);
+        }
         return false;
       }
 
-      if (_image != nullptr) {
-        delete _image;
-      }
-      _image = image;
-      _frame = init ? 0 : _frame + 1;
+      set_image(image, init);
       return true;
     }
 
@@ -435,12 +468,13 @@ bool Video::next_mjpeg_direct(bool loop, bool init) {
     _file.seek(0);
   }
 
+  bool first = init;
   if (!find_frame()) {
     _file.seek(0);
-    if ((!loop && !init) || !find_frame()) {
+    if (!find_frame()) {
       return false;
     }
-    init = true;
+    first = true;
   }
 
   Image* image = read_frame();
@@ -452,16 +486,17 @@ bool Video::next_mjpeg_direct(bool loop, bool init) {
     delete _image;
   }
   _image = image;
-  _frame = init ? 0 : _frame + 1;
+  _frame = first ? 0 : _frame + 1;
 
-  return true;
+  // at the end of a non-looping play, the first frame is ready for the next play
+  return (init || loop || !first);
 }
 
 
 void Video::stop_mjpeg_task() {
   static const timer_ms_t STOP_TIMEOUT_MS = 2000;
 
-  if (_mjpeg_task_end) {
+  if (_mjpeg_task == nullptr) {
     return;
   }
 
@@ -470,10 +505,20 @@ void Video::stop_mjpeg_task() {
   timer_ms_t tick = Timer::get_millis();
   while (!_mjpeg_task_end) {
     if (Timer::get_millis() - tick >= STOP_TIMEOUT_MS) {
-      TF_LOGE(TAG, "mjpeg decode task did not stop.");
+      TF_LOGE(TAG, "mjpeg decode task did not stop, deleting it.");
       break;
     }
     delay(1);
+  }
+
+  // The task never deletes itself, so the handle stays valid here even if it timed out.
+  vTaskDelete(_mjpeg_task);
+  _mjpeg_task = nullptr;
+  _mjpeg_task_end = true;
+
+  if (_window != nullptr) {
+    free_auto(_window);
+    _window = nullptr;
   }
 }
 
@@ -481,8 +526,12 @@ void Video::stop_mjpeg_task() {
 void Video::mjpeg_entry_point(void* param) {
   auto pthis = (Video*)param;
   pthis->mjpeg_decode();
+  pthis->_mjpeg_task_end = true;
 
-  vTaskDelete(nullptr);
+  // wait for stop_mjpeg_task to delete this task
+  while (true) {
+    vTaskSuspend(nullptr);
+  }
 }
 
 
@@ -493,7 +542,6 @@ void Video::mjpeg_decode() {
   if (_window == nullptr) {
     TF_LOGE(TAG, "mjpeg read buffer allocation failed.");
     _mjpeg_fail = true;
-    _mjpeg_task_end = true;
     return;
   }
   window_rewind();
@@ -501,6 +549,19 @@ void Video::mjpeg_decode() {
   bool has_frame = false;
 
   while (_mjpeg_run) {
+    if (_mjpeg_rewind) {
+      if (xSemaphoreTake(_interlock, portMAX_DELAY)) {
+        for (auto it : _decoded) {
+          delete it;
+        }
+        _decoded.clear();
+        xSemaphoreGive(_interlock);
+      }
+      window_rewind();
+      has_frame = false;
+      _mjpeg_rewind = false;
+    }
+
     size_t queued = QUEUE_FRAMES;
     if (xSemaphoreTake(_interlock, portMAX_DELAY)) {
       queued = _decoded.size();
@@ -548,10 +609,9 @@ void Video::mjpeg_decode() {
     delay(1);
   }
 
-  free_auto(_window);
+  auto window = _window;
   _window = nullptr;
-
-  _mjpeg_task_end = true;
+  free_auto(window);
 }
 
 

@@ -40,7 +40,7 @@ void EffectSideRainbow::process_strip(Display& display) {
   const int OFF_SPEED = 20;
 
   size_t width = display.getWidth();
-  size_t numleds = width / 2;
+  size_t numleds = std::max(width / 2, (size_t)1);
 
   int off_index = (color_millis() / OFF_SPEED) % numleds;
 

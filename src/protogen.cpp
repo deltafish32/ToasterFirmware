@@ -1052,6 +1052,7 @@ bool Toaster::loadSidePanel(const YamlNodeArray& yaml) {
     bool side_panel_reversed = parse_bool(yaml.getString("hardware:side_panel:reversed", "false").c_str());
 
     if (!_side_display.begin(side_panel_num_leds, side_panel_pin, side_panel_reversed)) {
+      _side_display_use = false;
       return false;
     }
   }

@@ -356,6 +356,12 @@ void EffectScript::processSequence(Display& display, const std::vector<DRAW_SEQU
       return;
     }
 
+    if (!_assets[current.image]->isLoaded()) {
+      TF_LOGE(TAG, "processSequence: video decoding failed. (asset: %d)", current.image);
+      _error = true;
+      return;
+    }
+
     const auto& video = _assets[current.image]->getVideo();
 
     display.draw_image(video->getImage(), (DRAW_MODE)current.mode, current.offset_x, current.offset_y, 0);
@@ -366,7 +372,10 @@ void EffectScript::processSequence(Display& display, const std::vector<DRAW_SEQU
     if (Protogen.isAdaptiveFps() || timeout(video->getPF_ms())) {
       if (current.method == Effect::SM_VIDEO && sequence.size() >= 2) {
         // no loop
-        if (!video->nextFrame(false)) {
+        if (video->nextFrame(false)) {
+          restartTimer();
+        }
+        else {
           setStep((_step < sequence.size() - 1) ? _step + 1 : 0);
         }
       }
@@ -452,6 +461,12 @@ void EffectScript::processVideo(Display& display) {
     auto asset = _assets.front();
     if (asset->getType() != Asset::ASSET_VIDEO) {
       TF_LOGE(TAG, "processVideo: asset type is not video. (asset: %d, type: %d)", _step, asset->getType());
+      _error = true;
+      return;
+    }
+
+    if (!asset->isLoaded()) {
+      TF_LOGE(TAG, "processVideo: video decoding failed.");
       _error = true;
       return;
     }

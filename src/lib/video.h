@@ -75,6 +75,8 @@ protected:
   volatile bool _mjpeg_run{false};
   volatile bool _mjpeg_task_end{true};
   volatile bool _mjpeg_fail{false};
+  volatile bool _mjpeg_rewind{false};
+  TaskHandle_t _mjpeg_task{nullptr};
 
   SemaphoreHandle_t _interlock{nullptr};
   std::list<Image*> _decoded;

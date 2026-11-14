@@ -42,6 +42,7 @@
 - 설정 값이 0이거나 단위가 빠졌을 때 재부팅되거나 멈추던 문제 수정
   - 대상: `rainbow_speed`, `rainbow_single_speed`(예: `10` 대신 `10ms`), `hardware:hub75:fps`, `hardware:hud:fps`, `hardware:thermometer:period`, 스크립트의 `video:fps`
   - 잘못된 값은 경고 로그를 남기고 기본값을 사용합니다.
+- 사이드 패널의 `num_leds`를 생략하거나 1 이하로 쓰고 `festive`, `dino` 표정을 고르면 재부팅되던 문제 수정
 - 프레임 지연이 0인 GIF를 재생할 때 HUD가 멈출 수 있던 문제 수정
 - 사이드 패널 LED가 37개를 넘을 때 원형 무지개 효과에서 메모리 범위 밖을 읽던 문제 수정
 - 스크립트의 이미지 번호가 0-255를 벗어나면 다른 이미지가 표시되던 문제 수정. 이제 스크립트 오류로 처리합니다.
@@ -59,8 +60,13 @@
   - (PSRAM 있는 보드) 재생을 시작하면 첫 프레임이 약 1초 동안 멈춰 있고 이후 재생이 늦게 따라가던 문제
   - (PSRAM 있는 보드) 디코드가 실패하거나 영상을 바꿀 때 멈출 수 있던 문제
   - (PSRAM 없는 보드) 반복 재생하는 영상이 끝에 도달하면 재부팅될 수 있던 문제
-  - 시퀀스의 `video`/`video_loop`로 재생한 MJPEG가 멈추거나 다음 단계로 넘어가지 않던 문제. 이제 한 번 재생(`video`)은 끝나면 다음 단계로 넘어가고, 다시 돌아오면 처음부터 재생합니다.
   - 마지막 프레임의 끝 부분이 잘리던 문제
+- 시퀀스에서 재생하는 영상 관련 문제 수정
+  - 시퀀스의 `video`/`video_loop`로 재생한 MJPEG가 멈추거나 다음 단계로 넘어가지 않던 문제. 시퀀스에는 fps를 지정할 수 없으므로 15fps로 재생합니다.
+  - 효과가 여러 개인 표정에서 시퀀스의 `video`(한 번 재생)가 영상 속도를 무시하고 화면 갱신마다 다음 프레임으로 넘어가던 문제
+  - 시퀀스의 `video`로 재생한 GIF가 한 번 재생된 뒤 다시 재생되지 않던 문제
+  - 이제 한 번 재생(`video`)은 끝나면 다음 단계로 넘어가고, 다시 돌아오면 처음부터 재생합니다.
+- 손상된 GIF를 재생할 때 재부팅될 수 있던 문제 수정. 이제 스크립트 오류로 처리합니다.
 
 ### 기타
 - RTC(DS3231) 사용 시 10분마다 시간을 다시 맞추도록 변경
@@ -112,6 +118,7 @@
 - Fixed reboots or freezes when a setting is 0 or is missing its unit.
   - Affected settings: `rainbow_speed`, `rainbow_single_speed` (e.g. `10` instead of `10ms`), `hardware:hub75:fps`, `hardware:hud:fps`, `hardware:thermometer:period`, and `video:fps` in scripts.
   - Invalid values are logged as a warning and replaced with the default value.
+- Fixed a reboot when choosing the `festive` or `dino` emotion with the side panel's `num_leds` omitted or set to 1 or less.
 - Fixed the HUD possibly freezing while playing a GIF with a frame delay of 0.
 - Fixed an out-of-bounds read in the circular rainbow effect when the side panel has more than 37 LEDs.
 - Fixed image numbers outside 0-255 in scripts showing a different image. They are now reported as a script error.
@@ -129,8 +136,13 @@
   - (Boards with PSRAM) The first frame stayed on screen for about a second when playback started, and playback lagged behind after that.
   - (Boards with PSRAM) Playback could freeze when decoding failed or when switching videos.
   - (Boards without PSRAM) A looping video could cause a reboot when it reached the end.
-  - MJPEG videos played with `video`/`video_loop` in a sequence froze or did not move on to the next step. A `video` step now moves on when the video ends, and plays from the beginning the next time it comes around.
   - The end of the last frame was cut off.
+- Fixed issues with videos played in a sequence.
+  - MJPEG videos played with `video`/`video_loop` in a sequence froze or did not move on to the next step. Since a sequence cannot specify fps, they now play at 15fps.
+  - In emotions with more than one effect, a `video` step in a sequence ignored the video's speed and advanced a frame on every screen refresh.
+  - GIFs played with `video` in a sequence did not play again after the first time.
+  - A `video` step now moves on when the video ends, and plays from the beginning the next time it comes around.
+- Fixed a possible reboot while playing a corrupted GIF. It is now treated as a script error.
 
 ### Misc.
 - With an RTC (DS3231), the time is re-synchronized every 10 minutes.
