@@ -276,7 +276,7 @@ int YamlNodeArray::getInt(const char* keys, int def_value) const {
 
 float YamlNodeArray::getFloat(const char* keys, float def_value) const {
   std::string str = getString(keys, "");
-  return (str.empty()) ? def_value : atoff(str.c_str());
+  return (str.empty()) ? def_value : strtof(str.c_str(), nullptr);
 }
 
 
@@ -288,20 +288,21 @@ std::string YamlNodeArray::toString(const char* newline, const char* indent) con
 
 
 YamlNodeArray YamlNodeArray::fromBytes(const char* data, size_t data_size) {
-  YamlNodeArray yaml;
-  std::vector<YamlNodeArray*> stack;
+  // Each open container remembers the indent of the line that opened it and the indent
+  // its children must use. A line first closes every container opened at its own indent
+  // or deeper, then must match the child indent of the container left on top.
+  // List items are stored as objects or strings keyed by their index ("0", "1", ...).
+  struct Frame {
+    YamlNodeArray* nodes;
+    int open_indent;  // indent of the line that opened this container, -1 for the root
+    int child_indent; // indent its children must use
+  };
 
-  stack.push_back(&yaml);
+  YamlNodeArray yaml;
+  std::vector<Frame> stack;
+  stack.push_back({&yaml, -1, 0});
 
   const char* ptr = data;
-  int recent_depth = 0;
-  bool recent_array = false;
-
-  auto stack_rewind = [&stack](int n = 1) {
-    for (int i = 0; i < n; i++) {
-      stack.pop_back();
-    }
-  };
 
   while (*ptr != 0) {
     std::string line = grab_line(ptr);
@@ -312,51 +313,68 @@ YamlNodeArray YamlNodeArray::fromBytes(const char* data, size_t data_size) {
       continue;
     }
 
-    size_t indent = grab_indent(line.c_str());
+    int indent = (int)grab_indent(line.c_str());
     if (indent % YAML_INDENT != 0) {
       return YamlNodeArray("indent odd error");
-    }
-
-    int line_depth = (int)(indent / YAML_INDENT);
-    if (line_depth - recent_depth > 1) {
-      return YamlNodeArray("indent error");
     }
 
     const char* line_start = line.c_str() + indent;
     bool is_array = is_yaml_array(line_start);
 
-    stack_rewind(recent_depth - line_depth);
+    // "key:" followed by "- item" at the same indent is valid YAML, but this parser
+    // needs list items indented under their key. Report it instead of misplacing the items.
+    if (is_array && stack.back().open_indent == indent && stack.back().nodes->empty()) {
+      return YamlNodeArray("list items must be indented under their key");
+    }
 
-    recent_depth = line_depth;
+    while (stack.back().open_indent >= indent) {
+      stack.pop_back();
+    }
+
+    // too deep (e.g. children under "key: value") or not aligned with the siblings
+    if (indent != stack.back().child_indent) {
+      return YamlNodeArray("indent error");
+    }
 
     std::string key;
     std::string value;
     uint8_t type = parse_key_value(line_start, key, value);
+    YamlNodeArray* nodes = stack.back().nodes;
+
+    if (type == YamlNode::YAML_ARRAY) {
+      char index_str[16];
+      snprintf(index_str, sizeof(index_str), "%u", (unsigned)nodes->size());
+
+      if (!is_array || key.empty()) {
+        // "- value", or "key:value" without a space after ':'
+        nodes->pushString(index_str, value.c_str());
+        continue;
+      }
+
+      // "- key: value": the item is an object whose keys line up after "- "
+      nodes->pushObject(index_str);
+      nodes = &nodes->back().asObjects();
+      stack.push_back({nodes, indent, indent + (int)YAML_INDENT});
+      indent += YAML_INDENT;
+      type = YamlNode::YAML_STRING;
+    }
+    else if (type == YamlNode::YAML_OBJECT && is_array) {
+      // "- key:": the item is an object, and key opens another object inside it
+      char index_str[16];
+      snprintf(index_str, sizeof(index_str), "%u", (unsigned)nodes->size());
+
+      nodes->pushObject(index_str);
+      nodes = &nodes->back().asObjects();
+      stack.push_back({nodes, indent, indent + (int)YAML_INDENT});
+      indent += YAML_INDENT;
+    }
 
     if (type == YamlNode::YAML_STRING) {
-      stack.back()->pushString(key.c_str(), value.c_str());
+      nodes->pushString(key.c_str(), value.c_str());
     }
     else if (type == YamlNode::YAML_OBJECT) {
-      stack.back()->pushObject(key.c_str());
-      stack.back()->back().setObject();
-      stack.push_back(&stack.back()->back().asObjects());
-      recent_array = false;
-    }
-    else if (type == YamlNode::YAML_ARRAY) {
-      char index_str[16];
-      snprintf(index_str, sizeof(index_str), "%d", stack.back()->size());
-
-      if (key.empty()) {
-        stack.back()->pushString(index_str, value.c_str());
-      }
-      else {
-        stack.back()->pushObject(index_str);
-        stack.back()->back().setObject();
-        stack.push_back(&stack.back()->back().asObjects());
-
-        stack.back()->pushString(key.c_str(), value.c_str());
-        recent_array = true;
-      }
+      nodes->pushObject(key.c_str());
+      stack.push_back({&nodes->back().asObjects(), indent, indent + (int)YAML_INDENT});
     }
     else {
       return YamlNodeArray("format error");

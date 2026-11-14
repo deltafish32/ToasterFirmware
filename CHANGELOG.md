@@ -47,11 +47,16 @@
 - 스크립트의 `images`, `sequences`, `boop_sequences` 항목을 한 줄이 아닌 하위 항목으로 쓰면 재부팅될 수 있던 문제 수정. 이제 스크립트 오류로 처리합니다.
 - `emotion.yaml`의 `default` 표정이 없거나 키가 빠졌을 때 표정이 하나도 등록되지 않아 HUD나 시리얼에서 표정을 고르면 재부팅될 수 있던 문제 수정
   - 이제 빠진 키는 비워 두고 경고 로그를 남기며, 나머지 표정은 정상적으로 불러옵니다.
+- YAML 파일의 들여쓰기에 따라 항목이 엉뚱한 위치에 들어가거나 재부팅되던 문제 수정
+  - 한 줄짜리 목록 항목(`- name: a`)이 연속될 때, 하위 항목을 모두 주석 처리한 키 다음에 다른 키가 올 때 등
+  - 값이 있는 키(`key: value`) 아래에 하위 항목을 쓰는 등 들여쓰기가 맞지 않으면 이제 `indent error`로 처리합니다.
+  - 목록 항목은 키보다 한 단계 들여써야 합니다. 같은 깊이에 쓰면 오류로 처리합니다.
 
 ### 기타
 - RTC(DS3231) 사용 시 10분마다 시간을 다시 맞추도록 변경
 - 기본 `eyelash` 표정의 중복된 `mouth` 키 정리
 - 여러 작업에서 동시에 출력한 로그가 한 줄 안에서 섞이지 않도록 개선
+- PC에서 실행하는 단위 테스트 추가 (`test/host`, YAML 파서와 문자열 함수)
 
 ### Feature
 - (Beta) Added USB storage mode (ESP32-S3 only, `adafruit_matrixportal_esp32s3_usbm` build).
@@ -98,11 +103,16 @@
 - Fixed a possible reboot when an item in `images`, `sequences`, or `boop_sequences` of a script is written as nested items instead of a single line. It is now reported as a script error.
 - Fixed a possible reboot when selecting an emotion from the HUD or serial if the `default` emotion in `emotion.yaml` was missing or incomplete, which left no emotions registered.
   - Missing keys are now left empty with a warning, and the other emotions load normally.
+- Fixed YAML items ending up in the wrong place, or a reboot, depending on indentation.
+  - For example, consecutive single-line list items (`- name: a`), or a key that follows another key whose children are all commented out.
+  - Mismatched indentation, such as children under a key that has a value (`key: value`), is now reported as `indent error`.
+  - List items must be indented one level deeper than their key. Items at the same level are reported as an error.
 
 ### Misc.
 - With an RTC (DS3231), the time is re-synchronized every 10 minutes.
 - Removed duplicate `mouth` keys in the built-in `eyelash` emotions.
 - Logs printed at the same time from multiple tasks no longer get mixed within a line.
+- Added unit tests that run on a PC (`test/host`, YAML parser and string utilities).
 
 
 ## 2026.1.1
