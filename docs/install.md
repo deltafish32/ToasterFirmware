@@ -297,3 +297,29 @@ Visual Studio Code 화면 하단의 `Platformio: Serial Monitor` 버튼을 누�
 | `setdatetime`          | 내장 시계의 날짜와 시간을 설정합니다. | 예제: `setdatetime 2023-12-08 12:34:56` |
 | `color`                | 색상 모드를 변경합니다. | 예제: `color personal2` |
 | `usb`                  | USB 저장소 모드로 재부팅합니다. | [USB 저장소 모드](#usb-저장소-모드) 빌드에서만 사용 가능 |
+| `loglevel`             | 로그 레벨을 표시하거나 변경합니다. | 예제: `loglevel`, `loglevel info`, `loglevel 3`. [로그 레벨](#로그-레벨) 참고 |
+
+
+## 로그 레벨
+시리얼 모니터에 출력할 로그의 양을 정할 수 있습니다. 설정한 레벨과 그보다 중요한 로그만 출력됩니다.
+
+| 레벨 | 숫자 | 출력되는 로그 |
+| - | - | - |
+| `none`    | 0 | 출력하지 않음 |
+| `error`   | 1 | 오류 |
+| `warn`    | 2 | 오류, 경고 |
+| `info`    | 3 | 오류, 경고, 정보 |
+| `debug`   | 4 | 오류, 경고, 정보, 디버그 (기본값) |
+| `verbose` | 5 | 모든 로그 |
+
+부팅 시의 레벨은 `config.yaml`의 `log_level`로 정합니다. 설정을 읽기 전의 부팅 로그는 기본값(`debug`)으로 출력됩니다.
+```yaml
+log_level: info
+```
+
+실행 중에는 `loglevel` 명령으로 바꿀 수 있으며, 재부팅하면 `config.yaml`의 값으로 돌아갑니다.
+
+빌드 플래그 `TF_LOG_MAX_LEVEL`보다 높은 레벨의 로그는 펌웨어에 포함되지 않으므로, 레벨을 올려도 출력되지 않습니다. 기본값은 `4`(`debug`)이며, `verbose` 로그를 보려면 `platformio.ini`의 `build_flags`에 다음을 추가한 후 다시 업로드해주십시오.
+```ini
+  -DTF_LOG_MAX_LEVEL=5
+```

@@ -481,6 +481,28 @@ static const auto color_func = [](const char* param) {
 };
 
 
+// loglevel: show current level, loglevel <none|error|warn|info|debug|verbose|0-5>: set level
+static const auto loglevel_func = [](const char* param) {
+  if (param[0] == '\0') {
+    Serial.printf("log level: %s (compiled max: %s)\n",
+      tf_log_level_to_string(tf_log_get_level()), tf_log_level_to_string((tf_log_level_t)TF_LOG_MAX_LEVEL));
+    return;
+  }
+
+  tf_log_level_t level;
+  if (!tf_log_level_from_string(param, &level)) {
+    TF_LOGW(TAG, "loglevel: invalid value [%s] (none, error, warn, info, debug, verbose or 0-5)", param);
+    return;
+  }
+
+  tf_log_set_level(level);
+  Serial.printf("log level: %s\n", tf_log_level_to_string(level));
+  if (level > TF_LOG_MAX_LEVEL) {
+    Serial.printf("note: logs above %s are not compiled in.\n", tf_log_level_to_string((tf_log_level_t)TF_LOG_MAX_LEVEL));
+  }
+};
+
+
 static const size_t getCommandCount();
 
 static const COMMAND COMMAND_LIST[] = {
@@ -504,6 +526,7 @@ static const COMMAND COMMAND_LIST[] = {
   { "settime",              "Set RTC time (HH:MM or HH:MM:SS).",      settime_func },
   { "setdatetime",          "Set RTC date and time (YYYY-mm-dd HH:MM:SS).", setdatetime_func },
   { "color",                "Change the color preset.",               color_func },
+  { "loglevel",             "Show or set log level (none, error, warn, info, debug, verbose).", loglevel_func },
 #ifdef USE_USB_MSC
   { "usb",                  "Reboot into USB storage mode.",          [](const char*) { Protogen.requestUsbStorage(); } },
 #endif

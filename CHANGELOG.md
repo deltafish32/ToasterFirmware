@@ -7,6 +7,9 @@
   - PC에 USB로 연결하면 내장 플래시(FFAT)가 USB 드라이브로 나타나, `Upload Filesystem Image` 없이 탐색기에서 파일을 바로 고칠 수 있습니다.
   - HUD의 `Options` > `USB` 또는 시리얼 명령 `usb`로 진입합니다. PC에서 꺼내기를 하거나 USB 연결을 해제하면 재부팅합니다.
   - 설정 오류로 부팅하지 못하면 USB 저장소 모드로 자동 진입합니다.
+- 시리얼 로그 레벨 설정 추가
+  - `config.yaml`의 `log_level`(`none`, `error`, `warn`, `info`, `debug`, `verbose`, 기본값: `debug`)로 설정하고, 실행 중에는 시리얼 명령 `loglevel`로 확인하거나 바꿀 수 있습니다.
+  - 빌드 플래그 `-DTF_LOG_MAX_LEVEL=<0-5>`(기본값: `4`, debug)보다 높은 레벨의 로그는 펌웨어에서 제외됩니다.
 
 ### 버그 수정
 - (ESP32-S3) 펌웨어를 업로드하면 FFAT의 일부 파일이 손상될 수 있던 문제 수정
@@ -44,6 +47,9 @@
   - When connected to a PC over USB, the internal flash (FFAT) appears as a USB drive, so you can edit files directly in your file manager without `Upload Filesystem Image`.
   - Enter it with `Options` > `USB` in the HUD or the serial command `usb`. Ejecting it on the PC or disconnecting USB reboots the device.
   - If the device fails to boot because of a configuration error, it enters USB storage mode automatically.
+- Added serial log level setting.
+  - Set it with `log_level` in `config.yaml` (`none`, `error`, `warn`, `info`, `debug`, `verbose`, default: `debug`), and check or change it at runtime with the serial command `loglevel`.
+  - Logs above the build flag `-DTF_LOG_MAX_LEVEL=<0-5>` (default: `4`, debug) are left out of the firmware.
 
 ### Bugfix
 - (ESP32-S3) Fixed firmware uploads possibly corrupting some files in FFAT.

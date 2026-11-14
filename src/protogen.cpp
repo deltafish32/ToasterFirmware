@@ -162,6 +162,17 @@ bool Toaster::begin() {
     return false;
   }
 
+  std::string log_level_str = config_yaml.getString("log_level");
+  if (!log_level_str.empty()) {
+    tf_log_level_t log_level;
+    if (tf_log_level_from_string(log_level_str.c_str(), &log_level)) {
+      tf_log_set_level(log_level);
+    }
+    else {
+      TF_LOGW(TAG, "begin: invalid log_level (%s)", log_level_str.c_str());
+    }
+  }
+
   // TF_LOGD(TAG, "config.yaml\n\n%s", config_yaml.toString().c_str());
   
   YamlNodeArray emotion_yaml = YamlNodeArray::fromFile(EMOTIONS_DEFAULT_YAML, FFat);

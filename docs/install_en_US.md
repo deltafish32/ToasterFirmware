@@ -293,7 +293,33 @@ Press the `Enter` key or `!` key and enter the command.
 | `dithering`            | Enable HUD dithering. | |
 | `nodithering`          | Disable HUD dithering. | |
 | `datetime`             | Displays the date and time of the built-in clock. | |
-| `settime`              | Sets the time of the built-in clock. | ex: `settime 12:34` 또는 `settime 12:34:56` |
+| `settime`              | Sets the time of the built-in clock. | ex: `settime 12:34` or `settime 12:34:56` |
 | `setdatetime`          | Sets the date and time of the built-in clock. | ex: `setdatetime 2023-12-08 12:34:56` |
 | `color`                | Change the color preset. | ex: `color personal2` |
 | `usb`                  | Reboot into USB storage mode. | Only in the [USB storage mode](#usb-storage-mode) build |
+| `loglevel`             | Show or change the log level. | ex: `loglevel`, `loglevel info`, `loglevel 3`. See [Log Level](#log-level) |
+
+
+## Log Level
+You can choose how much is logged to the serial monitor. Only logs at the selected level or more important are printed.
+
+| Level | Number | Logs printed |
+| - | - | - |
+| `none`    | 0 | Nothing |
+| `error`   | 1 | Errors |
+| `warn`    | 2 | Errors, warnings |
+| `info`    | 3 | Errors, warnings, info |
+| `debug`   | 4 | Errors, warnings, info, debug (default) |
+| `verbose` | 5 | All logs |
+
+The level at boot is set with `log_level` in `config.yaml`. Boot logs printed before the settings are read use the default (`debug`).
+```yaml
+log_level: info
+```
+
+You can change it at runtime with the `loglevel` command. It goes back to the value in `config.yaml` after a reboot.
+
+Logs above the build flag `TF_LOG_MAX_LEVEL` are not included in the firmware, so raising the level will not print them. The default is `4` (`debug`). To see `verbose` logs, add the following to `build_flags` in `platformio.ini` and upload again.
+```ini
+  -DTF_LOG_MAX_LEVEL=5
+```
