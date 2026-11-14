@@ -2,6 +2,10 @@
 
 
 ## Unreleased
+### 중요
+- (ESP32-S3) 이전 버전에서 펌웨어를 업로드한 적이 있다면, 이번 버전을 업로드한 뒤 `Upload Filesystem Image`로 파일을 다시 올리는 것을 권장합니다. 업로드 과정에서 FFAT의 일부 파일이 손상되었을 수 있습니다.
+- YAML 들여쓰기 검사가 엄격해져, 이전에는 읽히던 파일이 이제 `indent error`로 처리될 수 있습니다. 목록 항목은 키보다 한 단계 들여써야 합니다.
+
 ### 기능
 - (Beta) USB 저장소 모드 추가 (ESP32-S3 전용, `adafruit_matrixportal_esp32s3_usbm` 빌드)
   - PC에 USB로 연결하면 내장 플래시(FFAT)가 USB 드라이브로 나타나, `Upload Filesystem Image` 없이 탐색기에서 파일을 바로 고칠 수 있습니다.
@@ -15,47 +19,26 @@
 ### 버그 수정
 - (ESP32-S3) 펌웨어를 업로드하면 FFAT의 일부 파일이 손상될 수 있던 문제 수정
   - 보드 정의가 업로드 시 TinyUF2 이미지를 함께 기록했는데, 그 위치가 FFAT 파티션 안이라 약 2MB 지점 이후 172KB의 데이터를 덮어썼습니다.
-  - 이전 버전에서 업로드한 적이 있다면 이번 버전을 업로드한 뒤 `Upload Filesystem Image`로 파일을 다시 올리는 것을 권장합니다.
-- `emotion.yaml`의 버전을 검사할 때 `config.yaml`의 버전을 읽던 버그 수정
-- 부팅 시 기본 표정을 두 번 불러오던 문제 수정
-- 존재하지 않는 빠른 표정 변경 프리셋을 불러올 때 오류가 발생할 수 있는 문제 수정
-- 빠른 표정 변경 프리셋을 불러오지 못해도 선택된 프리셋이 바뀌던 문제 수정
-- 잠재적인 Buffer Overflow 가능성 문제 수정
-  - 이에 따라 연속된 이미지 영상의 `path`에는 정수 서식(`%d`, `%03d` 등)을 하나만 사용할 수 있습니다.
-- ESP-NOW 수신, 이미지 그리기, 이미지·영상 로드 실패 시 메모리 손상이나 재부팅이 발생할 수 있는 문제 수정
+- 연속된 이미지 영상이 재생되지 않던 문제 수정 (`offset: auto`, 시작 프레임, `fps`, 마지막 프레임)
 - 오른쪽 개인 색상(`color_right_*`)과 오른쪽 그라데이션(`gradation_right_points`)이 적용되지 않던 문제 수정
 - 색상 모드를 적용한 영상(`video: color`)의 오른쪽이 어둡게 표시되던 문제 수정
-- 연속된 이미지 영상이 재생되지 않던 문제 수정 (`offset: auto`, 시작 프레임, `fps`, 마지막 프레임)
 - 다른 그룹이나 SD 카드에 이름이 같은 스크립트가 있으면 이전 스크립트가 그대로 표시되던 문제 수정
 - 스크립트 오류가 한 번 나면 그 부위(눈, 코, 입 등)가 재부팅 전까지 표시되지 않던 문제 수정
 - 조도센서 사용 중 직접 조절한 밝기가 곧바로 자동 밝기로 덮어써지던 문제 수정
   - 이제 밝기를 직접 조절하면 자동 밝기가 꺼집니다. HUD의 `Options` > `Auto B.` 또는 시리얼 명령 `b auto`로 다시 켤 수 있으며, 재부팅하면 자동 밝기로 시작합니다.
-- 조도센서의 `alpha_init` 설정이 무시되던 문제 수정
 - 구버전 설정 키 `hardware:i2c_esp_now`로는 ESP-NOW 수신기가 동작하지 않던 문제 수정
-- `setdatetime` 명령에 형식이 틀린 값을 넣으면 잘못된 시간이 기록되던 문제 수정. `settime`, `setdatetime`은 범위를 벗어난 값도 거부합니다.
-- RTC 없이 `clock` 표정을 고르면 시계가 비정상적으로 빨리 흐르던 문제 수정.
-- `/splash.png`가 없을 때 기본 로고 대신 빈 화면이 나오던 문제 수정
+- RTC 없이 `clock` 표정을 고르면 시계가 비정상적으로 빨리 흐르던 문제 수정
 - Boop 센서 응답이 끊겨도 감지하지 못하던 문제 수정. 측정이 0.5초 이상 끊기면 센서를 다시 초기화합니다.
-- 공룡 게임의 메모리 누수 수정
 - 셔플 후 HUD에서 이전 표정이 강조 표시되던 문제 수정
 - SD 카드의 표정이 기본 표정을 대체하면 HUD 메뉴에 중복으로 표시되던 문제 수정
 - 설정 값이 0이거나 단위가 빠졌을 때 재부팅되거나 멈추던 문제 수정
   - 대상: `rainbow_speed`, `rainbow_single_speed`(예: `10` 대신 `10ms`), `hardware:hub75:fps`, `hardware:hud:fps`, `hardware:thermometer:period`, 스크립트의 `video:fps`
   - 잘못된 값은 경고 로그를 남기고 기본값을 사용합니다.
-- 사이드 패널의 `num_leds`를 생략하거나 1 이하로 쓰고 `festive`, `dino` 표정을 고르면 재부팅되던 문제 수정
 - 프레임 지연이 0인 GIF를 재생할 때 HUD가 멈출 수 있던 문제 수정
-- 사이드 패널 LED가 37개를 넘을 때 원형 무지개 효과에서 메모리 범위 밖을 읽던 문제 수정
-- 스크립트의 이미지 번호가 0-255를 벗어나면 다른 이미지가 표시되던 문제 수정. 이제 스크립트 오류로 처리합니다.
-- 스크립트의 `images`, `sequences`, `boop_sequences` 항목을 한 줄이 아닌 하위 항목으로 쓰면 재부팅될 수 있던 문제 수정. 이제 스크립트 오류로 처리합니다.
-- `emotion.yaml`의 `default` 표정이 없거나 키가 빠졌을 때 표정이 하나도 등록되지 않아 HUD나 시리얼에서 표정을 고르면 재부팅될 수 있던 문제 수정
-  - 이제 빠진 키는 비워 두고 경고 로그를 남기며, 나머지 표정은 정상적으로 불러옵니다.
 - YAML 파일의 들여쓰기에 따라 항목이 엉뚱한 위치에 들어가거나 재부팅되던 문제 수정
   - 한 줄짜리 목록 항목(`- name: a`)이 연속될 때, 하위 항목을 모두 주석 처리한 키 다음에 다른 키가 올 때 등
   - 값이 있는 키(`key: value`) 아래에 하위 항목을 쓰는 등 들여쓰기가 맞지 않으면 이제 `indent error`로 처리합니다.
   - 목록 항목은 키보다 한 단계 들여써야 합니다. 같은 깊이에 쓰면 오류로 처리합니다.
-- 리모컨(ESP-NOW, IR)과 시리얼에서 동시에 키를 입력하거나 HUD가 화면을 바꾸는 중에 키를 입력하면 HUD 메뉴가 오동작하거나 재부팅될 수 있던 문제 수정
-- ESP-NOW 리모컨으로 셔플할 때 표정을 불러오는 동안 리모컨 수신이 멈추던 문제 수정
-- HUD에서 일시 정지를 전환할 때 화면을 그리는 중이던 효과의 시간이 어긋날 수 있던 문제 수정
 - MJPEG 영상 관련 문제 수정
   - (PSRAM 있는 보드) 재생을 시작하면 첫 프레임이 약 1초 동안 멈춰 있고 이후 재생이 늦게 따라가던 문제
   - (PSRAM 있는 보드) 디코드가 실패하거나 영상을 바꿀 때 멈출 수 있던 문제
@@ -66,7 +49,17 @@
   - 효과가 여러 개인 표정에서 시퀀스의 `video`(한 번 재생)가 영상 속도를 무시하고 화면 갱신마다 다음 프레임으로 넘어가던 문제
   - 시퀀스의 `video`로 재생한 GIF가 한 번 재생된 뒤 다시 재생되지 않던 문제
   - 이제 한 번 재생(`video`)은 끝나면 다음 단계로 넘어가고, 다시 돌아오면 처음부터 재생합니다.
-- 손상된 GIF를 재생할 때 재부팅될 수 있던 문제 수정. 이제 스크립트 오류로 처리합니다.
+- 잘못된 설정·스크립트·명령이나 손상된 파일 때문에 재부팅되거나 오동작하던 문제 수정
+  - 사이드 패널의 `num_leds`를 생략하거나 1 이하로 쓰고 `festive`, `dino` 표정을 고른 경우
+  - `emotion.yaml`의 `default` 표정이 없거나 키가 빠진 경우. 이제 빠진 키는 비워 두고 경고 로그를 남기며, 나머지 표정은 정상적으로 불러옵니다.
+  - 스크립트의 이미지 번호가 0-255를 벗어나거나 `images`, `sequences`, `boop_sequences` 항목을 하위 항목으로 쓴 경우, 손상된 GIF를 재생한 경우. 이제 스크립트 오류로 처리합니다.
+  - 존재하지 않거나 불러오지 못한 빠른 표정 변경 프리셋을 고른 경우
+  - `setdatetime`에 형식이 틀린 값을 넣은 경우. `settime`, `setdatetime`은 범위를 벗어난 값도 거부합니다.
+- 메모리 손상, 재부팅, 입력 오동작 등 안정성 문제 수정
+  - ESP-NOW 수신, 이미지 그리기, 이미지·영상 로드 실패 시 메모리 손상
+  - 리모컨(ESP-NOW, IR)과 시리얼에서 동시에 키를 입력하거나 HUD가 화면을 바꾸는 중에 키를 입력할 때 HUD 메뉴 오동작
+  - ESP-NOW 리모컨으로 셔플할 때 표정을 불러오는 동안 리모컨 수신이 멈추던 문제
+  - 공룡 게임의 메모리 누수, 사이드 패널 LED가 37개를 넘을 때 원형 무지개 효과의 메모리 범위 밖 읽기
 
 ### 기타
 - RTC(DS3231) 사용 시 10분마다 시간을 다시 맞추도록 변경
@@ -77,6 +70,10 @@
 - (ESP32-S3) 불필요한 빌드 플래그 `-mfix-esp32-psram-cache-issue` 제거
 - HUD 화면 미러링, GIF 디코딩, 설정 파일 읽기의 메모리 할당을 줄이고, 영상·이미지·설정 파일을 불러올 때 메모리가 부족하면 재부팅하지 않고 오류로 처리하도록 개선
 - (PSRAM 있는 보드) MJPEG 영상을 64KB 단위로 미리 읽어 두고 프레임을 찾도록 바꿔 파일 읽기와 메모리 할당을 줄임. 64KB를 넘는 프레임은 경고 로그를 남기고 건너뜁니다.
+
+### Important
+- (ESP32-S3) If you uploaded the firmware with an earlier version, it is recommended to upload this version and then re-upload your files with `Upload Filesystem Image`. Some files in FFAT may have been corrupted during the upload.
+- YAML indentation is now checked more strictly, so files that loaded before may now be reported as `indent error`. List items must be indented one level deeper than their key.
 
 ### Feature
 - (Beta) Added USB storage mode (ESP32-S3 only, `adafruit_matrixportal_esp32s3_usbm` build).
@@ -91,47 +88,26 @@
 ### Bugfix
 - (ESP32-S3) Fixed firmware uploads possibly corrupting some files in FFAT.
   - The board definition also flashed the TinyUF2 image on upload, at an address inside the FFAT partition, overwriting about 172KB of data from around the 2MB point.
-  - If you uploaded an earlier version, it is recommended to upload this version and then re-upload your files with `Upload Filesystem Image`.
-- Fixed a bug where the version check of `emotion.yaml` read the version of `config.yaml`.
-- Fixed the default emotion being loaded twice at boot.
-- Fixed a possible error when loading an emotion shortcut preset that does not exist.
-- Fixed the selected emotion shortcut preset changing even when the preset failed to load.
-- Fixed potential buffer overflows.
-  - As a result, the `path` of image sequence videos may contain only one integer format (`%d`, `%03d`, etc.).
-- Fixed possible memory corruption or reboots in ESP-NOW receiving, image drawing, and failed image/video loading.
+- Fixed image sequence videos not playing (`offset: auto`, start frame, `fps`, last frame).
 - Fixed the right-side personal colors (`color_right_*`) and right-side gradation (`gradation_right_points`) not being applied.
 - Fixed the right side of videos with a color mode (`video: color`) appearing darker.
-- Fixed image sequence videos not playing (`offset: auto`, start frame, `fps`, last frame).
 - Fixed the previous script staying on screen when a script with the same name exists in another group or on the SD card.
 - Fixed a part (eyes, nose, mouth, etc.) staying blank until reboot after a single script error.
 - Fixed manually set brightness being overwritten by auto brightness right away when using a light sensor.
   - Changing the brightness manually now turns auto brightness off. Turn it back on with `Options` > `Auto B.` in the HUD or the serial command `b auto`. Auto brightness is always on after a reboot.
-- Fixed the light sensor's `alpha_init` setting being ignored.
 - Fixed the ESP-NOW receiver not working with the legacy config key `hardware:i2c_esp_now`.
-- Fixed `setdatetime` writing a wrong time when given a malformed value. `settime` and `setdatetime` also reject out-of-range values.
 - Fixed the clock running abnormally fast when the `clock` emotion is selected without an RTC.
-- Fixed a blank screen instead of the default logo when `/splash.png` is missing.
 - Fixed boop sensor dropouts going undetected. The sensor is now reset when no measurement arrives for 0.5 seconds.
-- Fixed a memory leak in the dino game.
 - Fixed the HUD highlighting the previous emotion after shuffling.
 - Fixed duplicate entries in the HUD menu when an SD card emotion replaces a built-in one.
 - Fixed reboots or freezes when a setting is 0 or is missing its unit.
   - Affected settings: `rainbow_speed`, `rainbow_single_speed` (e.g. `10` instead of `10ms`), `hardware:hub75:fps`, `hardware:hud:fps`, `hardware:thermometer:period`, and `video:fps` in scripts.
   - Invalid values are logged as a warning and replaced with the default value.
-- Fixed a reboot when choosing the `festive` or `dino` emotion with the side panel's `num_leds` omitted or set to 1 or less.
 - Fixed the HUD possibly freezing while playing a GIF with a frame delay of 0.
-- Fixed an out-of-bounds read in the circular rainbow effect when the side panel has more than 37 LEDs.
-- Fixed image numbers outside 0-255 in scripts showing a different image. They are now reported as a script error.
-- Fixed a possible reboot when an item in `images`, `sequences`, or `boop_sequences` of a script is written as nested items instead of a single line. It is now reported as a script error.
-- Fixed a possible reboot when selecting an emotion from the HUD or serial if the `default` emotion in `emotion.yaml` was missing or incomplete, which left no emotions registered.
-  - Missing keys are now left empty with a warning, and the other emotions load normally.
 - Fixed YAML items ending up in the wrong place, or a reboot, depending on indentation.
   - For example, consecutive single-line list items (`- name: a`), or a key that follows another key whose children are all commented out.
   - Mismatched indentation, such as children under a key that has a value (`key: value`), is now reported as `indent error`.
   - List items must be indented one level deeper than their key. Items at the same level are reported as an error.
-- Fixed the HUD menu misbehaving or rebooting when keys arrived from the remotes (ESP-NOW, IR) and serial at the same time, or while the HUD was changing screens.
-- Fixed ESP-NOW remote input stalling while an emotion loaded after a shuffle from the remote.
-- Fixed the timing of effects being drawn possibly going off when pausing or resuming from the HUD.
 - Fixed MJPEG video issues.
   - (Boards with PSRAM) The first frame stayed on screen for about a second when playback started, and playback lagged behind after that.
   - (Boards with PSRAM) Playback could freeze when decoding failed or when switching videos.
@@ -142,7 +118,17 @@
   - In emotions with more than one effect, a `video` step in a sequence ignored the video's speed and advanced a frame on every screen refresh.
   - GIFs played with `video` in a sequence did not play again after the first time.
   - A `video` step now moves on when the video ends, and plays from the beginning the next time it comes around.
-- Fixed a possible reboot while playing a corrupted GIF. It is now treated as a script error.
+- Fixed reboots or misbehavior caused by invalid settings, scripts, or commands, or by corrupted files.
+  - Choosing the `festive` or `dino` emotion with the side panel's `num_leds` omitted or set to 1 or less.
+  - A missing or incomplete `default` emotion in `emotion.yaml`. Missing keys are now left empty with a warning, and the other emotions load normally.
+  - Image numbers outside 0-255 in a script, items in `images`, `sequences`, or `boop_sequences` written as nested items, or a corrupted GIF. These are now reported as a script error.
+  - Choosing an emotion shortcut preset that does not exist or fails to load.
+  - A malformed value given to `setdatetime`. `settime` and `setdatetime` also reject out-of-range values.
+- Fixed stability issues such as memory corruption, reboots, and input glitches.
+  - Memory corruption in ESP-NOW receiving, image drawing, and failed image/video loading.
+  - The HUD menu misbehaving when keys arrived from the remotes (ESP-NOW, IR) and serial at the same time, or while the HUD was changing screens.
+  - ESP-NOW remote input stalling while an emotion loaded after a shuffle from the remote.
+  - A memory leak in the dino game, and an out-of-bounds read in the circular rainbow effect when the side panel has more than 37 LEDs.
 
 ### Misc.
 - With an RTC (DS3231), the time is re-synchronized every 10 minutes.
