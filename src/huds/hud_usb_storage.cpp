@@ -9,24 +9,17 @@ HUDUsbStorage hud_usb_storage;
 
 
 // Shown as transferring if a read/write happened within this time.
-static const uint32_t ACTIVITY_MS = 300;
+static const uint32_t ACTIVITY_MS = 1000;
 
 
-static void formatBytes(char* buf, size_t size, uint32_t bytes) {
-  if (bytes < 1024) {
-    snprintf(buf, size, "%uB", (unsigned)bytes);
-  }
-  else if (bytes < 1024 * 1024) {
-    snprintf(buf, size, "%uK", (unsigned)(bytes / 1024));
-  }
-  else {
-    snprintf(buf, size, "%u.%uM", (unsigned)(bytes / (1024 * 1024)), (unsigned)((bytes % (1024 * 1024)) * 10 / (1024 * 1024)));
-  }
+static void formatBytes(char* buf, size_t size, uint64_t bytes) {
+  snprintf(buf, size, "%u.%uM", (unsigned)(bytes / (1024 * 1024)), (unsigned)((bytes % (1024 * 1024)) * 10 / (1024 * 1024)));
 }
 
 
+// last_ms is recorded as millis() | 1, so it can be 1ms ahead of now; compare as a signed difference.
 static bool isRecent(uint32_t last_ms, uint32_t now) {
-  return last_ms != 0 && (now - last_ms) < ACTIVITY_MS;
+  return last_ms != 0 && (int32_t)(now - last_ms) < (int32_t)ACTIVITY_MS;
 }
 
 
@@ -46,7 +39,7 @@ void HUDUsbStorage::draw(Adafruit_SSD1306& oled, const UsbStorage::Status& statu
   drawAnimation(oled, 0, 16, oled.width(), 24, status, reading, writing);
 
   // Transfer amount
-  if (status.state == UsbStorage::STATE_CONNECTED) {
+  if (status.state == UsbStorage::STATE_CONNECTED || status.state == UsbStorage::STATE_FINISHING) {
     char sz_read[12];
     char sz_write[12];
     char sz[32];
@@ -63,11 +56,20 @@ void HUDUsbStorage::draw(Adafruit_SSD1306& oled, const UsbStorage::Status& statu
   const char* text = "";
   switch (status.state) {
   case UsbStorage::STATE_WAITING:
-    // Alternate with a notice when entered because of an error
-    text = (status.error_boot && (now / 2000) % 2 == 0) ? "Config error" : "Connect to PC";
-    break;
   case UsbStorage::STATE_CONNECTED:
-    text = writing ? "Writing" : (reading ? "Reading" : "Connected");
+    // Alternate with a notice when entered because of an error
+    if ((status.error_boot || status.sd_error) && (now / 2000) % 2 == 0) {
+      text = status.error_boot ? "Config error" : "SD card error";
+    }
+    else if (status.state == UsbStorage::STATE_WAITING) {
+      text = "Connect to PC";
+    }
+    else {
+      text = writing ? "Writing" : (reading ? "Reading" : "Connected");
+    }
+    break;
+  case UsbStorage::STATE_FINISHING:
+    text = "Waiting...";
     break;
   case UsbStorage::STATE_RESTARTING:
     text = "Restarting";

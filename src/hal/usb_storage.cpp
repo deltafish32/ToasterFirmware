@@ -16,6 +16,13 @@
 #include <esp_partition.h>
 #include <wear_levelling.h>
 
+#ifdef USE_SD
+#include <SPI.h>
+#include "sd_diskio.h"
+#include "ff.h"
+#include "diskio.h"
+#endif
+
 #include "lib/logger.h"
 
 
@@ -43,23 +50,44 @@ static const uint32_t RESTART_DELAY_MS = 200;
 
 // 소프트웨어 리셋에서만 유지되는 RTC 메모리 (전원을 끄면 사라짐)
 // RTC memory retained across software resets only.
-static const uint32_t BOOT_MAGIC = 0x55534D43; // "USMC"
-static const uint32_t BOOT_MAGIC_ERROR = 0x55534D45; // "USME"
+// 하위 8비트는 플래그
+// The low 8 bits hold flags.
+static const uint32_t BOOT_MAGIC = 0x55534D00; // "USM"
+static const uint32_t BOOT_MAGIC_MASK = 0xFFFFFF00;
+static const uint32_t BOOT_FLAG_ERROR = 0x01;
+static const uint32_t BOOT_FLAG_SD = 0x02;
 RTC_NOINIT_ATTR static uint32_t s_boot_magic;
 RTC_NOINIT_ATTR static uint32_t s_boot_magic_inv;
 
 static bool s_active = false;
 static bool s_error_boot = false;
+static bool s_sd_present = false;
 static USBMSC* s_msc = nullptr;
 static wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
 static size_t s_sector_size = 0;
 static uint8_t* s_sector_buffer = nullptr;
 static volatile bool s_eject_requested = false;
 
-static volatile uint32_t s_read_bytes = 0;
-static volatile uint32_t s_write_bytes = 0;
+#ifdef USE_SD
+// 4MHz에서는 64KB에 약 200ms가 걸려 USB 전체가 그동안 멈춥니다. (카드 초기화는 400kHz로 진행)
+// At 4MHz a 64KB transfer takes ~200ms and stalls the whole USB device. (Card init runs at 400kHz.)
+static const uint32_t SD_FREQUENCY = 20000000;
+static const uint32_t SD_SECTOR_SIZE = 512;
+static USBMSC* s_sd_msc = nullptr;
+static uint8_t s_sd_pdrv = 0xFF;
+static volatile bool s_sd_eject_requested = false;
+#endif
+
+static volatile uint64_t s_read_bytes = 0;
+static volatile uint64_t s_write_bytes = 0;
 static volatile uint32_t s_last_read_ms = 0;
 static volatile uint32_t s_last_write_ms = 0;
+static volatile uint32_t s_ffat_last_write_ms = 0;
+static volatile uint32_t s_sd_last_write_ms = 0;
+
+// 한 드라이브를 꺼낸 뒤, 다른 드라이브에 이 시간 동안 쓰기가 없으면 재부팅합니다. (복사 중 재부팅 방지)
+// After one drive is ejected, reboot once the other drive has had no writes for this long (avoids rebooting mid-copy).
+static const uint32_t EJECT_IDLE_MS = 2000;
 
 
 // MSC 인터페이스는 USB.begin() 전에 등록되어야 하므로 전역 생성자에서 처리합니다.
@@ -68,10 +96,17 @@ static volatile uint32_t s_last_write_ms = 0;
 class BootCheck {
 public:
   BootCheck() {
-    if ((s_boot_magic == BOOT_MAGIC || s_boot_magic == BOOT_MAGIC_ERROR) && s_boot_magic_inv == ~s_boot_magic) {
+    if ((s_boot_magic & BOOT_MAGIC_MASK) == BOOT_MAGIC && s_boot_magic_inv == ~s_boot_magic) {
       s_active = true;
-      s_error_boot = (s_boot_magic == BOOT_MAGIC_ERROR);
+      s_error_boot = (s_boot_magic & BOOT_FLAG_ERROR) != 0;
       s_msc = new USBMSC();
+#ifdef USE_SD
+      // 호스트가 연결 직후 LUN 개수를 읽으므로 여기서 정합니다.
+      // The host reads the LUN count right after connecting, so it is fixed here.
+      if (s_boot_magic & BOOT_FLAG_SD) {
+        s_sd_msc = new USBMSC();
+      }
+#endif
     }
 
     // 한 번만 진입하도록 즉시 해제
@@ -132,6 +167,7 @@ static int32_t onWrite(uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t 
 
   s_write_bytes += bufsize;
   s_last_write_ms = millis() | 1;
+  s_ffat_last_write_ms = s_last_write_ms;
 
   return bufsize;
 }
@@ -146,8 +182,79 @@ static bool onStartStop(uint8_t power_condition, bool start, bool load_eject) {
 }
 
 
+#ifdef USE_SD
+static int32_t onSdRead(uint32_t lba, uint32_t offset, void* buffer, uint32_t bufsize) {
+  if (offset != 0 || bufsize % SD_SECTOR_SIZE != 0) {
+    return -1;
+  }
+
+  if (ff_disk_read(s_sd_pdrv, (BYTE*)buffer, lba, bufsize / SD_SECTOR_SIZE) != RES_OK) {
+    return -1;
+  }
+
+  s_read_bytes += bufsize;
+  s_last_read_ms = millis() | 1;
+
+  return bufsize;
+}
+
+
+static int32_t onSdWrite(uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t bufsize) {
+  if (offset != 0 || bufsize % SD_SECTOR_SIZE != 0) {
+    return -1;
+  }
+
+  if (ff_disk_write(s_sd_pdrv, buffer, lba, bufsize / SD_SECTOR_SIZE) != RES_OK) {
+    return -1;
+  }
+
+  s_write_bytes += bufsize;
+  s_last_write_ms = millis() | 1;
+  s_sd_last_write_ms = s_last_write_ms;
+
+  return bufsize;
+}
+
+
+static bool onSdStartStop(uint8_t power_condition, bool start, bool load_eject) {
+  if (load_eject && !start) {
+    s_sd_eject_requested = true;
+  }
+
+  return true;
+}
+
+
+// 카드를 초기화만 하고 마운트하지 않습니다. (PC와 동시에 파일 시스템을 쓰지 않도록)
+// Initializes the card without mounting it, so the file system is not used together with the host.
+static bool beginSd(uint32_t& sector_count) {
+  SPI.begin();
+
+  s_sd_pdrv = sdcard_init(PIN_FSPI_CS, &SPI, SD_FREQUENCY);
+  if (s_sd_pdrv == 0xFF) {
+    return false;
+  }
+
+  if ((ff_disk_initialize(s_sd_pdrv) & STA_NOINIT) != 0 || sdcard_sector_size(s_sd_pdrv) != SD_SECTOR_SIZE) {
+    sdcard_uninit(s_sd_pdrv);
+    s_sd_pdrv = 0xFF;
+    return false;
+  }
+
+  sector_count = sdcard_num_sectors(s_sd_pdrv);
+
+  return sector_count > 0;
+}
+#endif
+
+
 bool isSupported() {
   return true;
+}
+
+
+void setSdCardPresent(bool present) {
+  s_sd_present = present;
 }
 
 
@@ -162,9 +269,9 @@ bool isErrorBoot() {
 
 
 bool reboot(bool on_error) {
-  TF_LOGI(TAG, "reboot into USB storage mode%s", on_error ? " (error)" : "");
+  TF_LOGI(TAG, "reboot into USB storage mode%s%s", on_error ? " (error)" : "", s_sd_present ? " with SD card" : "");
 
-  s_boot_magic = on_error ? BOOT_MAGIC_ERROR : BOOT_MAGIC;
+  s_boot_magic = BOOT_MAGIC | (on_error ? BOOT_FLAG_ERROR : 0) | (s_sd_present ? BOOT_FLAG_SD : 0);
   s_boot_magic_inv = ~s_boot_magic;
 
   Serial.flush();
@@ -228,6 +335,34 @@ bool run(TickCallback on_tick, uint32_t tick_interval_ms) {
   status.error_boot = s_error_boot;
   status.capacity_kb = sector_count * s_sector_size / 1024;
 
+  bool sd_active = false;
+#ifdef USE_SD
+  if (s_sd_msc != nullptr) {
+    uint32_t sd_sector_count = 0;
+
+    s_sd_msc->vendorID("Toaster");
+    s_sd_msc->productID("SD");
+    s_sd_msc->productRevision("1.0");
+    s_sd_msc->onStartStop(onSdStartStop);
+    s_sd_msc->onRead(onSdRead);
+    s_sd_msc->onWrite(onSdWrite);
+
+    if (beginSd(sd_sector_count) && s_sd_msc->begin(sd_sector_count, SD_SECTOR_SIZE)) {
+      s_sd_msc->mediaPresent(true);
+      sd_active = true;
+      status.capacity_kb += sd_sector_count / (1024 / SD_SECTOR_SIZE);
+
+      TF_LOGI(TAG, "SD card (count: %u, size: %u MB)", (unsigned)sd_sector_count, (unsigned)(sd_sector_count / (1024 * 1024 / SD_SECTOR_SIZE)));
+    }
+    else {
+      status.sd_error = true;
+      TF_LOGE(TAG, "run: SD card initialization failed");
+    }
+  }
+#endif
+
+  bool ffat_ejected = false;
+
   auto tick = [&]() {
     if (on_tick != nullptr) {
       status.read_bytes = s_read_bytes;
@@ -245,14 +380,48 @@ bool run(TickCallback on_tick, uint32_t tick_interval_ms) {
   tick();
 
   while (1) {
-    if (s_eject_requested) {
-      TF_LOGI(TAG, "ejected by host");
-      break;
+    uint32_t now = millis();
+
+    // 드라이브 하나를 꺼내면, 남은 드라이브에 쓰기가 멈춘 뒤 재부팅합니다.
+    // When one drive is ejected, reboot once writes to the remaining drive have stopped.
+    bool sd_ejected = false;
+    if (s_eject_requested && !ffat_ejected) {
+      ffat_ejected = true;
+      s_msc->mediaPresent(false);
+      TF_LOGI(TAG, "FFat ejected by host");
+    }
+#ifdef USE_SD
+    if (s_sd_eject_requested && sd_active) {
+      sd_active = false;
+      s_sd_msc->mediaPresent(false);
+      TF_LOGI(TAG, "SD card ejected by host");
+    }
+    sd_ejected = s_sd_eject_requested && s_sd_msc != nullptr;
+#endif
+    if (ffat_ejected || sd_ejected) {
+      uint32_t other_last_write = 0;
+      if (!ffat_ejected) {
+        other_last_write = s_ffat_last_write_ms;
+      }
+      else if (sd_active) {
+        other_last_write = s_sd_last_write_ms;
+      }
+
+      // 쓰기는 USB 태스크에서 기록되므로 now보다 나중일 수 있어, 부호 있는 차이로 비교합니다.
+      // Writes are recorded by the USB task and can be newer than now, so compare as a signed difference.
+      if (other_last_write == 0 || (int32_t)(millis() - other_last_write) >= (int32_t)EJECT_IDLE_MS) {
+        TF_LOGI(TAG, "ejected by host");
+        break;
+      }
+
+      if (status.state != STATE_FINISHING) {
+        status.state = STATE_FINISHING;
+        TF_LOGI(TAG, "waiting for writes to the other drive to finish");
+      }
     }
 
     bool mounted = tud_mounted();
     bool suspended = tud_suspended();
-    uint32_t now = millis();
 
     if (status.state == STATE_WAITING) {
       if (mounted && !suspended) {
@@ -305,6 +474,11 @@ bool run(TickCallback on_tick, uint32_t tick_interval_ms) {
   }
 
   s_msc->mediaPresent(false);
+#ifdef USE_SD
+  if (s_sd_msc != nullptr) {
+    s_sd_msc->mediaPresent(false);
+  }
+#endif
 
   status.state = STATE_RESTARTING;
   tick();
@@ -344,6 +518,9 @@ bool isActive() {
 
 bool isErrorBoot() {
   return false;
+}
+
+void setSdCardPresent(bool present) {
 }
 
 bool reboot(bool on_error) {

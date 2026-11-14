@@ -179,12 +179,16 @@ If there are duplicate emotions on the FFAT and SD card, the SD card will be use
 
 If the SD card isn't recognized, format it with the file system set to `FAT32` and the allocation unit size set to `4096 bytes` and try again.
 
+Cards formatted as `exFAT` or `NTFS` cannot be read. Note that Windows formats cards larger than 32GB as `exFAT` by default.
+
 
 
 # USB Storage Mode
 > NOTE: This is a beta feature. Keep a backup of important files on your PC.
 
 On the ESP32-S3, the internal flash (FFAT) can be connected to a PC as a USB drive. You can edit `config.yaml` or emotion files directly in your file manager without `Upload Filesystem Image`.
+
+If an [SD card](#sd-card) is inserted, it appears as a separate drive as well.
 
 ## Build
 USB storage mode requires a separate build environment. Select `env:adafruit_matrixportal_esp32s3_usbm` in the environment selector at the bottom of PlatformIO, then click `Upload`.
@@ -200,8 +204,9 @@ This environment uses USB differently (TinyUSB instead of USB-CDC).
 1. All LEDs turn off and the device reboots into USB storage mode.
 1. Connect it to a PC over USB and a drive appears. Copy or edit files.
 1. When you are done, **eject** the drive in your file manager. The device reboots automatically and applies the changes.
+   - If the SD card appeared too, ejecting either drive is enough. If the other drive is still being written to, the device reboots after the writes finish, showing `Waiting...` on the HUD in the meantime.
 
-- If you have a HUD, the USB storage mode screen shows the connection status and the amount read/written.
+- If you have a HUD, the USB storage mode screen shows the connection status and the amount read/written (total of all drives).
 - Unplugging USB without ejecting also powers off or reboots the device within 3 seconds, but data the PC has not finished writing may be lost and files may be corrupted. Always eject first.
 - The device also treats the PC going to sleep as a disconnect and reboots.
 - If you entered USB storage mode without a USB connection, turn the power off and on to boot normally.
@@ -209,6 +214,11 @@ This environment uses USB differently (TinyUSB instead of USB-CDC).
 - If files are corrupted and cause read errors:
   - Write them again with `Upload Filesystem Image`.
   - Or format the drive with file system `FAT` and allocation unit size `4096 bytes`, then copy the data back.
+- SD card:
+  - Only a card inserted before entering USB storage mode appears. Do not remove or insert the card while in USB storage mode.
+  - A card that cannot be read still appears as a drive, so you can format it on the PC. Be sure to choose `FAT32` as the file system.
+  - If the SD card cannot be initialized, the HUD shows `SD card error` and the drive appears empty.
+  - Transfers over USB are slow, so for large files it is faster to remove the card and use the PC's card reader.
 
 ## Automatic entry on configuration errors
 In the USB storage mode build, if the device fails to boot because of an error in `config.yaml` or similar, it enters USB storage mode automatically. Connect it to a PC, fix the files, and eject the drive to boot again.

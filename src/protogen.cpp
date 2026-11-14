@@ -9,12 +9,34 @@
 #include "lib/strutil.h"
 #include <map>
 
+#ifdef USE_SD
+#include "sd_diskio.h"
+#include "ff.h"
+#include "diskio.h"
+#endif
+
 
 namespace toaster {
 
 static const char* TAG = "Protogen";
 
 static void drawUsbStorageHUD(const UsbStorage::Status& status);
+
+
+#ifdef USE_SD
+// Checks whether a card responds, without mounting it (e.g. exFAT or unformatted cards).
+static bool probeSdCard() {
+  uint8_t pdrv = sdcard_init(PIN_FSPI_CS, &SPI, 4000000);
+  if (pdrv == 0xFF) {
+    return false;
+  }
+
+  bool present = (ff_disk_initialize(pdrv) & STA_NOINIT) == 0;
+  sdcard_uninit(pdrv);
+
+  return present;
+}
+#endif
 
 
 Toaster Protogen;
@@ -159,9 +181,16 @@ bool Toaster::begin() {
 
     TF_LOGI(TAG, "SD card found (type: %d, size: %lld)", (int)SD.cardType(), SD.cardSize() / 1024 / 1024);
   }
+  else if (probeSdCard()) {
+    _sd_error = true;
+
+    TF_LOGE(TAG, "begin: SD card found but cannot be read. Format it as FAT32.");
+  }
   else {
     TF_LOGW(TAG, "begin: SD begin failed");
   }
+
+  UsbStorage::setSdCardPresent(_sd_use || _sd_error);
 #endif
 
   if (!FFat.begin(false)) {

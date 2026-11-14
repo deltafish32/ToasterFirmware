@@ -227,6 +227,7 @@ protected:
   bool _rtc_use{false};
   uint8_t _rtc_format{0};
   bool _sd_use{false};
+  bool _sd_error{false};
 
 protected:
   uint32_t _hub75_fps{60};
