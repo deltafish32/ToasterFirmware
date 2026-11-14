@@ -62,10 +62,15 @@ protected:
   std::string _path;
 
   // mjpeg only
-  // With PSRAM, the decode task owns _file, _start and _end and passes frames through
+  // With PSRAM, the decode task owns _file and the read window and passes frames through
   // _decoded. A nullptr entry marks the end of the video, after which the first frame follows.
   size_t _start{0};
   size_t _end{0};
+
+  uint8_t* _window{nullptr};
+  size_t _window_pos{0};
+  size_t _window_len{0};
+  size_t _cursor{0};
 
   volatile bool _mjpeg_run{false};
   volatile bool _mjpeg_task_end{true};
@@ -86,6 +91,10 @@ protected:
   void stop_mjpeg_task();
   static void mjpeg_entry_point(void* param);
   void mjpeg_decode();
+  void window_rewind();
+  bool window_fill(size_t keep_from);
+  bool window_find_soi(size_t from, size_t& found);
+  uint8_t window_next_frame(const uint8_t*& data, size_t& size);
   bool find_frame();
   Image* read_frame();
 };

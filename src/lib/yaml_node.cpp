@@ -12,6 +12,12 @@ YamlNode::YamlNode(const YamlNode& other) {
 }
 
 
+YamlNode::YamlNode(YamlNode&& other) noexcept : key(std::move(other.key)), _type(other._type), _ptr(other._ptr) {
+  other._type = YAML_NONE;
+  other._ptr = nullptr;
+}
+
+
 YamlNode::YamlNode(const char* new_key, const char* new_str) : key(new_key) {
   setString(new_str);
 }
@@ -37,6 +43,7 @@ void YamlNode::release() {
     }
     _ptr = nullptr;
   }
+  _type = YAML_NONE;
 }
 
 
@@ -51,6 +58,20 @@ YamlNode& YamlNode::operator=(const YamlNode& other) {
     setObject();
     *_sub = *other._sub;
     break;
+  }
+
+  return *this;
+}
+
+
+YamlNode& YamlNode::operator=(YamlNode&& other) noexcept {
+  if (this != &other) {
+    release();
+    key = std::move(other.key);
+    _type = other._type;
+    _ptr = other._ptr;
+    other._type = YAML_NONE;
+    other._ptr = nullptr;
   }
 
   return *this;

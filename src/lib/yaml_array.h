@@ -24,7 +24,6 @@ public:
   void pushString(const char* key, const char* str);
   void pushArray(const char* key);
   void pushObject(const char* key);
-  void pushPending(const char* key);
 
 public:
   YamlNode* find(const char* key);
@@ -74,10 +73,3 @@ protected:
 };
 
 };
-
-
-#include <iostream>
-
-static std::ostream& operator<<(std::ostream& os, toaster::YamlNodeArray& yaml) {
-  return os << yaml.toString().c_str();
-}

@@ -1,4 +1,5 @@
 #include "effect_festive.h"
+#include <new>
 
 #include "lib/logger.h"
 #include "protogen.h"
@@ -31,7 +32,7 @@ static const size_t FRAME_DATA_COUNT = sizeof(FRAME_DATAS) / sizeof(FRAME_DATAS[
 void EffectFestive::init(Display& display) {
   Effect::init(display);
 
-  _vdatas = new VDATA[display.getWidth() / HUB75_PANEL_CHAIN];
+  _vdatas = new (std::nothrow) VDATA[display.getWidth() / HUB75_PANEL_CHAIN];
   if (_vdatas == nullptr) {
     TF_LOGE("EffectFestive", "memory allocation failed.");
     return;

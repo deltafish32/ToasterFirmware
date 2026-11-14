@@ -1,4 +1,5 @@
 #include "config/configure.h"
+#include <new>
 #include "display.h"
 #include "lib/logger.h"
 
@@ -19,7 +20,7 @@ bool Display::begin(int width, int height) {
   if (_buffer != nullptr) {
     delete[] _buffer;
   }
-  _buffer = new uint8_t[_width * _height * 3];
+  _buffer = new (std::nothrow) uint8_t[_width * _height * 3];
 
   return (_buffer != nullptr);
 }

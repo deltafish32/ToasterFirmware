@@ -1,4 +1,5 @@
 #include "hud_dashboard.h"
+#include <new>
 
 
 #include "huds.h"
@@ -95,6 +96,10 @@ void HUDDashboard::process(Adafruit_SSD1306& oled) {
 
 
 void HUDDashboard::release() {
+  delete[] _mirror_bitmap;
+  _mirror_bitmap = nullptr;
+  delete[] _mirror_gray;
+  _mirror_gray = nullptr;
 }
 
 
@@ -142,8 +147,18 @@ void HUDDashboard::mirror(Adafruit_SSD1306& oled, int offset_x, int offset_y, bo
   const size_t BYTE_WIDTH = (WIDTH + 7) / 8;
   auto& display = Protogen._display;
 
-  uint8_t* bitmap = new uint8_t[BYTE_WIDTH * HUB75_PANEL_RES_Y];
-  uint8_t* gray = new uint8_t[HUB75_PANEL_RES_X * HUB75_PANEL_CHAIN * HUB75_PANEL_RES_Y];
+  if (_mirror_bitmap == nullptr) {
+    _mirror_bitmap = new (std::nothrow) uint8_t[BYTE_WIDTH * HEIGHT];
+  }
+  if (dither && _mirror_gray == nullptr) {
+    _mirror_gray = new (std::nothrow) uint8_t[WIDTH * HEIGHT];
+  }
+  if (_mirror_bitmap == nullptr || (dither && _mirror_gray == nullptr)) {
+    return;
+  }
+
+  uint8_t* bitmap = _mirror_bitmap;
+  uint8_t* gray = _mirror_gray;
 
   memset(bitmap, 0, BYTE_WIDTH * HEIGHT);
   
@@ -183,9 +198,6 @@ void HUDDashboard::mirror(Adafruit_SSD1306& oled, int offset_x, int offset_y, bo
   }
 
   oled.drawBitmap(offset_x, offset_y, bitmap, WIDTH, HEIGHT, SSD1306_WHITE);
-
-  delete[] bitmap;
-  delete[] gray;
 }
 
 };

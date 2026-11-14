@@ -1,4 +1,5 @@
 #include "neopixel_display.h"
+#include <new>
 
 
 namespace toaster {
@@ -21,9 +22,9 @@ bool NeoPixelDisplay::begin(int numleds, int pin, bool reversed) {
   if (_prev_buffer != nullptr) {
     delete[] _prev_buffer;
   }
-  _prev_buffer = new uint8_t[_width * _height * 3];
+  _prev_buffer = new (std::nothrow) uint8_t[_width * _height * 3];
 
-  return true;
+  return (_prev_buffer != nullptr);
 }
 
 

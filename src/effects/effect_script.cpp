@@ -1,4 +1,5 @@
 #include "effect_script.h"
+#include <new>
 
 #include "lib/logger.h"
 #include "lib/strutil.h"
@@ -146,7 +147,11 @@ bool EffectScript::initSequence(Display& display) {
   // find only used images
   size_t image_count = _parser.getImages().size();
   size_t image_usage_count = 0;
-  uint8_t* image_usage = new uint8_t[image_count];
+  uint8_t* image_usage = new (std::nothrow) uint8_t[image_count];
+  if (image_usage == nullptr) {
+    TF_LOGE(TAG, "initSequence: memory allocation failed.");
+    return false;
+  }
   memset(image_usage, 0, sizeof(uint8_t) * image_count);
 
   for (const auto& it : _parser.getSequences()) {
@@ -233,7 +238,7 @@ bool EffectScript::initVideo(Display& display) {
     }
     std::string filename = makeFileName(s);
 
-    _video_legacy_frame = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
+    _video_legacy_frame = new (std::nothrow) Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
     if (_video_legacy_frame == nullptr || !_video_legacy_frame->isLoaded()) {
       TF_LOGE(TAG, "initVideo: video first frame load failed. (%s)", video.path.c_str());
       _error = true;
@@ -246,7 +251,7 @@ bool EffectScript::initVideo(Display& display) {
   }
   else { // gif, mjpeg
     std::string filename = makeFileName(video.path.c_str());
-    auto asset = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), _parser.getVideoInfo().loop, _parser.getVideoInfo().fps);
+    auto asset = new (std::nothrow) Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), _parser.getVideoInfo().loop, _parser.getVideoInfo().fps);
     if (asset == nullptr || !asset->isLoaded() || asset->getType() != Asset::ASSET_VIDEO) {
       TF_LOGE(TAG, "initVideo: video load failed. (%s)", video.path.c_str());
       _error = true;
@@ -398,7 +403,7 @@ void EffectScript::processVideo(Display& display) {
         }
         std::string filename = makeFileName(s);
 
-        _video_legacy_frame = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
+        _video_legacy_frame = new (std::nothrow) Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
         if (_video_legacy_frame == nullptr || !_video_legacy_frame->isLoaded()) {
           TF_LOGE(TAG, "processVideo: video frame load failed. (%s)", video_info.path.c_str());
           if (_video_legacy_frame != nullptr) {
@@ -558,7 +563,7 @@ size_t EffectScript::loadNextImages(Display& display, int current_sequence, cons
       int image_index = seq[i].image;
       if (_assets[image_index] == nullptr) {
         std::string filename = makeFileName(_parser.getImages()[image_index].c_str());
-        _assets[image_index] = new Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
+        _assets[image_index] = new (std::nothrow) Asset(filename.c_str(), _from_sd, Protogen.isRGB565(), false);
         if (_assets[image_index] != nullptr && !_assets[image_index]->isLoaded()) {
           delete _assets[image_index];
           _assets[image_index] = nullptr;

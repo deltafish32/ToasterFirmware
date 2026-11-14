@@ -1,4 +1,6 @@
 #include "config/configure.h"
+#include <new>
+#include <algorithm>
 #include "video.h"
 #include "logger.h"
 #include <AnimatedGIF.h>
@@ -13,6 +15,14 @@
 namespace toaster {
 
 static const char* TAG = "Video";
+
+static const size_t MJPEG_WINDOW_SIZE = 64 * 1024;
+
+enum {
+  FRAME_FOUND = 0,
+  FRAME_SKIP,
+  FRAME_END,
+};
 
 
 Video::Video(const char* path, bool from_sd, bool loop, uint32_t mjpeg_fps) {
@@ -92,7 +102,7 @@ bool Video::nextFrame(bool loop, bool init) {
 static bool g_gif_from_sd = false;
 
 static void* gif_file_open(const char *fname, int32_t *pSize) {
-  File* file_ptr = new File;
+  File* file_ptr = new (std::nothrow) File;
   if (file_ptr == nullptr) {
     return nullptr;
   }
@@ -171,60 +181,18 @@ static void gif_draw(GIFDRAW *pDraw) {
   auto width = image->getWidth();
   const uint8_t ucTransparent = pDraw->ucTransparent;
 
-  // Apply the new pixels to the main image
-  if (pDraw->ucHasTransparency && pDraw->ucDisposalMethod != 2) { // if transparency used
-    auto palette_temp = new rgb888_t[pDraw->iWidth];
-    const uint8_t *ptr_color = pDraw->pPixels;
-    const uint8_t *ptr_end = ptr_color + pDraw->iWidth;
-    int x = 0;
-
-    while (x < pDraw->iWidth) {
-      uint8_t color = ucTransparent - 1;
-      rgb888_t *ptr_palette = palette_temp;
-      int opaque_count = 0; // count non-transparent pixels
-
-      while (color != ucTransparent && ptr_color < ptr_end) {
-        color = *ptr_color++;
-        if (color == ucTransparent) { // done, stop
-          ptr_color--; // back up to treat it like transparent
-        }
-        else { // opaque
-          *ptr_palette++ = palette[color];
-          opaque_count++;
-        }
-      } // while looking for opaque pixels
-
-      if (opaque_count) { // any opaque pixels?
-        auto ptr_buffer = buffer + (((pDraw->iY + pDraw->y) * width + (pDraw->iX + x)) * 3);
-        for (int i = 0; i < opaque_count; i++) {
-          *ptr_buffer++ = palette_temp[i].r;
-          *ptr_buffer++ = palette_temp[i].g;
-          *ptr_buffer++ = palette_temp[i].b;
-        }
-
-        x += opaque_count;
-        opaque_count = 0;
+  if (pDraw->ucHasTransparency && pDraw->ucDisposalMethod != 2) {
+    auto ptr_buffer = buffer + (((pDraw->iY + pDraw->y) * width + (pDraw->iX)) * 3);
+    for (int x = 0; x < pDraw->iWidth; x++, ptr_buffer += 3) {
+      uint8_t color = pDraw->pPixels[x];
+      if (color == ucTransparent) {
+        continue;
       }
-
-      // no, look for a run of transparent pixels
-      color = ucTransparent;
-      while (color == ucTransparent && ptr_color < ptr_end) {
-        color = *ptr_color++;
-        if (color == ucTransparent) {
-          opaque_count++;
-        }
-        else {
-          ptr_color--;
-        }
-      }
-
-      if (opaque_count) {
-        x += opaque_count; // skip these
-        opaque_count = 0;
-      }
+      const auto& pal = palette[color];
+      ptr_buffer[0] = pal.r;
+      ptr_buffer[1] = pal.g;
+      ptr_buffer[2] = pal.b;
     }
-
-    delete[] palette_temp;
   }
   else {
     // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
@@ -251,21 +219,22 @@ bool Video::load_gif(const char* path, bool from_sd, bool loop) {
   release();
 
   g_gif_from_sd = from_sd;
+  bool exists = false;
   if (from_sd) {
 #ifdef USE_SD
-    _file = SD.open(path);
+    exists = SD.exists(path);
 #endif
   }
   else {
-    _file = FFat.open(path);
+    exists = FFat.exists(path);
   }
 
-  if (!_file) {
+  if (!exists) {
     TF_LOGE(TAG, "gif file open failed (sd: %d, %s).", from_sd, path);
     return false;
   }
 
-  auto gif = new AnimatedGIF;
+  auto gif = new (std::nothrow) AnimatedGIF;
   if (gif == nullptr) {
     TF_LOGE(TAG, "gif memory allocation failed.");
     release();
@@ -292,7 +261,7 @@ bool Video::load_gif(const char* path, bool from_sd, bool loop) {
   if (_image != nullptr) {
     delete _image;
   }
-  _image = new Image(width, height, 3, 0);
+  _image = new (std::nothrow) Image(width, height, 3, 0);
   if (_image == nullptr || !_image->isLoaded()) {
     TF_LOGE(TAG, "gif memory allocation failed.");
     release();
@@ -520,6 +489,15 @@ void Video::mjpeg_entry_point(void* param) {
 void Video::mjpeg_decode() {
   static const size_t QUEUE_FRAMES = 8;
 
+  _window = (uint8_t*)malloc_auto(MJPEG_WINDOW_SIZE);
+  if (_window == nullptr) {
+    TF_LOGE(TAG, "mjpeg read buffer allocation failed.");
+    _mjpeg_fail = true;
+    _mjpeg_task_end = true;
+    return;
+  }
+  window_rewind();
+
   bool has_frame = false;
 
   while (_mjpeg_run) {
@@ -534,12 +512,20 @@ void Video::mjpeg_decode() {
       continue;
     }
 
+    const uint8_t* data = nullptr;
+    size_t size = 0;
+    uint8_t result = window_next_frame(data, size);
+    if (result == FRAME_SKIP) {
+      continue;
+    }
+
     Image* image = nullptr;
 
-    if (find_frame()) {
-      image = read_frame();
-      if (image == nullptr) {
-        TF_LOGW(TAG, "mjpeg frame decode failed (%u - %u).", (unsigned)_start, (unsigned)_end);
+    if (result == FRAME_FOUND) {
+      image = new (std::nothrow) Image(Image::IMAGE_JPEG, data, size, true);
+      if (image == nullptr || !image->isLoaded()) {
+        delete image;
+        TF_LOGW(TAG, "mjpeg frame decode failed (%u bytes).", (unsigned)size);
         continue;
       }
       has_frame = true;
@@ -551,7 +537,7 @@ void Video::mjpeg_decode() {
         break;
       }
       has_frame = false;
-      _file.seek(0);
+      window_rewind();
     }
 
     if (xSemaphoreTake(_interlock, portMAX_DELAY)) {
@@ -562,7 +548,89 @@ void Video::mjpeg_decode() {
     delay(1);
   }
 
+  free_auto(_window);
+  _window = nullptr;
+
   _mjpeg_task_end = true;
+}
+
+
+void Video::window_rewind() {
+  _file.seek(0);
+  _window_pos = 0;
+  _window_len = 0;
+  _cursor = 0;
+}
+
+
+// Moves the data from keep_from to the end of the window to the front, then reads more of the file after it.
+bool Video::window_fill(size_t keep_from) {
+  size_t window_end = _window_pos + _window_len;
+  keep_from = std::min(std::max(keep_from, _window_pos), window_end);
+
+  size_t keep = window_end - keep_from;
+  if (keep > 0 && keep_from > _window_pos) {
+    memmove(_window, _window + (keep_from - _window_pos), keep);
+  }
+  _window_pos = keep_from;
+  _window_len = keep;
+
+  size_t bytes_read = _file.read(_window + keep, MJPEG_WINDOW_SIZE - keep);
+  _window_len += bytes_read;
+
+  return (bytes_read > 0);
+}
+
+
+bool Video::window_find_soi(size_t from, size_t& found) {
+  size_t window_end = _window_pos + _window_len;
+
+  for (size_t i = std::max(from, _window_pos); i + 1 < window_end; i++) {
+    const uint8_t* ptr = _window + (i - _window_pos);
+    if (ptr[0] == 0xff && ptr[1] == 0xd8) {
+      found = i;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+uint8_t Video::window_next_frame(const uint8_t*& data, size_t& size) {
+  size_t start = 0;
+  size_t from = _cursor;
+  while (!window_find_soi(from, start)) {
+    size_t window_end = _window_pos + _window_len;
+    from = (window_end > 0) ? (window_end - 1) : 0;
+    if (!window_fill(from)) {
+      return FRAME_END;
+    }
+  }
+
+  size_t end = 0;
+  from = start + 2;
+  while (!window_find_soi(from, end)) {
+    size_t window_end = _window_pos + _window_len;
+
+    if (start == _window_pos && _window_len == MJPEG_WINDOW_SIZE) {
+      TF_LOGW(TAG, "mjpeg frame too large (> %u bytes).", (unsigned)MJPEG_WINDOW_SIZE);
+      _cursor = window_end - 1;
+      return FRAME_SKIP;
+    }
+
+    from = std::max(window_end - 1, start + 2);
+    if (!window_fill(start)) {
+      end = window_end;
+      break;
+    }
+  }
+
+  data = _window + (start - _window_pos);
+  size = end - start;
+  _cursor = end;
+
+  return FRAME_FOUND;
 }
 
 
@@ -643,8 +711,8 @@ Image* Video::read_frame() {
 
   Image* image = nullptr;
   if (bytes_read == size) {
-    image = new Image(Image::IMAGE_JPEG, buffer, size, true);
-    if (!image->isLoaded()) {
+    image = new (std::nothrow) Image(Image::IMAGE_JPEG, buffer, size, true);
+    if (image != nullptr && !image->isLoaded()) {
       delete image;
       image = nullptr;
     }

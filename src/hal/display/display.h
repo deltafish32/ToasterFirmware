@@ -20,7 +20,7 @@ typedef enum _DRAW_MODE {
 } DRAW_MODE;
 
 
-typedef std::function<void(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param)> COLOR_FUNC;
+typedef void (*COLOR_FUNC)(int x, int y, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t a, uint8_t param);
 
 
 class Display {

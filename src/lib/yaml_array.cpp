@@ -1,4 +1,5 @@
 #include "yaml_array.h"
+#include <new>
 #include "yaml_node.h"
 #include <string>
 #include <memory>
@@ -398,7 +399,7 @@ YamlNodeArray YamlNodeArray::fromFile(const char* filename, fs::FS& filesystem) 
 
   size_t size = file.size();
 
-  std::shared_ptr<char[]> buffer(new char[size + 1]);
+  std::shared_ptr<char[]> buffer(new (std::nothrow) char[size + 1]);
   if (buffer.get() == nullptr) {
     file.close();
     return YamlNodeArray("memory allocation failed.");
@@ -420,7 +421,11 @@ YamlNodeArray YamlNodeArray::fromFile(const char* filename) {
   size_t size = ftell(f);
   fseek(f, 0, SEEK_SET);
 
-  std::shared_ptr<char[]> buffer(new char[size + 1]);
+  std::shared_ptr<char[]> buffer(new (std::nothrow) char[size + 1]);
+  if (buffer.get() == nullptr) {
+    fclose(f);
+    return YamlNodeArray("memory allocation failed.");
+  }
 
   fread(buffer.get(), 1, size, f);
   buffer.get()[size] = 0;

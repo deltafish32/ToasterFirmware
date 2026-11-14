@@ -15,6 +15,7 @@ public:
 public:
   YamlNode();
   YamlNode(const YamlNode& other);
+  YamlNode(YamlNode&& other) noexcept;
   YamlNode(const char* new_key, const char* new_str = "");
   YamlNode(const char* new_key, uint8_t new_type);
 
@@ -25,6 +26,7 @@ public:
   void release();
 
   YamlNode& operator=(const YamlNode& other);
+  YamlNode& operator=(YamlNode&& other) noexcept;
 
   uint8_t getType() const {
     return _type;

@@ -66,6 +66,10 @@
 - 기본 `eyelash` 표정의 중복된 `mouth` 키 정리
 - 여러 작업에서 동시에 출력한 로그가 한 줄 안에서 섞이지 않도록 개선
 - PC에서 실행하는 단위 테스트 추가 (`test/host`, YAML 파서와 문자열 함수)
+- 외부 라이브러리 버전 고정 (`platformio.ini`의 `lib_deps`)
+- (ESP32-S3) 불필요한 빌드 플래그 `-mfix-esp32-psram-cache-issue` 제거
+- HUD 화면 미러링, GIF 디코딩, 설정 파일 읽기의 메모리 할당을 줄이고, 영상·이미지·설정 파일을 불러올 때 메모리가 부족하면 재부팅하지 않고 오류로 처리하도록 개선
+- (PSRAM 있는 보드) MJPEG 영상을 64KB 단위로 미리 읽어 두고 프레임을 찾도록 바꿔 파일 읽기와 메모리 할당을 줄임. 64KB를 넘는 프레임은 경고 로그를 남기고 건너뜁니다.
 
 ### Feature
 - (Beta) Added USB storage mode (ESP32-S3 only, `adafruit_matrixportal_esp32s3_usbm` build).
@@ -131,6 +135,10 @@
 - Removed duplicate `mouth` keys in the built-in `eyelash` emotions.
 - Logs printed at the same time from multiple tasks no longer get mixed within a line.
 - Added unit tests that run on a PC (`test/host`, YAML parser and string utilities).
+- Pinned the versions of external libraries (`lib_deps` in `platformio.ini`).
+- (ESP32-S3) Removed the unnecessary build flag `-mfix-esp32-psram-cache-issue`.
+- Reduced memory allocations in HUD mirroring, GIF decoding, and config file loading, and running out of memory while loading videos, images, or config files is now handled as an error instead of rebooting.
+- (Boards with PSRAM) MJPEG videos are now read ahead in 64KB chunks to find frames, reducing file reads and memory allocations. Frames larger than 64KB are skipped with a warning.
 
 
 ## 2026.1.1
