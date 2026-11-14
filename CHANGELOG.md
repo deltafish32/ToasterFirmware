@@ -54,6 +54,12 @@
 - 리모컨(ESP-NOW, IR)과 시리얼에서 동시에 키를 입력하거나 HUD가 화면을 바꾸는 중에 키를 입력하면 HUD 메뉴가 오동작하거나 재부팅될 수 있던 문제 수정
 - ESP-NOW 리모컨으로 셔플할 때 표정을 불러오는 동안 리모컨 수신이 멈추던 문제 수정
 - HUD에서 일시 정지를 전환할 때 화면을 그리는 중이던 효과의 시간이 어긋날 수 있던 문제 수정
+- MJPEG 영상 관련 문제 수정
+  - (PSRAM 있는 보드) 재생을 시작하면 첫 프레임이 약 1초 동안 멈춰 있고 이후 재생이 늦게 따라가던 문제
+  - (PSRAM 있는 보드) 디코드가 실패하거나 영상을 바꿀 때 멈출 수 있던 문제
+  - (PSRAM 없는 보드) 반복 재생하는 영상이 끝에 도달하면 재부팅될 수 있던 문제
+  - 시퀀스의 `video`/`video_loop`로 재생한 MJPEG가 멈추거나 다음 단계로 넘어가지 않던 문제. 이제 한 번 재생(`video`)은 끝나면 다음 단계로 넘어가고, 다시 돌아오면 처음부터 재생합니다.
+  - 마지막 프레임의 끝 부분이 잘리던 문제
 
 ### 기타
 - RTC(DS3231) 사용 시 10분마다 시간을 다시 맞추도록 변경
@@ -113,6 +119,12 @@
 - Fixed the HUD menu misbehaving or rebooting when keys arrived from the remotes (ESP-NOW, IR) and serial at the same time, or while the HUD was changing screens.
 - Fixed ESP-NOW remote input stalling while an emotion loaded after a shuffle from the remote.
 - Fixed the timing of effects being drawn possibly going off when pausing or resuming from the HUD.
+- Fixed MJPEG video issues.
+  - (Boards with PSRAM) The first frame stayed on screen for about a second when playback started, and playback lagged behind after that.
+  - (Boards with PSRAM) Playback could freeze when decoding failed or when switching videos.
+  - (Boards without PSRAM) A looping video could cause a reboot when it reached the end.
+  - MJPEG videos played with `video`/`video_loop` in a sequence froze or did not move on to the next step. A `video` step now moves on when the video ends, and plays from the beginning the next time it comes around.
+  - The end of the last frame was cut off.
 
 ### Misc.
 - With an RTC (DS3231), the time is re-synchronized every 10 minutes.

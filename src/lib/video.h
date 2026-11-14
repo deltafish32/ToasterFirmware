@@ -3,10 +3,6 @@
 #include <list>
 
 
-// At least 3 buffers are required
-#define MJPEG_BUFFERS     3
-
-
 namespace toaster {
 
 
@@ -66,46 +62,32 @@ protected:
   std::string _path;
 
   // mjpeg only
+  // With PSRAM, the decode task owns _file, _start and _end and passes frames through
+  // _decoded. A nullptr entry marks the end of the video, after which the first frame follows.
   size_t _start{0};
   size_t _end{0};
 
-  typedef struct _MJPEG_BUFFER {
-    uint8_t* ptr{nullptr};
-    size_t start{0};
-    size_t size{0};
-    size_t read{0};
-    bool valid{false};
-    bool last{false};
-  } MJPEG_BUFFER;
-  MJPEG_BUFFER _buffer[MJPEG_BUFFERS];
-  bool _buffering{false};
-  bool _buffering_loop{false};
-  bool _mjpeg_read_end{false};
-  bool _mjpeg_decode_end{false};
-  bool _buffering_fail{false};
+  volatile bool _mjpeg_run{false};
+  volatile bool _mjpeg_task_end{true};
+  volatile bool _mjpeg_fail{false};
 
   SemaphoreHandle_t _interlock{nullptr};
   std::list<Image*> _decoded;
 
-  
+
 protected:
   bool load_gif(const char* path, bool from_sd, bool loop);
   bool next_gif(bool loop, bool init = false);
   bool load_gif_frame();
   bool load_mjpeg(const char* path, bool from_sd, bool loop, uint32_t fps);
   bool next_mjpeg(bool loop, bool init = false);
-  bool load_mjpeg_frame();
-  static void mjpeg_read_entry_point(void* param);
-  static void mjpeg_decode_entry_point(void* param);
-  void mjpeg_read();
+  bool next_mjpeg_decoded(bool loop, bool init);
+  bool next_mjpeg_direct(bool loop, bool init);
+  void stop_mjpeg_task();
+  static void mjpeg_entry_point(void* param);
   void mjpeg_decode();
-  void mjpeg_decode2();
-  int find_buffer(size_t pos);
-  int find_free_buffer();
-  bool find_range();
-  bool find_range_direct();
-  void flush_buffer(bool init);
-  bool has_last();
+  bool find_frame();
+  Image* read_frame();
 };
 
 

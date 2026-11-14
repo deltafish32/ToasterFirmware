@@ -15,10 +15,6 @@ namespace toaster {
 static const char* TAG = "Video";
 
 
-static const size_t MJPEG_BUFFER_SIZE = 64 * 1024;
-static const size_t MJPEG_LOAD_FRAMES = 30;
-
-
 Video::Video(const char* path, bool from_sd, bool loop, uint32_t mjpeg_fps) {
   const char* ext = strrchr(path, '.');
   if (ext != nullptr) {
@@ -41,6 +37,8 @@ Video::~Video() {
 
 
 void Video::release() {
+  stop_mjpeg_task();
+
   _file.close();
 
   if (_image != nullptr) {
@@ -53,22 +51,6 @@ void Video::release() {
     gif->close();
     delete gif;
     _gif = nullptr;
-  }
-
-  if (_type == VIDEO_MJPEG) {
-    if (_buffering) {
-      _buffering = false;
-      while (!_mjpeg_read_end || !_mjpeg_decode_end) {
-        delay(1);
-      }
-    }
-
-    for (int i = 0; i < MJPEG_BUFFERS; i++) {
-      if (_buffer[i].ptr != nullptr) {
-        free_auto(_buffer[i].ptr);
-        _buffer[i].ptr = nullptr;
-      }
-    }
   }
 
   for (auto it : _decoded) {
@@ -387,64 +369,33 @@ bool Video::load_mjpeg(const char* path, bool from_sd, bool loop, uint32_t fps) 
     return false;
   }
 
-  _start = 0;
-
   if (psramFound()) {
-    _interlock = xSemaphoreCreateBinary();
-    xSemaphoreGive(_interlock);
-
-    for (int i = 0; i < MJPEG_BUFFERS; i++) {
-      if (_buffer[i].ptr == nullptr) {
-        _buffer[i].size = MJPEG_BUFFER_SIZE;
-        _buffer[i].ptr = (uint8_t*)malloc_auto(_buffer[i].size);
-        _buffer[i].start = 0;
-        _buffer[i].read = 0;
-        _buffer[i].valid = false;
-        _buffer[i].last = false;
-      }
-    }
-
-    _buffering = true;
-    _buffering_loop = loop;
-    _mjpeg_read_end = false;
-    _mjpeg_decode_end = false;
-    _buffering_fail = false;
-
-    auto core_result1 = xTaskCreatePinnedToCore(mjpeg_read_entry_point, "mjpegr", 2048, this, 1, nullptr, PRO_CPU_NUM);
-    if (core_result1 != pdPASS) {
-      TF_LOGE(TAG, "xTaskCreatePinnedToCore failed (%d).", core_result1);
-    }
-
-    auto core_result2 = xTaskCreatePinnedToCore(mjpeg_decode_entry_point, "mjpegd", 8192, this, 1, nullptr, PRO_CPU_NUM);
-    if (core_result2 != pdPASS) {
-      TF_LOGE(TAG, "xTaskCreatePinnedToCore failed (%d).", core_result2);
-    }
-
-    if (!next_mjpeg(false, true)) {
-      TF_LOGE(TAG, "video header not found (%s).", path);
+    _interlock = xSemaphoreCreateMutex();
+    if (_interlock == nullptr) {
+      TF_LOGE(TAG, "video mutex creation failed (%s).", path);
       release();
       return false;
     }
 
-    while (_decoded.size() < MJPEG_LOAD_FRAMES) {
-      delay(1);
-    }
-  }
-  else {
-    if (!next_mjpeg(false, true)) {
-      TF_LOGE(TAG, "video header not found (%s).", path);
-      release();
-      return false;
-    }
+    _mjpeg_run = true;
+    _mjpeg_task_end = false;
+    _mjpeg_fail = false;
 
-    if (!load_mjpeg_frame()) {
-      TF_LOGE(TAG, "video mjpeg first frame load failed. (%s)", path);
+    auto core_result = xTaskCreatePinnedToCore(mjpeg_entry_point, "mjpeg", 8192, this, 1, nullptr, PRO_CPU_NUM);
+    if (core_result != pdPASS) {
+      TF_LOGE(TAG, "xTaskCreatePinnedToCore failed (%d).", core_result);
+      _mjpeg_run = false;
+      _mjpeg_task_end = true;
       release();
       return false;
     }
   }
 
-  _frame = 0;
+  if (!next_mjpeg(false, true)) {
+    TF_LOGE(TAG, "video mjpeg first frame load failed. (%s)", path);
+    release();
+    return false;
+  }
 
   _pf.type = PF_FREQUENCY;
   _pf.frequency = fps;
@@ -454,111 +405,111 @@ bool Video::load_mjpeg(const char* path, bool from_sd, bool loop, uint32_t fps) 
 
 
 bool Video::next_mjpeg(bool loop, bool init) {
-  if (init) {
-    _start = _end = 0;
-    _frame = 0;
-    
-    if (psramFound()) {
-      for (int i = 0; i < MJPEG_BUFFERS; i++) {
-        if (_buffer[i].valid && (_buffer[i].last || _buffer[i].start > MJPEG_BUFFER_SIZE)) {
-          _buffer[i].valid = false;
-        }
-      }
-    }
-  }
-  else {
-    _start = _end;
-    ++_frame;
-  }
-
-  if (psramFound()) {
-    timer_ms_t tick = Timer::get_millis();
-    while (Timer::get_millis() - tick < 500) {
-      if (_buffering_fail) {
-        return false;
-      }
-
-      if (load_mjpeg_frame()) {
-        return true;
-      }
-
-      delay(1);
-    }
-    
-    return false;
-  }
-  else {
-    bool has_next = find_range_direct() && (_start < _end);
-
-    if (has_next) {
-      if (!load_mjpeg_frame()) {
-        return false;
-      }
-    }
-
-    if (!has_next && loop) {
-      return next_mjpeg(loop, true);
-    }
-
-    return has_next;
-  }
+  return psramFound() ? next_mjpeg_decoded(loop, init) : next_mjpeg_direct(loop, init);
 }
 
 
-bool Video::load_mjpeg_frame() {
-  if (_image != nullptr) {
-    delete _image;
-    _image = nullptr;
-  }
-  
-  if (psramFound()) {
+bool Video::next_mjpeg_decoded(bool loop, bool init) {
+  static const timer_ms_t FIRST_FRAME_TIMEOUT_MS = 1000;
+
+  timer_ms_t tick = Timer::get_millis();
+
+  while (true) {
+    if (_mjpeg_fail) {
+      return false;
+    }
+
+    bool popped = false;
+    Image* image = nullptr;
+
     if (xSemaphoreTake(_interlock, portMAX_DELAY)) {
       if (!_decoded.empty()) {
-        _image = _decoded.front();
+        image = _decoded.front();
         _decoded.pop_front();
+        popped = true;
       }
       xSemaphoreGive(_interlock);
     }
 
-    return (_image != nullptr);
-  }
-  else {
-    size_t size = _end - _start;
-    uint8_t* buffer = new uint8_t[size];
-    if (buffer == nullptr) {
+    if (popped) {
+      if (image == nullptr) {
+        if (loop || init) {
+          continue;
+        }
+        return false;
+      }
+
+      if (_image != nullptr) {
+        delete _image;
+      }
+      _image = image;
+      _frame = init ? 0 : _frame + 1;
+      return true;
+    }
+
+    // keep the current frame rather than stall rendering while the decoder catches up
+    if (!init) {
+      return true;
+    }
+
+    if (Timer::get_millis() - tick >= FIRST_FRAME_TIMEOUT_MS) {
       return false;
     }
 
-    _file.seek(_start);
-    _file.read(buffer, size);
-
-    _image = new Image(Image::IMAGE_JPEG, buffer, size, true);
-    delete[] buffer;
-    
-    if (_image == nullptr) {
-      return false;
-    }
-
-    if (!_image->isLoaded()) {
-      delete _image;
-      _image = nullptr;
-      return false;
-    }
-    
-    return true;
+    delay(1);
   }
 }
 
 
-void Video::mjpeg_read_entry_point(void* param) {
-  auto pthis = (Video*)param;
-  pthis->mjpeg_read();
+bool Video::next_mjpeg_direct(bool loop, bool init) {
+  if (init) {
+    _file.seek(0);
+  }
 
-  vTaskDelete(nullptr);
+  if (!find_frame()) {
+    _file.seek(0);
+    if ((!loop && !init) || !find_frame()) {
+      return false;
+    }
+    init = true;
+  }
+
+  Image* image = read_frame();
+  if (image == nullptr) {
+    return false;
+  }
+
+  if (_image != nullptr) {
+    delete _image;
+  }
+  _image = image;
+  _frame = init ? 0 : _frame + 1;
+
+  return true;
 }
 
 
-void Video::mjpeg_decode_entry_point(void* param) {
+void Video::stop_mjpeg_task() {
+  static const timer_ms_t STOP_TIMEOUT_MS = 2000;
+
+  if (_mjpeg_task_end) {
+    return;
+  }
+
+  _mjpeg_run = false;
+
+  timer_ms_t tick = Timer::get_millis();
+  while (!_mjpeg_task_end) {
+    if (Timer::get_millis() - tick >= STOP_TIMEOUT_MS) {
+      TF_LOGE(TAG, "mjpeg decode task did not stop.");
+      break;
+    }
+    delay(1);
+  }
+}
+
+
+void Video::mjpeg_entry_point(void* param) {
   auto pthis = (Video*)param;
   pthis->mjpeg_decode();
 
@@ -566,268 +517,103 @@ void Video::mjpeg_decode_entry_point(void* param) {
 }
 
 
-void Video::mjpeg_read() {
-  while (_buffering && !_buffering_fail) {
-    if (_file.available()) {
-      int index = find_free_buffer();
-      if (index >= 0) {
-        _buffer[index].start = _file.position();
-        _buffer[index].read = _file.read(_buffer[index].ptr, _buffer[index].size);
-        _buffer[index].last = !_file.available();
-        _buffer[index].valid = true;
-      }
-    }
-    else if (_buffering_loop) {
-      int index = find_free_buffer();
-      if (index >= 0) {
-        _file.seek(0);
-      }
-    }
-
-    delay(1);
-  }
-
-  _mjpeg_read_end = true;
-}
-
-
 void Video::mjpeg_decode() {
-  while (_buffering && !_buffering_fail) {
-    mjpeg_decode2();
+  static const size_t QUEUE_FRAMES = 8;
 
-    delay(1);
-  }
+  bool has_frame = false;
 
-  _mjpeg_decode_end = true;
-}
-
-
-void Video::mjpeg_decode2() {
-  if (_decoded.size() >= MJPEG_LOAD_FRAMES) {
-    return;
-  }
-
-  if (!find_range()) {
-    if (has_last()) {
-      _start = _end = 0;
-      flush_buffer(true);
+  while (_mjpeg_run) {
+    size_t queued = QUEUE_FRAMES;
+    if (xSemaphoreTake(_interlock, portMAX_DELAY)) {
+      queued = _decoded.size();
+      xSemaphoreGive(_interlock);
     }
-    return;
-  }
 
-  flush_buffer(false);
-  
-  if (_start >= _end) {
-    return;
-  }
+    if (queued >= QUEUE_FRAMES) {
+      delay(1);
+      continue;
+    }
 
-  int index1 = find_buffer(_start);
-  if (index1 < 0) {
-    return;
-  }
+    Image* image = nullptr;
 
-  int index2 = find_buffer(_end);
-  if (index2 < 0) {
-    return;
-  }
+    if (find_frame()) {
+      image = read_frame();
+      if (image == nullptr) {
+        TF_LOGW(TAG, "mjpeg frame decode failed (%u - %u).", (unsigned)_start, (unsigned)_end);
+        continue;
+      }
+      has_frame = true;
+    }
+    else {
+      if (!has_frame) {
+        TF_LOGE(TAG, "mjpeg has no frames.");
+        _mjpeg_fail = true;
+        break;
+      }
+      has_frame = false;
+      _file.seek(0);
+    }
 
-  size_t size = _end - _start;
-  
-  Image* image;
-  if (index1 == index2) {
-    // continuous data
-    image = new Image(Image::IMAGE_JPEG, _buffer[index1].ptr + _start - _buffer[index1].start, size, true);
-  }
-  else {
-    // fragmented data
-    uint8_t* buffer = (uint8_t*)malloc_auto(size);
-    size_t size1 = _buffer[index1].size - (_start - _buffer[index1].start);
-    size_t size2 = size - size1;
-    memcpy(buffer, _buffer[index1].ptr + _start - _buffer[index1].start, size1);
-    memcpy(buffer + size1, _buffer[index2].ptr, size2);
-    image = new Image(Image::IMAGE_JPEG, buffer, size, true);
-    free_auto(buffer);
-  }
-
-  if (image == nullptr) {
-    _buffering_fail = true;
-    return;
-  }
-
-  if (!image->isLoaded()) {
-    // _buffering_fail = true;
-    TF_LOGW(TAG, "fail %d %d", _start, _end);
-    delete image;
-  }
-  else {
     if (xSemaphoreTake(_interlock, portMAX_DELAY)) {
       _decoded.push_back(image);
       xSemaphoreGive(_interlock);
     }
+
+    delay(1);
   }
+
+  _mjpeg_task_end = true;
 }
 
 
-int Video::find_buffer(size_t pos) {
-  for (int i = 0; i < MJPEG_BUFFERS; i++) {
-    if (_buffer[i].ptr == nullptr || !_buffer[i].valid) {
-      continue;
-    }
-
-    if (pos >= _buffer[i].start && pos < _buffer[i].start + _buffer[i].size) {
-      return i;
-    }
-  }
-
-  return -1;
-}
-
-
-int Video::find_free_buffer() {
-  for (int i = 0; i < MJPEG_BUFFERS; i++) {
-    if (_buffer[i].ptr == nullptr || _buffer[i].valid) {
-      continue;
-    }
-    
-    return i;
-  }
-
-  return -1;
-}
-
-
-bool Video::find_range() {
-  int step = 0;
-  bool find_header = false;
-  int start = -1;
-  int end = -1;
-
-  size_t file_size = _file.size();
-
-  for (size_t i = _start; i < file_size; i++) {
-    int index = find_buffer(i);
-    if (index < 0) {
-      return false;
-    }
-
-    uint8_t read = _buffer[index].ptr[i - _buffer[index].start];
-
-    switch (step) {
-    case 0: // find ff
-      if (read == 0xff) {
-        start = i;
-        step = 1;
-      }
-      break;
-    case 1: // find d8
-      if (read == 0xd8) {
-        find_header = true;
-        step = 2;
-      }
-      else if (read == 0xff) {
-        start = i;
-      }
-      else {
-        step = 0;
-      }
-      break;
-    case 2: // find next ff
-      if (read == 0xff) {
-        end = i;
-        step = 3;
-      }
-      break;
-    case 3: // find next d8
-      if (read == 0xd8) {
-        _start = start;
-        _end = end;
-        return true;
-      }
-      else if (read == 0xff) {
-        end = i;
-      }
-      else {
-        step = 2;
-      }
-      break;
-    }
-  }
-
-  if (find_header) {
-    _start = start;
-    _end = end;
-    return true;
-  }
-
-  return false;
-}
-
-
-bool Video::find_range_direct() {
-  int step = 0;
-  bool find_header = false;
-  int start = -1;
-  int end = -1;
-
+// A frame starts at an SOI marker (FF D8) and ends where the next one starts, or at the end of the file.
+bool Video::find_frame() {
   const size_t BLOCK_SIZE = CONFIG_WL_SECTOR_SIZE;
-  uint8_t* block = new uint8_t[BLOCK_SIZE];
+  uint8_t* block = (uint8_t*)malloc_auto(BLOCK_SIZE);
+  if (block == nullptr) {
+    return false;
+  }
+
+  bool found_start = false;
+  size_t start = 0;
+  bool has_prev = false;
+  uint8_t prev = 0;
 
   while (_file.available()) {
     size_t block_pos = _file.position();
     size_t bytes_read = _file.read(block, BLOCK_SIZE);
-    
+    if (bytes_read == 0) {
+      break;
+    }
+
     for (size_t i = 0; i < bytes_read; i++) {
-      size_t pos = block_pos + i;
       uint8_t read = block[i];
 
-      switch (step) {
-      case 0: // find ff
-        if (read == 0xff) {
-          start = pos;
-          step = 1;
-        }
-        break;
-      case 1: // find d8
-        if (read == 0xd8) {
-          find_header = true;
-          step = 2;
-        }
-        else if (read == 0xff) {
-          start = pos;
+      if (has_prev && prev == 0xff && read == 0xd8) {
+        size_t marker = block_pos + i - 1;
+
+        if (!found_start) {
+          found_start = true;
+          start = marker;
         }
         else {
-          step = 0;
-        }
-        break;
-      case 2: // find next ff
-        if (read == 0xff) {
-          end = pos;
-          step = 3;
-        }
-        break;
-      case 3: // find next d8
-        if (read == 0xd8) {
-          delete[] block;
+          free_auto(block);
           _start = start;
-          _end = end;
+          _end = marker;
           return true;
         }
-        else if (read == 0xff) {
-          end = pos;
-        }
-        else {
-          step = 2;
-        }
-        break;
       }
+
+      prev = read;
+      has_prev = true;
     }
   }
-  
-  delete[] block;
 
-  if (find_header) {
+  free_auto(block);
+
+  if (found_start) {
     _start = start;
-    _end = end;
+    _end = _file.size();
     return true;
   }
 
@@ -835,52 +621,37 @@ bool Video::find_range_direct() {
 }
 
 
-void Video::flush_buffer(bool init) {
-  if (init) {
-    for (int i = 0; i < MJPEG_BUFFERS; i++) {
-      if (!_buffer[i].valid) {
-        continue;
-      }
+Image* Video::read_frame() {
+  static const size_t FRAME_SIZE_MAX = 64 * 1024;
 
-      if (_buffer[i].last || _buffer[i].start > (MJPEG_BUFFER_SIZE * (MJPEG_BUFFERS - 2))) {
-        _buffer[i].valid = false;
-      }
-    }
-  }
-  else {
-    for (int i = 0; i < MJPEG_BUFFERS; i++) {
-      if (!_buffer[i].valid) {
-        continue;
-      }
-
-      if (has_last()) {
-        if (_buffer[i].start > (MJPEG_BUFFER_SIZE * (MJPEG_BUFFERS - 2))
-        && _start >= _buffer[i].start + _buffer[i].size) {
-          _buffer[i].valid = false;
-        }
-      }
-      else {
-        if (_start >= _buffer[i].start + _buffer[i].size) {
-          _buffer[i].valid = false;
-        }
-      }
-    }
-  }
-}
-
-
-bool Video::has_last() {
-  for (int i = 0; i < MJPEG_BUFFERS; i++) {
-    if (_buffer[i].ptr == nullptr || !_buffer[i].valid) {
-      continue;
-    }
-
-    if (_buffer[i].last) {
-      return true;
-    }
+  size_t size = _end - _start;
+  if (size == 0 || size > FRAME_SIZE_MAX) {
+    TF_LOGW(TAG, "mjpeg frame size out of range (%u).", (unsigned)size);
+    _file.seek(_end);
+    return nullptr;
   }
 
-  return false;
+  uint8_t* buffer = (uint8_t*)malloc_auto(size);
+  if (buffer == nullptr) {
+    TF_LOGE(TAG, "mjpeg frame memory allocation failed (%u).", (unsigned)size);
+    _file.seek(_end);
+    return nullptr;
+  }
+
+  _file.seek(_start);
+  size_t bytes_read = _file.read(buffer, size);
+
+  Image* image = nullptr;
+  if (bytes_read == size) {
+    image = new Image(Image::IMAGE_JPEG, buffer, size, true);
+    if (!image->isLoaded()) {
+      delete image;
+      image = nullptr;
+    }
+  }
+  free_auto(buffer);
+
+  return image;
 }
 
 
