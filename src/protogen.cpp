@@ -287,7 +287,7 @@ bool Toaster::begin() {
 
       delay(1);
     }
-    }, "hud", 4096, this, 1, nullptr, PRO_CPU_NUM);
+    }, "hud", 4096, this, 1, &_hud_task, PRO_CPU_NUM);
   if (core_result != pdPASS) {
     TF_LOGE(TAG, "xTaskCreatePinnedToCore failed (%d).", core_result);
   }
@@ -513,6 +513,10 @@ bool Toaster::workPerSecond() {
     appendf(sz, sizeof(sz), len, " (%d)", ESP.getFreePsram());
   }
 
+  // if (_hud_task != nullptr) {
+  //   appendf(sz, sizeof(sz), len, ", hud stack: %u", (unsigned)uxTaskGetStackHighWaterMark(_hud_task));
+  // }
+
   TF_LOGD(TAG, "%s", sz);
 
   return true;
@@ -565,17 +569,17 @@ bool Toaster::setEmotion(size_t index) {
 }
 
 
-const char* Toaster::getEmotionGroup() const {
-  if (_emotion_index >= _emotions.size()) {
+const char* Toaster::getEmotionGroup(size_t index) const {
+  if (index >= _emotions.size()) {
     return "";
   }
 
-  const char* p = strrchr(_emotions[_emotion_index].base_path.c_str(), '/');
+  const char* p = strrchr(_emotions[index].base_path.c_str(), '/');
   return (p != nullptr) ? (p + 1) : "";
 }
 
 
-void Toaster::shuffleEmotion() {
+int Toaster::shuffleEmotion() {
   if (_shuffle_deck.empty()) {
     TF_LOGD(TAG, "shuffle list...");
 
@@ -607,11 +611,14 @@ void Toaster::shuffleEmotion() {
 
   if (_shuffle_deck.empty()) {
     // no other emotion to shuffle to
-    return;
+    return -1;
   }
 
-  setEmotion(_shuffle_deck.front());
+  int index = _shuffle_deck.front();
   _shuffle_deck.erase(_shuffle_deck.begin());
+  setNextEmotion(_emotions[index].name.c_str());
+
+  return index;
 }
 
 

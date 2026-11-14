@@ -52,10 +52,15 @@ void HUDEmotionDir::init() {
 
 
 void HUDEmotionDir::refreshHighlight() {
+  highlightGroup(Protogen.getEmotionGroup());
+}
+
+
+void HUDEmotionDir::highlightGroup(const char* group) {
   _menuHasHighlight = false;
 
   for (size_t i = 0; i < _menuData.size(); i++) {
-    if (strcmp(_menuData[i].text.c_str(), Protogen.getEmotionGroup()) == 0) {
+    if (strcmp(_menuData[i].text.c_str(), group) == 0) {
       _menuHighlight = i;
       _menuHasHighlight = true;
       break;
@@ -67,8 +72,10 @@ void HUDEmotionDir::refreshHighlight() {
 
 
 void HUDEmotionDir::shuffle() {
-  Protogen.shuffleEmotion();
-  refreshHighlight();
+  int index = Protogen.shuffleEmotion();
+  if (index >= 0) {
+    highlightGroup(Protogen.getEmotionGroup(index));
+  }
 }
 
 

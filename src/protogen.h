@@ -81,7 +81,10 @@ public:
     return (_emotion_index < _emotions.size()) ? _emotions[_emotion_index].name.c_str() : "";
   }
 
-  const char* getEmotionGroup() const;
+  const char* getEmotionGroup() const {
+    return getEmotionGroup(_emotion_index);
+  }
+  const char* getEmotionGroup(size_t index) const;
 
   size_t getEmotionIndex() const {
     return _emotion_index;
@@ -90,8 +93,7 @@ public:
   const size_t getEmotionCount() const {
     return _emotions.size();
   }
-
-  void shuffleEmotion();
+  int shuffleEmotion();
 
   bool setEmotionNext();
   void displayEmotionList();
@@ -121,7 +123,9 @@ public:
   }
 
   void setStaticMode(bool mode) {
+    syncLock();
     Effect::setStaticMode(mode);
+    syncUnlock();
   }
 
   PROTOGEN_COLOR_MODE getColorMode() const {
@@ -189,6 +193,7 @@ protected:
   uint8_t _sync_core{0};
   volatile bool _usb_storage_request{false};
   volatile bool _hud_task_paused{false};
+  TaskHandle_t _hud_task{nullptr};
 
 protected:
   void enterUsbStorage();

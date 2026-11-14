@@ -51,6 +51,9 @@
   - 한 줄짜리 목록 항목(`- name: a`)이 연속될 때, 하위 항목을 모두 주석 처리한 키 다음에 다른 키가 올 때 등
   - 값이 있는 키(`key: value`) 아래에 하위 항목을 쓰는 등 들여쓰기가 맞지 않으면 이제 `indent error`로 처리합니다.
   - 목록 항목은 키보다 한 단계 들여써야 합니다. 같은 깊이에 쓰면 오류로 처리합니다.
+- 리모컨(ESP-NOW, IR)과 시리얼에서 동시에 키를 입력하거나 HUD가 화면을 바꾸는 중에 키를 입력하면 HUD 메뉴가 오동작하거나 재부팅될 수 있던 문제 수정
+- ESP-NOW 리모컨으로 셔플할 때 표정을 불러오는 동안 리모컨 수신이 멈추던 문제 수정
+- HUD에서 일시 정지를 전환할 때 화면을 그리는 중이던 효과의 시간이 어긋날 수 있던 문제 수정
 
 ### 기타
 - RTC(DS3231) 사용 시 10분마다 시간을 다시 맞추도록 변경
@@ -107,6 +110,9 @@
   - For example, consecutive single-line list items (`- name: a`), or a key that follows another key whose children are all commented out.
   - Mismatched indentation, such as children under a key that has a value (`key: value`), is now reported as `indent error`.
   - List items must be indented one level deeper than their key. Items at the same level are reported as an error.
+- Fixed the HUD menu misbehaving or rebooting when keys arrived from the remotes (ESP-NOW, IR) and serial at the same time, or while the HUD was changing screens.
+- Fixed ESP-NOW remote input stalling while an emotion loaded after a shuffle from the remote.
+- Fixed the timing of effects being drawn possibly going off when pausing or resuming from the HUD.
 
 ### Misc.
 - With an RTC (DS3231), the time is re-synchronized every 10 minutes.

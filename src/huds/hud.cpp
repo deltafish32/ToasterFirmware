@@ -3,9 +3,12 @@
 
 #include "huds/huds.h"
 #include "protogen.h"
+#include "lib/logger.h"
 
 
 namespace toaster {
+
+static const char* TAG = "HUD";
 
 HeadUpDisplay::HeadUpDisplay() : _oled(OLED_WIDTH, OLED_HEIGHT, &Wire, OLED_RESET) {
 }
@@ -28,6 +31,13 @@ bool HeadUpDisplay::begin(uint8_t i2c_addr, uint32_t target_fps) {
   _target_fps = (target_fps > 0) ? target_fps : 1;
   Worker::begin(_target_fps);
 
+  if (_key_queue == nullptr) {
+    _key_queue = xQueueCreate(KEY_QUEUE_LENGTH, sizeof(KEY_EVENT));
+    if (_key_queue == nullptr) {
+      TF_LOGE(TAG, "key queue creation failed");
+    }
+  }
+
   _init = true;
 
   return true;
@@ -35,12 +45,33 @@ bool HeadUpDisplay::begin(uint8_t i2c_addr, uint32_t target_fps) {
 
 
 void HeadUpDisplay::pressKey(uint16_t key, uint8_t mode) {
-  if (_init == false) {
+  if (_init == false || _key_queue == nullptr) {
     return;
   }
 
-  if (_hud != nullptr) {
-    _hud->pressKey(key, mode);
+  KEY_EVENT event = {key, mode};
+  if (xQueueSend(_key_queue, &event, 0) != pdTRUE) {
+    TF_LOGW(TAG, "key queue full, key 0x%04x dropped", key);
+  }
+}
+
+
+void HeadUpDisplay::loop() {
+  processKeys();
+  Worker::loop();
+}
+
+
+void HeadUpDisplay::processKeys() {
+  if (_init == false || _key_queue == nullptr) {
+    return;
+  }
+
+  KEY_EVENT event;
+  while (xQueueReceive(_key_queue, &event, 0) == pdTRUE) {
+    if (_hud != nullptr) {
+      _hud->pressKey(event.key, event.mode);
+    }
   }
 }
 

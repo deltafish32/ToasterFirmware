@@ -33,6 +33,7 @@ public:
 protected:
   virtual void refreshHighlight();
   virtual void shuffle();
+  void highlightGroup(const char* group);
 
 };
 
