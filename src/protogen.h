@@ -78,7 +78,7 @@ public:
   bool setEmotion(const char* emotion);
   bool setEmotion(size_t index);
   const char* getEmotion() const {
-    return _emotions[_emotion_index].name.c_str();
+    return (_emotion_index < _emotions.size()) ? _emotions[_emotion_index].name.c_str() : "";
   }
 
   const char* getEmotionGroup() const;

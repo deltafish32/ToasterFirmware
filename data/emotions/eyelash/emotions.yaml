@@ -22,12 +22,10 @@ emotions:
     eyes: eyes_badass_e
     mouth: mouth_badass_e
     nose: nose_e
-    mouth: mouth_e
   - name: badass_e_blushing
     eyes: eyes_badass_e
     mouth: mouth_e
     nose: nose_e
-    mouth: mouth_e
     special: blushing
   - name: grin_e
     eyes: eyes_grin_e

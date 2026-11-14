@@ -38,9 +38,20 @@
 - 공룡 게임의 메모리 누수 수정
 - 셔플 후 HUD에서 이전 표정이 강조 표시되던 문제 수정
 - SD 카드의 표정이 기본 표정을 대체하면 HUD 메뉴에 중복으로 표시되던 문제 수정
+- 설정 값이 0이거나 단위가 빠졌을 때 재부팅되거나 멈추던 문제 수정
+  - 대상: `rainbow_speed`, `rainbow_single_speed`(예: `10` 대신 `10ms`), `hardware:hub75:fps`, `hardware:hud:fps`, `hardware:thermometer:period`, 스크립트의 `video:fps`
+  - 잘못된 값은 경고 로그를 남기고 기본값을 사용합니다.
+- 프레임 지연이 0인 GIF를 재생할 때 HUD가 멈출 수 있던 문제 수정
+- 사이드 패널 LED가 37개를 넘을 때 원형 무지개 효과에서 메모리 범위 밖을 읽던 문제 수정
+- 스크립트의 이미지 번호가 0-255를 벗어나면 다른 이미지가 표시되던 문제 수정. 이제 스크립트 오류로 처리합니다.
+- 스크립트의 `images`, `sequences`, `boop_sequences` 항목을 한 줄이 아닌 하위 항목으로 쓰면 재부팅될 수 있던 문제 수정. 이제 스크립트 오류로 처리합니다.
+- `emotion.yaml`의 `default` 표정이 없거나 키가 빠졌을 때 표정이 하나도 등록되지 않아 HUD나 시리얼에서 표정을 고르면 재부팅될 수 있던 문제 수정
+  - 이제 빠진 키는 비워 두고 경고 로그를 남기며, 나머지 표정은 정상적으로 불러옵니다.
 
 ### 기타
 - RTC(DS3231) 사용 시 10분마다 시간을 다시 맞추도록 변경
+- 기본 `eyelash` 표정의 중복된 `mouth` 키 정리
+- 여러 작업에서 동시에 출력한 로그가 한 줄 안에서 섞이지 않도록 개선
 
 ### Feature
 - (Beta) Added USB storage mode (ESP32-S3 only, `adafruit_matrixportal_esp32s3_usbm` build).
@@ -78,9 +89,20 @@
 - Fixed a memory leak in the dino game.
 - Fixed the HUD highlighting the previous emotion after shuffling.
 - Fixed duplicate entries in the HUD menu when an SD card emotion replaces a built-in one.
+- Fixed reboots or freezes when a setting is 0 or is missing its unit.
+  - Affected settings: `rainbow_speed`, `rainbow_single_speed` (e.g. `10` instead of `10ms`), `hardware:hub75:fps`, `hardware:hud:fps`, `hardware:thermometer:period`, and `video:fps` in scripts.
+  - Invalid values are logged as a warning and replaced with the default value.
+- Fixed the HUD possibly freezing while playing a GIF with a frame delay of 0.
+- Fixed an out-of-bounds read in the circular rainbow effect when the side panel has more than 37 LEDs.
+- Fixed image numbers outside 0-255 in scripts showing a different image. They are now reported as a script error.
+- Fixed a possible reboot when an item in `images`, `sequences`, or `boop_sequences` of a script is written as nested items instead of a single line. It is now reported as a script error.
+- Fixed a possible reboot when selecting an emotion from the HUD or serial if the `default` emotion in `emotion.yaml` was missing or incomplete, which left no emotions registered.
+  - Missing keys are now left empty with a warning, and the other emotions load normally.
 
 ### Misc.
 - With an RTC (DS3231), the time is re-synchronized every 10 minutes.
+- Removed duplicate `mouth` keys in the built-in `eyelash` emotions.
+- Logs printed at the same time from multiple tasks no longer get mixed within a line.
 
 
 ## 2026.1.1

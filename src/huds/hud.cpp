@@ -25,7 +25,7 @@ bool HeadUpDisplay::begin(uint8_t i2c_addr, uint32_t target_fps) {
 
   setHUD(&hud_splash);
 
-  _target_fps = target_fps;
+  _target_fps = (target_fps > 0) ? target_fps : 1;
   Worker::begin(_target_fps);
 
   _init = true;
@@ -47,14 +47,14 @@ void HeadUpDisplay::pressKey(uint16_t key, uint8_t mode) {
 
 void HeadUpDisplay::setPF(timer_pf_t pf) {
   if (pf.type == PF_FREQUENCY) {
-    uint32_t hud_freq = pf.frequency;
-    while (hud_freq > _target_fps) {
+    uint32_t hud_freq = (pf.frequency > 0) ? pf.frequency : 1;
+    while (hud_freq > _target_fps && hud_freq > 1) {
       hud_freq /= 2;
     }
     setFPS(hud_freq);
   }
   else if (pf.type == PF_PERIOD) {
-    uint32_t hud_period_ms = pf.period_ms;
+    uint32_t hud_period_ms = (pf.period_ms > 0) ? pf.period_ms : 1;
     while (hud_period_ms < (1000 / _target_fps)) {
       hud_period_ms *= 2;
     }

@@ -591,7 +591,7 @@ const char* SerialDebug::serial_buffer_read() {
 
 
 void SerialDebug::printAfterCursor(bool erase) {
-  int del = _serial_buffer.size() - _cursor + (del ? 1 : 0);
+  int del = _serial_buffer.size() - _cursor;
   if (del <= 0) {
     return;
   }

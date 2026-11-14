@@ -24,6 +24,27 @@ const char* Toaster::DEFAULT_BASE_PATH = "/emotions/default";
 
 static const int ADC_MAX = 4095;
 
+// Reads a positive integer setting. Zero or negative values fall back to def_value.
+static uint32_t get_positive_int(const YamlNodeArray& yaml, const char* keys, int def_value) {
+  int value = yaml.getInt(keys, def_value);
+  if (value <= 0) {
+    TF_LOGW(TAG, "%s must be greater than 0 (%d), using %d", keys, value, def_value);
+    return def_value;
+  }
+  return value;
+}
+
+// Reads a time setting such as "10ms" or "15s". A missing or unknown unit, or zero, falls back to def_value.
+static uint32_t get_time_ms(const YamlNodeArray& yaml, const char* keys, const char* def_value) {
+  std::string str = yaml.getString(keys, def_value);
+  uint32_t value = parse_time_str(str.c_str());
+  if (value == 0) {
+    TF_LOGW(TAG, "%s: invalid time '%s' (units: ms, s, min, h, d), using %s", keys, str.c_str(), def_value);
+    value = parse_time_str(def_value);
+  }
+  return value;
+}
+
 static const char* SCRIPT_DEFAULT_PATH = "/emotions/default/script";
 
 static const char* EMOTIONS_DIR = "/emotions";
@@ -231,7 +252,7 @@ bool Toaster::begin() {
   _interruptSemaphore = xSemaphoreCreateBinary();
   syncUnlock();
 
-  _hub75_fps = config_yaml.getInt("hardware:hub75:fps", 60);
+  _hub75_fps = get_positive_int(config_yaml, "hardware:hub75:fps", 60);
   Worker::begin(_hub75_fps);
 
   loadDefaultEmotion(config_yaml);
@@ -545,6 +566,10 @@ bool Toaster::setEmotion(size_t index) {
 
 
 const char* Toaster::getEmotionGroup() const {
+  if (_emotion_index >= _emotions.size()) {
+    return "";
+  }
+
   const char* p = strrchr(_emotions[_emotion_index].base_path.c_str(), '/');
   return (p != nullptr) ? (p + 1) : "";
 }
@@ -579,7 +604,12 @@ void Toaster::shuffleEmotion() {
       deck.erase(deck.begin() + rnd);
     }
   }
-  
+
+  if (_shuffle_deck.empty()) {
+    // no other emotion to shuffle to
+    return;
+  }
+
   setEmotion(_shuffle_deck.front());
   _shuffle_deck.erase(_shuffle_deck.begin());
 }
@@ -807,7 +837,7 @@ bool Toaster::isBlank() const {
 bool Toaster::isAdaptiveFps() const {
   uint8_t count = 0;
 
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < EFFECT_MAX; i++) {
     if (_effect[i] != nullptr) {
       ++count;
     }
@@ -1000,7 +1030,7 @@ bool Toaster::loadHUD(const YamlNodeArray& yaml) {
   _hud_use = yaml.isKeysExist("hardware:hud");
   if (_hud_use) {
     uint8_t hud_i2c = parse_hex(yaml.getString("hardware:hud:i2c", "0x3C").c_str());
-    _hud_fps = yaml.getInt("hardware:hud:fps", 30);
+    _hud_fps = get_positive_int(yaml, "hardware:hud:fps", 30);
     if (!_hud.begin(hud_i2c, _hud_fps)) {
       TF_LOGW(TAG, "loadHUD: SSD1306(0x%02x) not found", hud_i2c);
       return false;
@@ -1163,7 +1193,7 @@ bool Toaster::loadThermometer(const YamlNodeArray& yaml) {
     }
 
     uint8_t i2c = parse_hex(yaml.getString("hardware:thermometer:i2c", "0x44").c_str());
-    uint32_t period = parse_time_str(yaml.getString("hardware:thermometer:period", "15s").c_str());
+    uint32_t period = get_time_ms(yaml, "hardware:thermometer:period", "15s");
     
     if (_thermometer.beginSHT31(period, i2c)) {
       TF_LOGI(TAG, "loadThermometer: SHT31(0x%02x) connected.", i2c);
@@ -1340,25 +1370,25 @@ bool Toaster::loadPersonality(const YamlNodeArray& yaml) {
     set_color("color_right_mouth", 0, Effect::PC_MOUTH + Effect::PC_MAX, 0x00ff00);
     set_color("color_right_side", 0, Effect::PC_SIDE + Effect::PC_MAX, 0x00ff00);
     
-    set_color("color2_eyes", 1, Effect::PC_EYES, 0x00ff00);
-    set_color("color2_nose", 1, Effect::PC_NOSE, 0x00ff00);
-    set_color("color2_mouth", 1, Effect::PC_MOUTH, 0x00ff00);
-    set_color("color2_side", 1, Effect::PC_SIDE, 0x00ff00);
+    set_color("color2_eyes", 1, Effect::PC_EYES, 0x0000ff);
+    set_color("color2_nose", 1, Effect::PC_NOSE, 0x0000ff);
+    set_color("color2_mouth", 1, Effect::PC_MOUTH, 0x0000ff);
+    set_color("color2_side", 1, Effect::PC_SIDE, 0x0000ff);
     
-    set_color("color2_right_eyes", 1, Effect::PC_EYES + Effect::PC_MAX, 0x00ff00);
-    set_color("color2_right_nose", 1, Effect::PC_NOSE + Effect::PC_MAX, 0x00ff00);
-    set_color("color2_right_mouth", 1, Effect::PC_MOUTH + Effect::PC_MAX, 0x00ff00);
-    set_color("color2_right_side", 1, Effect::PC_SIDE + Effect::PC_MAX, 0x00ff00);
+    set_color("color2_right_eyes", 1, Effect::PC_EYES + Effect::PC_MAX, 0x0000ff);
+    set_color("color2_right_nose", 1, Effect::PC_NOSE + Effect::PC_MAX, 0x0000ff);
+    set_color("color2_right_mouth", 1, Effect::PC_MOUTH + Effect::PC_MAX, 0x0000ff);
+    set_color("color2_right_side", 1, Effect::PC_SIDE + Effect::PC_MAX, 0x0000ff);
     
-    set_color("color3_eyes", 2, Effect::PC_EYES, 0x00ff00);
-    set_color("color3_nose", 2, Effect::PC_NOSE, 0x00ff00);
-    set_color("color3_mouth", 2, Effect::PC_MOUTH, 0x00ff00);
-    set_color("color3_side", 2, Effect::PC_SIDE, 0x00ff00);
+    set_color("color3_eyes", 2, Effect::PC_EYES, 0xff0000);
+    set_color("color3_nose", 2, Effect::PC_NOSE, 0xff0000);
+    set_color("color3_mouth", 2, Effect::PC_MOUTH, 0xff0000);
+    set_color("color3_side", 2, Effect::PC_SIDE, 0xff0000);
     
-    set_color("color3_right_eyes", 2, Effect::PC_EYES + Effect::PC_MAX, 0x00ff00);
-    set_color("color3_right_nose", 2, Effect::PC_NOSE + Effect::PC_MAX, 0x00ff00);
-    set_color("color3_right_mouth", 2, Effect::PC_MOUTH + Effect::PC_MAX, 0x00ff00);
-    set_color("color3_right_side", 2, Effect::PC_SIDE + Effect::PC_MAX, 0x00ff00);
+    set_color("color3_right_eyes", 2, Effect::PC_EYES + Effect::PC_MAX, 0xff0000);
+    set_color("color3_right_nose", 2, Effect::PC_NOSE + Effect::PC_MAX, 0xff0000);
+    set_color("color3_right_mouth", 2, Effect::PC_MOUTH + Effect::PC_MAX, 0xff0000);
+    set_color("color3_right_side", 2, Effect::PC_SIDE + Effect::PC_MAX, 0xff0000);
   }
 
   auto color_mode = COLOR_MODE.find(yaml.getString("my_protogen:color_mode", "personal"));
@@ -1366,10 +1396,10 @@ bool Toaster::loadPersonality(const YamlNodeArray& yaml) {
   
   Effect::setColorMode(pcm);
   
-  uint32_t rainbow_single_speed = parse_time_str(yaml.getString("my_protogen:rainbow_single_speed", "20ms").c_str());
+  uint32_t rainbow_single_speed = get_time_ms(yaml, "my_protogen:rainbow_single_speed", "20ms");
   Effect::setRainbowSingleSpeed(rainbow_single_speed);
 
-  uint32_t rainbow_speed = parse_time_str(yaml.getString("my_protogen:rainbow_speed", "10ms").c_str());
+  uint32_t rainbow_speed = get_time_ms(yaml, "my_protogen:rainbow_speed", "10ms");
   uint32_t rainbow_transition_pixels = atoi(yaml.getString("my_protogen:rainbow_transition_pixels", "4").c_str());
   Effect::setRainbowSpeed(rainbow_speed, rainbow_transition_pixels);
 
@@ -1418,7 +1448,7 @@ size_t Toaster::loadEmotionsFromFS(const char* path, bool from_sd) {
   }
 #endif
 
-  File dir = fs->open(EMOTIONS_DIR);
+  File dir = fs->open(path);
   if (dir) {
     String filename = dir.getNextFileName();
   
@@ -1449,51 +1479,58 @@ size_t Toaster::loadEmotionsFromFS(const char* path, bool from_sd) {
 }
 
 
+// Returns the string value of key, or nullptr if it is missing or not a string.
+static const std::string* find_string(const YamlNodeArray& yaml, const char* key) {
+  auto node = yaml.findKeys(key);
+  return (node != nullptr && node->isString()) ? &node->asString() : nullptr;
+}
+
+
 bool Toaster::loadEmotions(const YamlNodeArray& yaml) {
-  auto emotions = yaml.findKeys("emotions");
-  if (emotions == nullptr || emotions->isObject() == false || emotions->asObjects().empty()) {
-    return false;
-  }
-
+  // The "default" emotion supplies the parts that other emotions leave out.
+  // Even without it, the built-in emotions below are registered so _emotions is never empty.
+  _emotion_default = {"", EMOTION_DEFAULT, "", "", "", "", "", "", false};
   bool is_default_loaded = false;
-  
-  for (const auto& it : emotions->asObjects()) {
-    const auto& emotion = it.asObjects();
-    
-    auto name = emotion.findKeys("name");
-    if (name != nullptr && name->asString() == "default") {
-      auto eyes = emotion.findKeys("eyes");
-      if (eyes == nullptr) continue;
 
-      auto nose = emotion.findKeys("nose");
-      if (nose == nullptr) continue;
+  auto emotions = yaml.findKeys("emotions");
+  if (emotions != nullptr && emotions->isObject()) {
+    for (const auto& it : emotions->asObjects()) {
+      if (it.isObject() == false) {
+        continue;
+      }
 
-      auto mouth = emotion.findKeys("mouth");
-      if (mouth == nullptr) continue;
+      const auto& emotion = it.asObjects();
+      auto name = find_string(emotion, "name");
+      if (name == nullptr || *name != EMOTION_DEFAULT) {
+        continue;
+      }
 
-      auto special = emotion.findKeys("special");
-      if (special == nullptr) continue;
+      const std::pair<const char*, std::string*> parts[] = {
+        {"eyes", &_emotion_default.eyes},
+        {"nose", &_emotion_default.nose},
+        {"mouth", &_emotion_default.mouth},
+        {"special", &_emotion_default.special},
+        {"special2", &_emotion_default.special2},
+        {"side", &_emotion_default.side},
+      };
 
-      auto special2 = emotion.findKeys("special2");
-      if (special2 == nullptr) continue;
+      for (const auto& part : parts) {
+        auto value = find_string(emotion, part.first);
+        if (value != nullptr) {
+          *part.second = *value;
+        }
+        else {
+          TF_LOGW(TAG, "loadEmotions: emotion 'default' has no '%s', left empty", part.first);
+        }
+      }
 
-      auto side = emotion.findKeys("side");
-      if (side == nullptr) continue;
-
-      _emotion_default.name = name->asString();
-      _emotion_default.eyes = eyes->asString();
-      _emotion_default.nose = nose->asString();
-      _emotion_default.mouth = mouth->asString();
-      _emotion_default.special = special->asString();
-      _emotion_default.special2 = special2->asString();
-      _emotion_default.side = side->asString();
       is_default_loaded = true;
       break;
     }
   }
 
   if (is_default_loaded == false) {
-    return false;
+    TF_LOGE(TAG, "loadEmotions: emotion 'default' not found. check emotion.yaml");
   }
 
   _emotions.push_back({"", "blank", "", "", "blank", "", "", "blank", true});
@@ -1523,14 +1560,14 @@ bool Toaster::loadEmotions(const YamlNodeArray& yaml) {
 
   clearEmptyHUDEmotions();
 
-  return true;
+  return is_default_loaded;
 }
 
 
 size_t Toaster::loadEmotionEachYaml(const YamlNodeArray& yaml, const char* base_path, bool from_sd) {
   auto emotions = yaml.findKeys("emotions");
   if (emotions == nullptr || emotions->isObject() == false || emotions->asObjects().empty()) {
-    return false;
+    return 0;
   }
 
   size_t count = 0;
@@ -1542,17 +1579,17 @@ size_t Toaster::loadEmotionEachYaml(const YamlNodeArray& yaml, const char* base_
 
     auto& emotion = it.asObjects();
     
-    auto name = emotion.findKeys("name");
+    auto name = find_string(emotion, "name");
     if (name == nullptr) continue;
 
-    auto eyes = emotion.findKeys("eyes");
-    auto nose = emotion.findKeys("nose");
-    auto mouth = emotion.findKeys("mouth");
-    auto special = emotion.findKeys("special");
-    auto special2 = emotion.findKeys("special2");
-    auto side = emotion.findKeys("side");
+    auto eyes = find_string(emotion, "eyes");
+    auto nose = find_string(emotion, "nose");
+    auto mouth = find_string(emotion, "mouth");
+    auto special = find_string(emotion, "special");
+    auto special2 = find_string(emotion, "special2");
+    auto side = find_string(emotion, "side");
 
-    if (name->asString() == "default") {
+    if (*name == EMOTION_DEFAULT) {
       continue;
     }
 
@@ -1569,25 +1606,25 @@ size_t Toaster::loadEmotionEachYaml(const YamlNodeArray& yaml, const char* base_
 
     EMOTION_DATA data;
     data.base_path = dir;
-    data.name = name->asString();
-    data.eyes = (eyes == nullptr) ? _emotion_default.eyes : eyes->asString();
-    data.nose = (nose == nullptr) ? _emotion_default.nose : nose->asString();
-    data.mouth = (mouth == nullptr) ? _emotion_default.mouth : mouth->asString();
-    data.special = (special == nullptr) ? _emotion_default.special : special->asString();
-    data.special2 = (special2 == nullptr) ? _emotion_default.special2 : special2->asString();
-    data.side = (side == nullptr) ? _emotion_default.side : side->asString();
+    data.name = *name;
+    data.eyes = (eyes == nullptr) ? _emotion_default.eyes : *eyes;
+    data.nose = (nose == nullptr) ? _emotion_default.nose : *nose;
+    data.mouth = (mouth == nullptr) ? _emotion_default.mouth : *mouth;
+    data.special = (special == nullptr) ? _emotion_default.special : *special;
+    data.special2 = (special2 == nullptr) ? _emotion_default.special2 : *special2;
+    data.side = (side == nullptr) ? _emotion_default.side : *side;
     data.shuffle_exclude = false;
 
-    int find = findEmotion(name->asString().c_str());
+    int find = findEmotion(name->c_str());
     if (find >= 0) {
       if (from_sd) {
         // remove from the group of the emotion being replaced, before it is overwritten
         removeHUDEmotion(_emotions[find].base_path.c_str(), _emotions[find].name.c_str());
         _emotions[find] = data;
-        TF_LOGI(TAG, "emotion (%s) already exist. replaced.", name->asString().c_str());
+        TF_LOGI(TAG, "emotion (%s) already exist. replaced.", name->c_str());
       }
       else {
-        TF_LOGW(TAG, "emotion (%s) already exist. ignored.", name->asString().c_str());
+        TF_LOGW(TAG, "emotion (%s) already exist. ignored.", name->c_str());
         continue;
       }
     }
@@ -1595,7 +1632,7 @@ size_t Toaster::loadEmotionEachYaml(const YamlNodeArray& yaml, const char* base_
       _emotions.push_back(data);
     }
     
-    addHUDEmotion(dir.c_str(), name->asString().c_str());
+    addHUDEmotion(dir.c_str(), name->c_str());
 
     ++count;
   }
@@ -1685,7 +1722,7 @@ bool Toaster::loadShortcutList() {
   
   TF_LOGI(TAG, "total %d shortcuts loaded!", _shortcut_list.size());
 
-  return false;
+  return true;
 }
 
 

@@ -36,7 +36,6 @@ void EffectFestive::init(Display& display) {
     TF_LOGE("EffectFestive", "memory allocation failed.");
     return;
   }
-  memset(_vdatas, 0, sizeof(_vdatas));
   
   if (Protogen.isFestiveFace()) {
     bool use_rgb565 = Protogen.isRGB565();

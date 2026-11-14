@@ -43,9 +43,13 @@ public:
   bool open(const char* filename, bool from_sd);
   
   void release() {
+    _error.clear();
+    _version = 0;
+    _type = 0;
     _images.clear();
     _sequences.clear();
     _boop_sequences.clear();
+    _video = VIDEO_INFO();
   }
 
   uint32_t getVersion() const {

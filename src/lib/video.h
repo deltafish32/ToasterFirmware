@@ -38,7 +38,7 @@ public:
   }
 
   timer_ms_t getPF_ms() const {
-    return (_pf.type == PF_FREQUENCY) ? (1000 / _pf.frequency) : (_pf.type == PF_PERIOD) ? _pf.period_ms : 0;
+    return (_pf.type == PF_FREQUENCY) ? (1000 / ((_pf.frequency > 0) ? _pf.frequency : 1)) : (_pf.type == PF_PERIOD) ? _pf.period_ms : 0;
   }
 
 public:

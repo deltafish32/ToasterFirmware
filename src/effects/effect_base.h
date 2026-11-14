@@ -139,13 +139,13 @@ public:
   }
 
   static void setRainbowSingleSpeed(uint32_t speed_ms) {
-    _rainbowSingleSpeed_ms = speed_ms;
+    _rainbowSingleSpeed_ms = (speed_ms > 0) ? speed_ms : 1;
 
     setDirty();
   }
 
   static void setRainbowSpeed(uint32_t speed_ms, uint32_t transition_pixels) {
-    _rainbowSpeed_ms = speed_ms;
+    _rainbowSpeed_ms = (speed_ms > 0) ? speed_ms : 1;
     _rainbowTransitionPixels = transition_pixels;
 
     setDirty();

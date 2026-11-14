@@ -215,6 +215,10 @@ void HUDMenu::drawMenu(Adafruit_SSD1306& oled) {
 
 
 bool HUDMenu::selectMenu(int index) {
+  if (index < 0 || index >= (int)_menuData.size()) {
+    return false;
+  }
+
   const auto& menu = _menuData[index];
 
   switch (menu.type) {

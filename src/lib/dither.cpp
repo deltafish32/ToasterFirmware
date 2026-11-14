@@ -54,7 +54,7 @@ void fastEDDither(uint8_t *IMG_pixel) {
     
     // distribute part of error at (x, y + 1)
     c = IMG_pixel[ind + IMG_WIDTH];
-    uint8_t temp_c = c + quant_err_c; // distribute the whole quantization error to the pixel below
+    int16_t temp_c = c + quant_err_c; // distribute the whole quantization error to the pixel below
     IMG_pixel[ind + IMG_WIDTH] = clamp(temp_c, 0, 255);
   }
   

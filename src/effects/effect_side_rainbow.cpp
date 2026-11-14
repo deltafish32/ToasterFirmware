@@ -75,10 +75,11 @@ void EffectSideRainbow::process_circle(Display& display) {
 
   size_t width = display.getWidth();
   size_t numleds = width / 2;
+  size_t drawleds = std::min(numleds, SIDE_PANEL_CIRCLE_DATA.size());
   timer_ms_t tick = color_millis();
 
   for (int i = 0; i < display.getHeight(); i++) {
-    for (int j = 0; j < numleds; j++) {
+    for (int j = 0; j < drawleds; j++) {
       uint16_t h1 = (int)((int)(((360.0f - SIDE_PANEL_CIRCLE_DATA[j].first) * ANGLE_MULTIPLIER) + (tick * TICK_MULTIPLIER_1)) % COLOR_ANGLE + (tick * TICK_MULTIPLIER_2)) % 360;
       uint16_t h2 = (int)((int)(((SIDE_PANEL_CIRCLE_DATA[j].first) * ANGLE_MULTIPLIER) + (tick * TICK_MULTIPLIER_1)) % COLOR_ANGLE + (tick * TICK_MULTIPLIER_2)) % 360;
 

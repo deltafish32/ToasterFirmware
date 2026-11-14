@@ -22,6 +22,9 @@ public:
   }
 
   virtual void setFPS(uint32_t target_frequency) {
+    if (target_frequency == 0) {
+      target_frequency = 1;
+    }
     _worker_uspf = 1000000 / target_frequency;
     _worker_uspf_error = 1000000 % target_frequency;
   }

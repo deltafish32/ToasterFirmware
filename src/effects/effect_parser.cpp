@@ -80,6 +80,11 @@ bool EffectParser::open(const char* filename, bool from_sd) {
 
     _images.clear();
     for (const auto& it : images->asObjects()) {
+      // skipping an item would shift the image numbers, so reject it instead
+      if (it.isString() == false) {
+        _error = "each item in [images] must be a file name";
+        return false;
+      }
       _images.push_back(it.asString());
     }
 
@@ -90,6 +95,11 @@ bool EffectParser::open(const char* filename, bool from_sd) {
     }
 
     for (const auto& it : sequences->asObjects()) {
+      if (it.isString() == false) {
+        _error = "each item in [sequences] must be a single line";
+        return false;
+      }
+
       DRAW_SEQUENCE ds;
       uint8_t result = parseDrawSequence(it.asString(), ds, _error);
 
@@ -107,6 +117,11 @@ bool EffectParser::open(const char* filename, bool from_sd) {
     auto boop_sequences = yaml.findKeys("boop_sequences");
     if (boop_sequences != nullptr && boop_sequences->isObject()) {
       for (const auto& it : boop_sequences->asObjects()) {
+        if (it.isString() == false) {
+          _error = "each item in [boop_sequences] must be a single line";
+          return false;
+        }
+
         DRAW_SEQUENCE ds;
         uint8_t result = parseDrawSequence(it.asString(), ds, _error);
 
@@ -126,7 +141,12 @@ bool EffectParser::open(const char* filename, bool from_sd) {
     _video.path = yaml.getString("video:path", "");
     _video.start = yaml.getInt("video:start", 1);
     _video.end = yaml.getInt("video:end", 1);
-    _video.fps = yaml.getInt("video:fps", 15);
+    int fps = yaml.getInt("video:fps", 15);
+    if (fps <= 0) {
+      TF_LOGW(TAG, "video:fps must be greater than 0 (%d), using 15", fps);
+      fps = 15;
+    }
+    _video.fps = fps;
     
     auto mode = MODES.find(yaml.getString("video:mode", "mirror_only_offset"));
     _video.mode = (mode != MODES.end()) ? mode->second : Effect::DM_MIRROR_ONLY_OFFSET;
@@ -141,6 +161,16 @@ bool EffectParser::open(const char* filename, bool from_sd) {
   
   TF_LOGD(TAG, "yaml parsed (%lld us)", Timer::get_micros() - tick);
 
+  return true;
+}
+
+// DRAW_SEQUENCE::image is uint8_t, so reject indices that would wrap around.
+static bool parse_image_index(const std::string& str, uint8_t& index) {
+  int value = atoi(str.c_str());
+  if (value < 0 || value > UINT8_MAX) {
+    return false;
+  }
+  index = value;
   return true;
 }
 
@@ -175,7 +205,10 @@ uint8_t EffectParser::parseDrawSequence(const std::string& str, DRAW_SEQUENCE& d
       return PD_FAIL;
     }
 
-    ds.image = atoi(split_result[1].c_str());
+    if (!parse_image_index(split_result[1], ds.image)) {
+      error = "image index out of range (0-255) in [sequences]";
+      return PD_FAIL;
+    }
 
     auto color = COLORS.find(split_result[2].c_str());
     if (color == COLORS.end()) {
@@ -204,7 +237,10 @@ uint8_t EffectParser::parseDrawSequence(const std::string& str, DRAW_SEQUENCE& d
       return PD_FAIL;
     }
 
-    ds.image = atoi(split_result[1].c_str());
+    if (!parse_image_index(split_result[1], ds.image)) {
+      error = "image index out of range (0-255) in [sequences]";
+      return PD_FAIL;
+    }
 
     auto mode = MODES.find(split_result[2].c_str());
     if (mode == MODES.end()) {
