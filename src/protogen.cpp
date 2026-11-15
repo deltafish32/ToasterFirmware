@@ -40,7 +40,7 @@ static bool probeSdCard() {
 
 
 Toaster Protogen;
-const char* Toaster::_tf_version = "2026.1.1";
+const char* Toaster::_tf_version = "2026.11.1";
 const char* Toaster::DEFAULT_BASE_PATH = "/emotions/default";
 
 
